@@ -1,0 +1,14 @@
+
+
+<launch>
+	<arg name="usepath"/>
+
+	<node name="simulation" pkg="osrf_gear" type="gear.py" args="-f $(arg usepath)"/>
+ 
+
+	<include file="$(find ur10_moveit_config)/launch/ur10_moveit_planning_execution.launch">
+		<arg name="sim" value="true"/>
+	</include> 
+</launch>
+
+
