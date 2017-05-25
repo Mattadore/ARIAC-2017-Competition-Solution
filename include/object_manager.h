@@ -1,0 +1,470 @@
+#include <algorithm>
+#include <vector>
+#include <utility>
+#include <string>
+#include <map>
+#include <list>
+#include <cstdio>
+#include <cmath>
+
+#include <ros/ros.h>
+
+#include <osrf_gear/VacuumGripperState.h>
+#include <osrf_gear/VacuumGripperControl.h>
+#include <osrf_gear/ConveyorBeltControl.h>
+#include <osrf_gear/LogicalCameraImage.h>
+#include <osrf_gear/Order.h>
+#include <osrf_gear/Proximity.h>
+#include <osrf_gear/AGVControl.h>
+#include <sensor_msgs/JointState.h>
+#include <sensor_msgs/LaserScan.h>
+#include <std_msgs/Float32.h>
+#include <std_msgs/String.h>
+#include <std_srvs/Trigger.h>
+#include <trajectory_msgs/JointTrajectory.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
+#include <tf2_ros/buffer_server.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <boost/thread.hpp>
+#include <boost/regex.hpp> 
+#include <geometry_msgs/Pose.h>
+#include <moveit/move_group_interface/move_group.h>
+#include <moveit/robot_state/conversions.h>
+
+//tf_publisher_data data;
+//bool gripper_attached = false;
+//either filter or average part displacement to predicted
+//treat OWN DATA as truth
+
+//calculate the offset
+//divide offset by min(max average num,parts added)?
+//incorporate the offset into calculation
+//transformation is calculated by:
+//at a given time: frame + offset + special factors;
+//change the 
+
+//4951 -actual
+//5492 -true
+//7500 -size
+
+//width 1: 
+//11500
+//12000
+
+//width difference: ~ 1000
+
+//on the ground: ~500
+
+//upside down: 0.007516
+//0.007000
+
+//sinking, not wrong
+
+namespace tracker {
+	const unsigned char max_average_num = 45;
+	const double noise_radius = 0.01; //idk something, set this later
+	const double true_bin_height = 0.005000; //the true offset bin surface height (pain to calculate)
+}
+using namespace tracker;
+
+enum part_location {
+	LOCATION_NULL,
+	LOCATION_ARM,
+	LOCATION_BELT,
+	LOCATION_AGV1,
+	LOCATION_AGV2,
+	LOCATION_GROUND,
+	LOCATION_NUM
+};
+
+/*
+const string pattern = "(abc)(def)";  
+const string target = "abcdef"; 
+
+boost::regex regexPattern(pattern, boost::regex::extended); 
+boost::smatch what; 
+
+bool isMatchFound = boost::regex_match(target, what, regexPattern); 
+if (isMatchFound) 
+{ 
+    for (unsigned int i=0; i < what.size(); i++) 
+    { 
+        cout << "WHAT " << i << " " << what[i] << endl; 
+    } 
+} 
+*/
+/*
+struct ObjectTrackStruct {
+	std::string object_input_tf;
+	std::string object_output_tf;
+	std::string reference;
+	//tf::StampedPose last_observation;
+	tf::StampedPose anchor_pose; //pose for offset calculations
+	tf::StampedPose recent_pose; //most recent published pose
+	object_tracker_struct(unsigned char initial_location_type);
+	unsigned char num_averaged;
+	//make a method that can determine where everything is
+	//have some thing to determine where everything starts?
+	ObjectTrackStruct() { //pass in pose, where it is, what type of thing it's on, all that stuff
+		num_averaged = 3;
+	}
+	void attach_to_arm() {
+		reference = "/vacuum_gripper_link";
+		num_averaged = 5; //weight of known value
+	}
+	void drop_on_agv1() {
+		//reference = "/vacuum_gripper_link";
+		//num_averaged = 5; //weight of known value
+	}
+	void drop_on_agv2() {
+
+	}
+}
+*/
+
+
+
+
+struct ObjectTypeData {
+	std::string part_type_name;
+	double size;
+	double tf_base_offset;
+	tf::Vector3 bin_start_point;
+	tf::Vector3 bin_end_point;
+	tf::Vector3 bin_start_rpy;
+	unsigned char bin_x_num;
+	unsigned char bin_y_num;
+};
+
+//TODO: this is ugly, we need headers
+
+class ObjectTracker;
+
+class ObjectData {
+public:
+	void reference_swap(std::string new_reference_name) {
+
+	}
+	std::string & get_name() {
+		return part_name;
+	}
+	std::string & get_reference_frame() {
+		return reference_frame;
+	}
+	ObjectData(std::string name,std::string reference,ObjectTypeData * typedata,bool on_conveyor = false) {
+		reference_frame = reference;
+		part_name = name;
+		type_information = typedata;
+		average_list_index = 0;
+		average_list_size = max_average_num;
+		average_list_position_size = max_average_num;
+		average_list_valid = 0;
+		moving = on_conveyor;
+		current_location = tf::StampedTransform(tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0,0,0)),ros::Time::now(),reference,name);
+		relative_motion = tf::Vector3(0,0,0);
+		if (on_conveyor) {
+			//TODO: MEASURE CONVEYOR SPEED OR MAKE A FILTER
+			//relative_motion = tf::Vector3(0.2,0,0);
+		}
+	}
+	ObjectTypeData * get_type_info() {
+		return type_information;
+	}
+	//this code below is not user friendly
+	void add_new_pose(tf::StampedTransform pose_in) {
+		average_list[average_list_index] = pose_in;
+		average_list_valid += (average_list_valid < average_list_size); //increment iff smaller than max
+		tf::Quaternion result_q = average_list[average_list_index].getRotation();
+		tf::Vector3 result_p = average_list[average_list_index].getOrigin();
+		tf::Vector3 result_v;
+		char total = 0;
+		char i_last = average_list_index;
+		for (char i = (average_list_index-1+average_list_size)%average_list_size; i!=(average_list_index-average_list_valid+max_average_num)%average_list_size;i=(i-1+average_list_size)%average_list_size) {
+			++total;
+			ros::Duration inter_frame_time = average_list[i_last].stamp_ - average_list[i].stamp_;
+			if (inter_frame_time < ros::Duration(0.5)) { //just in case
+				tf::Vector3 next_v = (average_list[i_last].getOrigin() - average_list[i].getOrigin())/inter_frame_time.toSec();
+				if (total == 1) {
+					result_v = next_v;
+				}
+				else {
+					//TODO: i feel like this would cause rounding error
+					//double weight = 1.0/(double)total;
+					//result_v = result_v.lerp(next_v,weight);
+					result_v += next_v;
+				}
+			}
+			i_last = i;
+		}
+		result_v = result_v / ((double)(average_list_valid-1));
+		result_v = tf::Vector3(0,0,0);
+		total = 1;
+		i_last = average_list_index;
+		char max_iter = std::min(average_list_valid,average_list_position_size);
+		for (char i = (average_list_index-1+average_list_size)%average_list_size; i!=(average_list_index-max_iter+average_list_size)%average_list_size;i=(i-1+average_list_size)%average_list_size) {
+			++total;
+			double inter_frame_time = ros::Duration(pose_in.stamp_ - average_list[i].stamp_).toSec();
+			tf::Quaternion next_q = average_list[i].getRotation();
+			tf::Vector3 next_p = average_list[i].getOrigin() + result_v*inter_frame_time;
+			double weight = 1.0/(double)total;
+			if (next_q.dot(result_q) < 0) {
+				next_q = next_q.inverse();
+			}
+			result_q = result_q.slerp(next_q,weight);
+			result_p = result_p.lerp(next_p,weight);
+			i_last = i;
+		}
+		tf::Pose temp_location(result_q,result_p);
+		tf::StampedTransform pose_out(pose_in);
+		pose_out.setData(temp_location);
+
+		current_location = pose_out;
+		relative_motion = result_v;
+
+		average_list_index = (average_list_index+1) % average_list_size; //increment with possible loop back to start
+	}
+
+	// void add_new_pose(tf::StampedTransform pose_in) {
+	// 	bool overwriting = (average_list_valid == average_list_size);
+	// 	average_list_valid += (average_list_valid < average_list_size); //increment iff smaller than max
+	// 	tf::StampedTransform old_pose = average_list[average_list_index];
+	// 	average_list[average_list_index] = pose_in;
+	// 	if (average_list_valid > 1) {
+	// 		tf::Vector3 result_p = current_location.getOrigin();
+	// 		tf::Quaternion result_q = pose_in.getRotation();
+	// 		double weight = 1.0/((double)(average_list_valid));
+	// 		if (overwriting) {
+	// 			tf::Vector3 old_vector = old_pose.getOrigin();
+	// 			result_p = result_p-weight*old_vector+weight*pose_in.getOrigin();
+	// 		}
+	// 		else {
+	// 			result_p = result_p.lerp(pose_in.getOrigin(),weight);
+	// 		}
+	// 		tf::Pose temp_location(result_q,result_p);
+	// 		pose_in.setData(temp_location);
+	// 	}
+	// 	current_location = pose_in;
+	// 	average_list_index = (average_list_index+1) % max_average_num; //increment with possible loop back to start
+	// }
+	tf::StampedTransform get_current_location() {
+		tf::StampedTransform out = current_location;
+		out.stamp_ = ros::Time::now();
+		double duration = ros::Duration(ros::Time::now() - current_location.stamp_).toSec();
+		//because we're in relative frame, using velocity in relative frame, we transform before we combine part space
+		out.setData(tf::Pose(tf::Quaternion(0,0,0,1),relative_motion*duration)*current_location);
+		//ROS_INFO("%s: %f %f %f",part_name.c_str(),relative_motion.getX(),relative_motion.getY(),relative_motion.getZ());
+		return out;
+	}
+	/*tf::StampedTransform get_global_location() {
+		tf::StampedTransform to_reference = ObjectTracker::get_recent_transform("world",reference_frame);
+		to_reference.setData(to_reference * get_current_location());
+		return to_reference; 
+	}*/
+protected:
+	//TODO: optimize this if it takes too long by just de-interpolating the last value from last calculation??
+
+	std::string reference_frame;
+	ObjectTypeData * type_information;
+	tf::StampedTransform current_location;
+	std::string part_name;
+	tf::Vector3 relative_motion;
+	bool moving;
+	//handles dynamic moving average
+	tf::StampedTransform average_list[max_average_num];
+	unsigned char average_list_index;
+	unsigned char average_list_size;
+	unsigned char average_list_position_size;
+	unsigned char average_list_valid;
+};
+
+class ObjectTracker {
+public:
+	/*static void toggle_vacuum(bool _enabled) {
+		ROS_INFO("Toggle requested: %d", (int)_enabled);
+		if (CompetitionInterface::get_state(GRIPPER_ENABLED) == (_enabled+1)) return;
+		ROS_INFO("Toggle attempted");
+		ros::ServiceClient vacuum_client = nodeptr->serviceClient<osrf_gear::VacuumGripperControl>("/ariac/gripper/control");
+		osrf_gear::VacuumGripperControl srv;
+		srv.request.enable = _enabled;
+		vacuum_client.call(srv);
+		if (!srv.response.success) {
+			ROS_ERROR("Unable to enable gripper");
+		}
+	}*/
+
+	//todo account for gripper size?
+
+	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
+		nodeptr = nodeptr_; 
+		listener = listener_;
+		initialize_object_types();
+		subscribe("/tf", 100, &ObjectTracker::tf_callback);
+		tf_publisher = nodeptr->advertise<tf2_msgs::TFMessage>("tf", 100);
+
+	}
+	static tf::StampedTransform get_recent_transform(std::string start, std::string end) {
+		tf::StampedTransform transform_out;
+		listener->lookupTransform(start,end,ros::Time(0),transform_out);
+		return transform_out;
+	}
+
+	static void publish_tfs() {
+		for (std::map<std::string,ObjectData *>::iterator it = lookup_map.begin(); it != lookup_map.end(); ++it) {
+			tf::StampedTransform current_transform = it->second->get_current_location();
+			tf2_msgs::TFMessage message_out;
+			geometry_msgs::TransformStamped transformation_out;
+			tf::transformStampedTFToMsg(current_transform,transformation_out);
+			message_out.transforms.push_back(transformation_out);
+			tf_publisher.publish(message_out);
+		}
+	}
+
+	//gets the location and orientation you should use to grab the part
+	//automatically adjusts if the part seems to be upside down
+	static tf::Pose get_grab_pose(std::string part_name,double grab_offset = -0.014) {
+		const tf::Quaternion identity(0,0,0,1);
+		ObjectData & part_to_grab = *(lookup_map[part_name]);
+		ObjectTypeData * part_typedata = part_to_grab.get_type_info();
+		tf::Pose out_pose, object_true_location = get_recent_transform("world", part_to_grab.get_reference_frame()) * part_to_grab.get_current_location();
+		bool is_inverted = is_upside_down(object_true_location);
+		double true_face_from_tf = true_bin_height - part_typedata->tf_base_offset;
+		if (is_inverted) {
+			tf::Pose flip_transform(tf::Quaternion(tf::Vector3(1,0,0),M_PI),tf::Vector3(0,0,0)); //flips the object pose
+			tf::Pose handle_transform(identity,tf::Vector3(0,0,true_face_from_tf+grab_offset)); //specifies where the handle is
+			out_pose = object_true_location * handle_transform * flip_transform;
+		}
+		else {
+			true_face_from_tf += part_typedata->size; //grab from top, which is "size" away from the tf
+			tf::Pose handle_transform(identity,tf::Vector3(0,0,true_face_from_tf-grab_offset)); //specifies where the handle is
+			out_pose = object_true_location * handle_transform;
+		}
+		return out_pose;
+	}
+	static tf::Pose get_tray_pose(char agv_number) {
+		if (agv_number == 1) {
+			return tf::Pose(tf::Quaternion(0,0,1,0),tf::Vector3(0.3,3.15,0.75));
+		}
+		return tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0.3,-3.15,0.75));
+	}
+
+protected:
+	template<class M>
+	static void subscribe(std::string name,uint32_t size,void(*fp)(M)) {
+		subscriptions[name] = nodeptr->subscribe(name,size,fp);
+	}
+
+	static bool is_upside_down(tf::Pose check) {
+		const tf::Vector3 z_vec(0,0,1);
+		const tf::Quaternion identity(0,0,0,1);
+		//gets what the "up" vector is for the pose
+		tf::Vector3 z_local = (check * tf::Pose(identity,z_vec)).getOrigin()-check.getOrigin();
+		double correlation = z_local.dot(z_vec); //compares with real "up"
+		ROS_INFO("correlation: %f",correlation);
+		return (correlation < -0.2); //arbitrary down correlation value
+	}
+	static void initialize_object_types() {
+		type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
+		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
+		type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
+		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),4,4}; //correct
+		type_data["piston_rod_part"] = {"piston_rod_part",0.007024,0.004951,tf::Vector3(0.2,0.2,0),
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
+		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
+		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),2,2};
+		//TODO: find values for these parts
+		//type_data["part1"] = {"part1",0.009996,0.004997,tf::Vector3(0.1,0.1,0),
+		//tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),5,5};
+		//type_data["part3"] = {"part3",0.009241,0.009615,tf::Vector3(0.2,0.2,0),
+		//tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,0),5,5};
+		type_data["part2"] = {"part2",0.009996,0.004997,tf::Vector3(0.1,0.1,0),
+		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),5,5};
+		type_data["part4"] = {"part4", 0.009879,0.009615,tf::Vector3(0.2,0.2,0),
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,0),5,5};
+
+		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
+			object_data[i->first] = std::list<ObjectData>();
+			ROS_INFO("%s",i->first.c_str());
+		}
+		//type_data["gasket_part"] = 
+		//type_data["gasket_part"] = 
+		//"gasket_part","gear_part","part1","part2","part3","part4","piston_rod_part","pulley_part"; 
+
+	}
+
+	static void tf_callback(const tf2_msgs::TFMessage & transform_list) {
+		for (int tf_i = 0; tf_i < transform_list.transforms.size();++tf_i) {
+			const geometry_msgs::TransformStamped & transformation = transform_list.transforms[tf_i];
+			std::string parent = transformation.header.frame_id;
+			std::string name = transformation.child_frame_id;
+			//parses name
+			boost::regex pattern("logical_camera_[0-9]+_((.*?part.*?)_(clone_)?[0-9]+)_frame", boost::regex::perl); 
+			boost::smatch matches;
+			std::string part_type, part_id, full_name;
+			bool is_conveyor_part;
+			if (boost::regex_match(name, matches, pattern)) {
+				full_name = matches[1];
+				part_type = matches[2];
+				//part_id = matches[3];
+				is_conveyor_part = (matches.size() == 4);
+			}
+			else {
+				continue;
+			}
+			if (!lookup_map.count(full_name)) {
+				//TODO: support conveyor belts
+				ObjectData new_object(full_name,"world",&(type_data[part_type]));
+				object_data[part_type].push_back(new_object);
+				lookup_map[full_name] = &(object_data[part_type].back());
+			}
+			tf::StampedTransform true_pose,reference_transformation;
+			tf::transformStampedMsgToTF(transformation,true_pose);
+			listener->lookupTransform(lookup_map[full_name]->get_reference_frame(),parent,ros::Time(0),reference_transformation);
+			true_pose.setData(reference_transformation*true_pose);
+			//ROS_INFO("%s",lookup_map[full_name]->get_reference_frame().c_str());
+			true_pose.frame_id_ = lookup_map[full_name]->get_reference_frame();
+			true_pose.child_frame_id_ = full_name;
+			lookup_map[full_name]->add_new_pose(true_pose);
+		}
+	}
+	static std::map<std::string,ObjectData *> lookup_map;
+	static std::map<std::string,std::list<ObjectData> > object_data;
+	static std::map<std::string,ObjectTypeData> type_data;
+	static std::map<std::string,ros::Subscriber> subscriptions;
+	static tf::TransformListener * listener;
+	static ros::NodeHandle * nodeptr;
+	static ros::Publisher tf_publisher;
+};
+
+std::map<std::string,ObjectData *> ObjectTracker::lookup_map;
+std::map<std::string,std::list<ObjectData> > ObjectTracker::object_data;
+std::map<std::string,ObjectTypeData> ObjectTracker::type_data;
+std::map<std::string,ros::Subscriber> ObjectTracker::subscriptions;
+tf::TransformListener * ObjectTracker::listener;
+ros::NodeHandle * ObjectTracker::nodeptr;
+ros::Publisher ObjectTracker::tf_publisher;
+
+
+
+/*
+int main(int argc, char ** argv) {
+	ros::init(argc, argv, "advanced_tf_publisher");
+
+
+	ros::rate(50) spin_rate;
+	while (ros::ok()) {
+		spin_rate.sleep();
+		ros::spinOnce();
+	}
+	return 0;
+}
+*/
+
+// todo:
+// subscribe to tf
+// create map of stuff
+
+

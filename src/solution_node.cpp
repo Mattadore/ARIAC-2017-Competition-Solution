@@ -44,7 +44,7 @@
 #include <moveit/move_group_interface/move_group.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
-#include "advanced_publisher.h"
+#include "object_manager.h"
 
 
 //core constants
@@ -64,8 +64,6 @@ const double conveyor_speed = 0.2; // m/s
 //macros
 
 #define SQUARE(x) x*x
-
-#define qualifier "qual3b"
 
 //helpful constants
 //acceptable radius squared
@@ -92,6 +90,18 @@ const double AGV_acceptable_range_sq_ = SQUARE(AGV_acceptable_range_);
 //The first kit received must be completed as quickly as possible?
 //It's more important to focus on individual kits because the speed gain of 
 //keeping the agvs in constant circulation dwarfs the speed gain of efficient depositing
+
+
+//TODO:
+//read in orders
+//process into kits
+//have logical loop to go through every kit part and pick/place it
+	//foreach kit part
+	//find one of that type
+	
+	//pick it up
+		//do pick logic
+	//place it 
 
 
 //enums (MANY ARE NOT USED)
@@ -264,6 +274,7 @@ struct arm_action {
 	bool lock_arm;
 	bool true_pose;
 	bool vacuum_enabled_end;
+	bool pick_part;
 	moveit_msgs::Constraints * constraints;
 	//maybe add what the state is here
 	arm_action(arm_action * previous) { //assumed this has state ownership
@@ -276,6 +287,7 @@ struct arm_action {
 		lock_arm = false;
 		constraints = NULL;
 		true_pose = false;
+		pick_part = false;
 		if (previous == NULL) {
 			vacuum_enabled_end = false;
 		}
@@ -293,6 +305,7 @@ struct arm_action {
 		end_delay = 0.0;
 		lock_arm = false;
 		constraints = NULL;
+		pick_part = false;
 		true_pose = false;
 		if (previous == NULL) {
 			vacuum_enabled_end = false;
@@ -895,57 +908,6 @@ protected:
 class CompetitionManager {
 public:
 
-	bool is_upside_down(std::string part_name) {
-		const tf::Vector3 z_vec(0,0,1);
-		tf::StampedTransform to_world;
-		tf::Pose z_local,z_global;
-		z_global = transform_from_vector(z_vec);
-		listener.lookupTransform(part_name,"world",ros::Time(0),to_world);
-		z_local = z_global * to_world;
-		tf::Vector3 offset = z_local.getOrigin() - to_world.getOrigin();
-		double correlation = offset.dot(z_vec);
-		return (correlation < -0.8); //arbitrary down correlation value
-	}
-
-	struct PartParameter {
-		double part_height;
-		double part_ground_offset;
-	};
-
-	PartParameter get_part_params(std::string part_name) {
-		PartParameter params;
-		if (part_name == "part3") {
-			params.part_height = 0.02;
-			params.part_ground_offset = 0.0;
-		}
-		else if (part_name == "piston_rod_part") {
-			params.part_height = 0.0075;
-			params.part_ground_offset = 0.0;
-		}
-		else if (part_name == "gear_part") {
-			params.part_height = 0.01;
-			params.part_ground_offset = 0.001;
-		}
-		else if (part_name == "pulley_part") {
-			params.part_height = 0.07;
-			params.part_ground_offset = 0.0;
-		}
-		else if (part_name == "gasket_part") {
-			params.part_height = 0.03391;
-			params.part_ground_offset = 0.0;
-		}
-		else if (part_name == "part4") {
-			params.part_height = 0.01;
-			//part_ground_offset = 0.004665;
-			//part_ground_offset = -0.004665; //when in doubt magic numbers
-			params.part_ground_offset = -0.008;
-		}
-		else {
-			ROS_INFO("Unknown part specified");
-			params.part_height = 0.0; //don't take chances?
-		}
-		return params;
-	}
 
 	//TODO: make sure this is finished
 	std::string get_closest_part(std::string part_name) {
@@ -1056,99 +1018,85 @@ public:
 
 	}
 */
-
-	void grab(std::string action_name,std::string to_grab,double grab_height = 0.01,double roll_offset = 0.0) {
-		arm_action * parent_action = NULL;
-		tf::StampedTransform temp;
-		tf::Pose offset,grab_offset,grab_onset;
-		tf::Quaternion fix_roll;
-		listener.lookupTransform("world",to_grab,ros::Time(0),temp);
-		fix_roll.setEuler(roll_offset,0,0);
-		temp.setRotation(temp.getRotation()*fix_roll);
-		offset = transform_from_vector(tf::Vector3(0,0,0.15));
-		grab_offset = temp*offset;
-		offset = transform_from_vector(tf::Vector3(0,0.0,grab_height));
-		grab_onset = temp*offset;
+	//testing
+	void grab(std::string action_name,std::string part_name) {
+		tf::Pose grab_pose = ObjectTracker::get_grab_pose(part_name);
 		motion_paths[action_name] = new std::vector<arm_action *>();
-		motion_paths[action_name]->push_back(new arm_action(grab_offset,parent_action));
-		(*(motion_paths[action_name]))[0]->vacuum_enabled_end = true;
-		//(*(motion_paths[action_name]))[0]->lock_arm = true;
-		motion_paths[action_name]->push_back(new arm_action(grab_onset,(*(motion_paths[action_name]))[0]));
-		(*(motion_paths[action_name]))[1]->end_delay = 1.0;
-		//(*(motion_paths[action_name]))[1]->lock_arm = true;
-		motion_paths[action_name]->push_back(new arm_action(grab_offset,(*(motion_paths[action_name]))[1]));
-		(*(motion_paths[action_name]))[2]->end_delay = 0.5;
-		//(*(motion_paths[action_name]))[2]->lock_arm = true;
-		planner.add_actions(motion_paths[action_name]);
-		controller.add_actions(motion_paths[action_name]);
+	 	motion_paths[action_name]->push_back(new arm_action(grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),NULL));
+	 	motion_paths[action_name]->back()->vacuum_enabled_end = true;
+	 	motion_paths[action_name]->push_back(new arm_action(grab_pose,motion_paths[action_name]->back()));
+	 	planner.add_actions(motion_paths[action_name]);
+	 	controller.add_actions(motion_paths[action_name]);
 	}
 
-	void drop(std::string action_name,std::string drop_frame,tf::Pose grab_offset,geometry_msgs::Pose tray_offset_geom) {
-		tf::Pose tray_offset;
-		tf::poseMsgToTF(tray_offset_geom,tray_offset);
-		arm_action * parent_action = NULL;
-		tf::StampedTransform temp,arm_location;
-		tf::Pose offset,drop_offset,intermediate,intermediate2;
-		listener.lookupTransform("world",drop_frame,ros::Time(0),temp);
-		listener.lookupTransform("world","vacuum_gripper_link",ros::Time(0),arm_location);
-		offset = transform_from_vector(tf::Vector3(0,0,0.2));
-		drop_offset = temp*tray_offset*grab_offset*offset;
-		intermediate = generate_intermediate(temp);
-		intermediate2 = transform_from_vector(tf::Vector3(0,0.9*(2*(intermediate.getOrigin().y()>0)-1),0))*intermediate;
+	// void drop(std::string action_name,std::string drop_frame,tf::Pose grab_offset,geometry_msgs::Pose tray_offset_geom) {
+	// 	tf::Pose tray_offset;
+	// 	tf::poseMsgToTF(tray_offset_geom,tray_offset);
+	// 	arm_action * parent_action = NULL;
+	// 	tf::StampedTransform temp,arm_location;
+	// 	tf::Pose offset,drop_offset,intermediate,intermediate2;
+	// 	listener.lookupTransform("world",drop_frame,ros::Time(0),temp);
+	// 	listener.lookupTransform("world","vacuum_gripper_link",ros::Time(0),arm_location);
+	// 	offset = transform_from_vector(tf::Vector3(0,0,0.2));
+	// 	drop_offset = temp*tray_offset*grab_offset*offset;
+	// 	intermediate = generate_intermediate(temp);
+	// 	intermediate2 = transform_from_vector(tf::Vector3(0,0.9*(2*(intermediate.getOrigin().y()>0)-1),0))*intermediate;
 
-		//offset = transform_from_vector(tf::Vector3(0,0,0.01));
-		motion_paths[action_name] = new std::vector<arm_action *>();
-		motion_paths[action_name]->push_back(new arm_action(intermediate,parent_action));
-		(*(motion_paths[action_name]))[0]->vacuum_enabled_end = true;
-		//(*(motion_paths[action_name]))[0]->lock_arm = true;
-		motion_paths[action_name]->push_back(new arm_action(intermediate2,(*(motion_paths[action_name]))[0]));
-		motion_paths[action_name]->push_back(new arm_action(drop_offset,(*(motion_paths[action_name]))[1]));
-		(*(motion_paths[action_name]))[2]->vacuum_enabled_end = false;
-		//(*(motion_paths[action_name]))[2]->true_pose = true;
-		(*(motion_paths[action_name]))[2]->end_delay = 0.8;
-		motion_paths[action_name]->push_back(new arm_action(intermediate,(*(motion_paths[action_name]))[2]));
-		//(*(motion_paths[action_name]))[2]->lock_arm = true;
-		//(*(motion_paths[action_name]))[1]->end_delay = 1.0;
-		planner.add_actions(motion_paths[action_name]);
-		controller.add_actions(motion_paths[action_name]);
-	}
+	// 	//offset = transform_from_vector(tf::Vector3(0,0,0.01));
+	// 	motion_paths[action_name] = new std::vector<arm_action *>();
+	// 	motion_paths[action_name]->push_back(new arm_action(intermediate,parent_action));
+	// 	(*(motion_paths[action_name]))[0]->vacuum_enabled_end = true;
+	// 	//(*(motion_paths[action_name]))[0]->lock_arm = true;
+	// 	motion_paths[action_name]->push_back(new arm_action(intermediate2,(*(motion_paths[action_name]))[0]));
+	// 	motion_paths[action_name]->push_back(new arm_action(drop_offset,(*(motion_paths[action_name]))[1]));
+	// 	(*(motion_paths[action_name]))[2]->vacuum_enabled_end = false;
+	// 	//(*(motion_paths[action_name]))[2]->true_pose = true;
+	// 	(*(motion_paths[action_name]))[2]->end_delay = 0.8;
+	// 	motion_paths[action_name]->push_back(new arm_action(intermediate,(*(motion_paths[action_name]))[2]));
+	// 	//(*(motion_paths[action_name]))[2]->lock_arm = true;
+	// 	//(*(motion_paths[action_name]))[1]->end_delay = 1.0;
+	// 	planner.add_actions(motion_paths[action_name]);
+	// 	controller.add_actions(motion_paths[action_name]);
+	// }
 
 
-	void minidrop(std::string action_name,std::string drop_frame,tf::Pose drop_pose) {
-		arm_action * parent_action = NULL;
-		tf::StampedTransform temp,arm_location;
-		tf::Pose offset,drop_offset;
-		listener.lookupTransform("world",drop_frame,ros::Time(0),temp);
-		listener.lookupTransform("world","vacuum_gripper_link",ros::Time(0),arm_location);
-		drop_offset = transform_from_vector(temp.getOrigin())*drop_pose;
+	// void minidrop(std::string action_name,std::string drop_frame,tf::Pose drop_pose) {
+	// 	arm_action * parent_action = NULL;
+	// 	tf::StampedTransform temp,arm_location;
+	// 	tf::Pose offset,drop_offset;
+	// 	listener.lookupTransform("world",drop_frame,ros::Time(0),temp);
+	// 	listener.lookupTransform("world","vacuum_gripper_link",ros::Time(0),arm_location);
+	// 	drop_offset = transform_from_vector(temp.getOrigin())*drop_pose;
 
-		//offset = transform_from_vector(tf::Vector3(0,0,0.01));
-		motion_paths[action_name] = new std::vector<arm_action *>();
-		tf::Vector3 new_origin = arm_location.getOrigin();
-		new_origin.setZ(drop_offset.getOrigin().getZ());
-		tf::Pose temp2 = transform_from_vector(new_origin);
-		motion_paths[action_name]->push_back(new arm_action(temp2,parent_action));
-		(*(motion_paths[action_name]))[0]->vacuum_enabled_end = true;
-		motion_paths[action_name]->push_back(new arm_action(drop_offset,(*(motion_paths[action_name]))[0]));
-		(*(motion_paths[action_name]))[1]->end_delay = 1.5;
-		(*(motion_paths[action_name]))[1]->vacuum_enabled_end = false;
+	// 	//offset = transform_from_vector(tf::Vector3(0,0,0.01));
+	// 	motion_paths[action_name] = new std::vector<arm_action *>();
+	// 	tf::Vector3 new_origin = arm_location.getOrigin();
+	// 	new_origin.setZ(drop_offset.getOrigin().getZ());
+	// 	tf::Pose temp2 = transform_from_vector(new_origin);
+	// 	motion_paths[action_name]->push_back(new arm_action(temp2,parent_action));
+	// 	(*(motion_paths[action_name]))[0]->vacuum_enabled_end = true;
+	// 	motion_paths[action_name]->push_back(new arm_action(drop_offset,(*(motion_paths[action_name]))[0]));
+	// 	(*(motion_paths[action_name]))[1]->end_delay = 1.5;
+	// 	(*(motion_paths[action_name]))[1]->vacuum_enabled_end = false;
 
-		planner.add_actions(motion_paths[action_name]);
-		controller.add_actions(motion_paths[action_name]);
-	}
+	// 	planner.add_actions(motion_paths[action_name]);
+	// 	controller.add_actions(motion_paths[action_name]);
+	// }
 
-	void drop(std::string drop_frame,std::string action_name,tf::Pose grab_offset) {
-		tf::Pose tray_offset = transform_from_vector(tf::Vector3(0,0,0));
-		geometry_msgs::Pose tray_offset_geom;
-		tf::poseTFToMsg(tray_offset,tray_offset_geom);
-		drop(drop_frame,action_name,grab_offset,tray_offset_geom);
-	}
+	// void drop(std::string drop_frame,std::string action_name,tf::Pose grab_offset) {
+	// 	tf::Pose tray_offset = transform_from_vector(tf::Vector3(0,0,0));
+	// 	geometry_msgs::Pose tray_offset_geom;
+	// 	tf::poseTFToMsg(tray_offset,tray_offset_geom);
+	// 	drop(drop_frame,action_name,grab_offset,tray_offset_geom);
+	// }
 
 	#define blocking_call(type,name,...) { \
-		type(name,__VA_ARGS__); \
-		ROS_INFO("Starting %s",name); \
-		controller.wait_until_executed(motion_paths[name]->back()); \
+	 	type(name,__VA_ARGS__); \
+	 	ROS_INFO("Starting %s",name); \
+	 	controller.wait_until_executed(motion_paths[name]->back()); \
 	}
+
+
 
 	//TODO: write method to do a kit here, part by part
 	//if during the completion of a part, we find out that there is a new priority kit
@@ -1168,13 +1116,15 @@ public:
 		tf::Pose temp2;
 
 		CompetitionInterface::toggle_vacuum(false);
+		ros::Duration(4.0).sleep();
+		blocking_call(grab, "piston_rod_part_3", "piston_rod_part_4")
 		//CompetitionInterface::start_competition();
 
 		//do stuff
 
 		//CompetitionInterface::end_competition();
 
-		//for each kit
+		//for each kit 
 		//for (std::map<std::string,osrf_gear::Kit>::iterator i = kit_tally.begin();++i;i!=kit_tally.end()) {
 			//execute a method to do a kit
 
@@ -1366,11 +1316,17 @@ int main(int argc, char ** argv) {
 
 	CompetitionInterface::initialize_interface(&node);
 	ObjectTracker::initialize_tracker(&node,&listener);
+	ros::Time tf_publish = ros::Time::now();
+	ros::Duration tf_frequency(0.1);
 	ros::Rate spinRate(100);
 	while (ros::ok() && manager.ok()) { //functionally equivalent to spin() but more customizable
 		spinRate.sleep();
 		ros::spinOnce();
 		manager.update();
+		if ((tf_publish+tf_frequency)>ros::Time::now()) {
+			ObjectTracker::publish_tfs();
+			tf_publish = ros::Time::now();
+		}
 	}
 	return 0;
 }

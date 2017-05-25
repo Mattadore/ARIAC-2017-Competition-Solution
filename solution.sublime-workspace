@@ -4,6 +4,130 @@
 		"selected_items":
 		[
 			[
+				"get",
+				"getOrigin\ttf::Vector3 & Transform::getOrigin()"
+			],
+			[
+				"Stamped",
+				"StampedTransform\tStampedTransform"
+			],
+			[
+				"tf_",
+				"tf_frequency"
+			],
+			[
+				"cur",
+				"current_transform"
+			],
+			[
+				"Sam",
+				"StampedTransform\tStampedTransform"
+			],
+			[
+				"int",
+				"inter_frame_time"
+			],
+			[
+				"resul",
+				"result_v\ttf::Vector3 result_v"
+			],
+			[
+				"average_list_s",
+				"average_list_size"
+			],
+			[
+				"avera",
+				"average_list_position_size"
+			],
+			[
+				"av",
+				"average_list_valid\tunsigned char average_list_valid"
+			],
+			[
+				"get_cur",
+				"get_current_location\ttf::StampedTransform get_current_location()"
+			],
+			[
+				"ref",
+				"reference_frame"
+			],
+			[
+				"resu",
+				"result_v\ttf::Vector3 result_v"
+			],
+			[
+				"on",
+				"on_exit\tint on_exit(void (*__func)(int, void *), void *__arg)"
+			],
+			[
+				"obje",
+				"object_true_location\ttf::Pose object_true_location"
+			],
+			[
+				"obj",
+				"object_true_location"
+			],
+			[
+				"true_",
+				"true_top_from_tf\tdouble true_top_from_tf"
+			],
+			[
+				"offs",
+				"offset_pose"
+			],
+			[
+				"QU",
+				"Quaternion\tQuaternion"
+			],
+			[
+				"ge",
+				"get_type_info\tObjectTypeData * get_type_info()"
+			],
+			[
+				"ObJ",
+				"ObjectTypeData\tObjectTypeData"
+			],
+			[
+				"par",
+				"part_to_grab\tObjectData & part_to_grab"
+			],
+			[
+				"mi",
+				"min\tconst _Tp & min(const _Tp &, const _Tp &)"
+			],
+			[
+				"old",
+				"old_vector"
+			],
+			[
+				"g",
+				"getZ\tconst tfScalar & getZ() const"
+			],
+			[
+				"res",
+				"result_v"
+			],
+			[
+				"ave",
+				"average_list_size\tunsigned char average_list_size"
+			],
+			[
+				"aver",
+				"average_list_valid"
+			],
+			[
+				"Sta",
+				"StampedTransform\tStampedTransform"
+			],
+			[
+				"get_",
+				"get_current_location"
+			],
+			[
+				"look",
+				"lookup_map"
+			],
+			[
 				"ad",
 				"advertise\tros::Publisher advertise<class M>(const std::string &topic, uint32_t queue_size)"
 			],
@@ -18,14 +142,6 @@
 			[
 				"Obj",
 				"ObjectTracker"
-			],
-			[
-				"get",
-				"get_reference_frame\tstd::string & get_reference_frame()"
-			],
-			[
-				"look",
-				"lookupTransform"
 			],
 			[
 				"S",
@@ -44,28 +160,12 @@
 				"type_data"
 			],
 			[
-				"av",
-				"average_list_index"
-			],
-			[
-				"ave",
-				"average_list_valid"
-			],
-			[
 				"max",
 				"max_average_num"
 			],
 			[
-				"aver",
-				"average_list_index"
-			],
-			[
 				"cal",
 				"calculate"
-			],
-			[
-				"avera",
-				"average_list_valid"
 			],
 			[
 				"initia",
@@ -414,111 +514,38 @@
 			[
 				"debug",
 				"debugEnd"
-			],
-			[
-				"deb",
-				"debugTarget"
-			],
-			[
-				"part_",
-				"part_ground_offset"
-			],
-			[
-				"async",
-				"asyncWaypointList"
-			],
-			[
-				"way",
-				"waypointList"
-			],
-			[
-				"asyn",
-				"asyncWaypointList"
-			],
-			[
-				"gra",
-				"grab_height_compensation"
-			],
-			[
-				"goal",
-				"goalPose"
-			],
-			[
-				"GRIPPER",
-				"GRIPPER_ATTACHED"
-			],
-			[
-				"toggle",
-				"toggle_vacuum"
-			],
-			[
-				"GRI",
-				"GRIPPER_ENABLED"
-			],
-			[
-				"grab",
-				"grab_palm_offset"
-			],
-			[
-				"ROS_INFO",
-				"ROS_INFO_STREAM"
-			],
-			[
-				"PUL",
-				"PUlLUP_PLAN"
-			],
-			[
-				"RETR",
-				"RETRACT_PLAN"
-			],
-			[
-				"FOR",
-				"FORWARD_PLAN"
-			],
-			[
-				"PLAN",
-				"GRAB_PLAN"
-			],
-			[
-				"NEXT",
-				"PLAN_NEXT"
-			],
-			[
-				"PL",
-				"PLAN_TYPE"
-			],
-			[
-				"NEX",
-				"PLAN_NEXT"
-			],
-			[
-				"iner",
-				"intermediate_limit"
-			],
-			[
-				"inter",
-				"intermediatePose"
-			],
-			[
-				"interMed",
-				"intermediatePose"
-			],
-			[
-				"pul",
-				"pull_up_part"
-			],
-			[
-				"del",
-				"delta"
-			],
-			[
-				"GRIPP",
-				"GRIPPER_ATTACHED"
 			]
 		]
 	},
 	"buffers":
 	[
+		{
+			"file": "src/solution_node.cpp",
+			"settings":
+			{
+				"buffer_size": 44294,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "include/object_manager.h",
+			"settings":
+			{
+				"buffer_size": 16844,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
+			"settings":
+			{
+				"buffer_size": 9269,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -567,12 +594,16 @@
 	[
 		"/home/matt/ariac_ws/src/competition_solution",
 		"/home/matt/ariac_ws/src/competition_solution/config",
-		"/home/matt/ariac_ws/src/competition_solution/launch"
+		"/home/matt/ariac_ws/src/competition_solution/include",
+		"/home/matt/ariac_ws/src/competition_solution/launch",
+		"/home/matt/ariac_ws/src/competition_solution/src"
 	],
 	"file_history":
 	[
-		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
+		"/home/matt/ariac_ws/src/start_sim_qual2",
 		"/home/matt/ariac_ws/src/competition_solution/include/advanced_publisher.h",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/PopulationState.msg",
+		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/matt/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
 		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
@@ -598,7 +629,6 @@
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/part4_ariac/model.",
 		"/home/matt/ariac_ws/src/qualifier2_solution/src/advanced_publisher.cpp",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/script/startup.sh",
-		"/home/matt/ariac_ws/src/start_sim_qual2",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/pulley_part_ariac/model.sdf",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/piston_rod_part_ariac/model.sdf",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
@@ -697,8 +727,7 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/launch/gear.urdf.xacro.template",
 		"/home/matt/ariac_ws/src/osrf_gear/srv/GetMaterialLocations.srv",
 		"/home/matt/ariac_ws/install/share/ur_description/urdf/ur10_joint_limited_robot.urdf.xacro",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/planning_context.launch",
-		"/home/matt/ariac_ws/src/osrf_gear/CMakeLists.txt"
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/planning_context.launch"
 	],
 	"find":
 	{
@@ -716,6 +745,38 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"ObjectData",
+			"get_current_lo",
+			"current_trans",
+			"lookup_map",
+			"publish",
+			"min",
+			"\n\t\t\t",
+			"result_v",
+			"0.02",
+			"handle_pose",
+			"tf::Vector3\\(0,0,(0\\.\\d+)\\)",
+			"move",
+			"logic",
+			"arm_action",
+			"add_new_pose",
+			"result_v",
+			"max_aver",
+			"get_current_",
+			"publisher",
+			"parent",
+			"Time\\(",
+			"\\(\\)\\(",
+			"lookupTransform",
+			"\\(\\)",
+			"\\(\\)\\(\\)",
+			"()()",
+			"full_name",
+			"reference_frame",
+			"Vector3",
+			"disk_part",
+			"add_new",
+			"tf_pu",
 			"relative_tf",
 			"TransformStamped",
 			"stamped<tf::pose>",
@@ -811,39 +872,7 @@
 			"manager",
 			"pose_list",
 			"plan",
-			"vector3",
-			"getCurrentState",
-			"plan_proc",
-			"move_proces",
-			"execute_mo",
-			"execute",
-			"plan\\(",
-			"execute",
-			"ROS_INFO_THROTTLE",
-			"arm_action\\(",
-			"arm_action",
-			"arm_control_group",
-			"pose_list",
-			"to_plan\\->plan",
-			"plan\\(",
-			"thrott",
-			"throttle",
-			"competitionMa",
-			"competi",
-			"controller",
-			"planner",
-			");\n",
-			"plan_thre",
-			"boost::thread",
-			"quat",
-			"world",
-			"offset",
-			"to_move",
-			"tf::Pose",
-			"sleep",
-			"listener",
-			"transform",
-			"transitions"
+			"vector3"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -851,6 +880,9 @@
 		"regex": true,
 		"replace_history":
 		[
+			"result_p",
+			"handle_transform",
+			"$1",
 			"reference_frame",
 			"StampedTransform",
 			"TransformStamped",
@@ -883,8 +915,97 @@
 	"groups":
 	[
 		{
+			"selected": 1,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "src/solution_node.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 44294,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								41973,
+								41973
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 16282.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "include/object_manager.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 16844,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								8147,
+								8163
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2482.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9269,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								991,
+								991
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 507.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -977,7 +1098,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 220.0,
+	"side_bar_width": 177.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
