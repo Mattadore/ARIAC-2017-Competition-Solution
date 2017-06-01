@@ -4,6 +4,90 @@
 		"selected_items":
 		[
 			[
+				"na",
+				"names"
+			],
+			[
+				"time",
+				"time_from_start"
+			],
+			[
+				"wait_",
+				"wait_until_planned"
+			],
+			[
+				"tr",
+				"trajectory_end\tint trajectory_end"
+			],
+			[
+				"relat",
+				"relative_motion\tint relative_motion"
+			],
+			[
+				"node",
+				"nodeptr"
+			],
+			[
+				"ali",
+				"align_action\tarm_action * align_action"
+			],
+			[
+				"arm",
+				"arm_trans\tint arm_trans"
+			],
+			[
+				"St",
+				"StampedTransform"
+			],
+			[
+				"plan",
+				"planning_status\tchar planning_status"
+			],
+			[
+				"p",
+				"plan\tint * plan"
+			],
+			[
+				"add_",
+				"add_action"
+			],
+			[
+				"po",
+				"points"
+			],
+			[
+				"traj",
+				"joint_trajectory"
+			],
+			[
+				"wait_un",
+				"wait_until_planned"
+			],
+			[
+				"part_wa",
+				"part_wait_rate"
+			],
+			[
+				"to",
+				"toSec\tdouble DurationBase<Duration>::toSec() const"
+			],
+			[
+				"pl",
+				"plan"
+			],
+			[
+				"act",
+				"action_name\tstd::string action_name"
+			],
+			[
+				"trajecto",
+				"trajectory_msgs\ttrajectory_msgs::"
+			],
+			[
+				"movie",
+				"moveit_msgs\tmoveit_msgs::"
+			],
+			[
 				"w",
 				"wait_until_executed"
 			],
@@ -156,10 +240,6 @@
 				"StampedTransform"
 			],
 			[
-				"St",
-				"StampedTransform\tStampedTransform"
-			],
-			[
 				"pose",
 				"poseStampedMsgToTF\tvoid poseStampedMsgToTF(const geometry_msgs::PoseStamped &msg, Stamped<Pose> &bt)"
 			],
@@ -200,10 +280,6 @@
 				"check_order"
 			],
 			[
-				"wait_un",
-				"wait_until_executed"
-			],
-			[
 				"wait",
 				"wait_for_move_complete"
 			],
@@ -230,10 +306,6 @@
 			[
 				"add_pl",
 				"add_plans"
-			],
-			[
-				"add_",
-				"add_actions"
 			],
 			[
 				"grab_o",
@@ -280,10 +352,6 @@
 				"offset"
 			],
 			[
-				"traj",
-				"trajectory_end"
-			],
-			[
 				"tat",
 				"target"
 			],
@@ -302,10 +370,6 @@
 			[
 				"con",
 				"controller"
-			],
-			[
-				"plan",
-				"planner"
 			],
 			[
 				"vec",
@@ -420,10 +484,6 @@
 				"AGV_2_PREDROP"
 			],
 			[
-				"node",
-				"nodeptr_"
-			],
-			[
 				"nodep",
 				"nodeptr"
 			],
@@ -454,104 +514,26 @@
 			[
 				"PIPE",
 				"PIPELINE_PROCESSING"
-			],
-			[
-				"planning",
-				"planning_status"
-			],
-			[
-				"wat",
-				"wait_until_planned"
-			],
-			[
-				"P",
-				"Publisher"
-			],
-			[
-				"current_cont",
-				"current_control_lock"
-			],
-			[
-				"current_ex",
-				"current_move_mutex"
-			],
-			[
-				"notif",
-				"notify_all"
-			],
-			[
-				"plann",
-				"planning_status"
-			],
-			[
-				"paralle",
-				"parallel_controller"
-			],
-			[
-				"current_plan",
-				"current_plan_condition"
-			],
-			[
-				"exec",
-				"execution_status"
-			],
-			[
-				"curr",
-				"currently_executing"
-			],
-			[
-				"CURREN",
-				"CURRENT_EXECUTION"
-			],
-			[
-				"PLANN",
-				"PLANNING_QUEUE"
-			],
-			[
-				"loc",
-				"location"
-			],
-			[
-				"currently_",
-				"currently_executing"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
-			"settings":
-			{
-				"buffer_size": 1357,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
-			"settings":
-			{
-				"buffer_size": 2233,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "include/object_manager.h",
 			"settings":
 			{
-				"buffer_size": 17098,
+				"buffer_size": 16851,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"contents": "rosrun tf static_transform_publisher 0.3 -3.15 0.75 0 0 0 1 world kit_tray_2\n\nrosrun tf static_transform_publisher 0.3 3.15 0.75 0 0 1 0",
-			"file": "/home/matt/ariac_ws/src/static_info",
-			"file_size": 153,
-			"file_write_time": 131402134302230689,
+			"file": "src/solution_node.cpp",
 			"settings":
 			{
-				"buffer_size": 136,
+				"buffer_size": 48639,
+				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
@@ -618,13 +600,21 @@
 	],
 	"file_history":
 	[
-		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
+		"/home/matt/ariac_ws/src/competition_solution/package.xml",
+		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
+		"/home/matt/Desktop/pseudocode",
+		"/home/matt/ariac_ws/src/moveit_start",
 		"/home/matt/ariac_ws/src/start_sim_qual2",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
+		"/opt/ros/indigo/share/moveit_msgs/msg/RobotTrajectory.msg",
+		"/home/matt/ariac_ws/src/competition_solution/config/gear_configuration.yaml",
+		"/home/matt/ariac_ws/src/static_info",
+		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/include/advanced_publisher.h",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/PopulationState.msg",
 		"/home/matt/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/matt/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
-		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/PopulationPlugin.cc",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/osrf_gear/ARIAC.hh",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/script/gear.py",
@@ -639,7 +629,6 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample.yaml",
 		"/home/matt/ariac_ws/src/qualifier2_actual/src/qual2_actual_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/include",
-		"/home/matt/ariac_ws/src/competition_solution/package.xml",
 		"/home/matt/ariac_ws/src/competition_solution/src/qual2_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/src/CMakeLists.txt",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/part4/model.sdf",
@@ -663,7 +652,6 @@
 		"/home/matt/ariac_ws/src/nistinfo.txt",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/controller/arm_controller_ur10.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/vendor/ur_description/urdf/ur10.urdf.xacro",
-		"/home/matt/ariac_ws/src/moveit_start",
 		"/home/matt/ariac_ws/install/share/osrf_gear/launch/ur10/ur10.urdf.xacro",
 		"/home/matt/ariac_ws/src/start_sim2",
 		"/home/matt/ariac_ws/src/qualifier2_solution/CMakeLists.txt",
@@ -738,14 +726,8 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/srv/VacuumGripperControl.srv",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/srv/SubmitTray.srv",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/Kit",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_scenario_drop.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_scenario1.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/scenes/ariac.scene",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/launch/gear.urdf.xacro.template",
-		"/home/matt/ariac_ws/src/osrf_gear/srv/GetMaterialLocations.srv",
-		"/home/matt/ariac_ws/install/share/ur_description/urdf/ur10_joint_limited_robot.urdf.xacro",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/planning_context.launch"
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_scenario1.yaml"
 	],
 	"find":
 	{
@@ -763,6 +745,50 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"generic_state",
+			"start_state",
+			"integrate",
+			"keybo",
+			"logic",
+			"dummy_action",
+			"new arm_action",
+			"plan_b",
+			"\\(temp",
+			"joint_trajectory",
+			"trajectory",
+			"velocities",
+			"velocity",
+			"drop",
+			"intermed",
+			"intermediate",
+			"at_time",
+			"get_current_location",
+			"now",
+			"shared_ptr",
+			"logic",
+			"vacuum_gripp",
+			"vacuum_gr",
+			"wait",
+			"get_grab_pose",
+			"ros::duration",
+			"start_state",
+			"correlation",
+			"integrate",
+			"6.0",
+			"add_actions",
+			"add_action",
+			"now*\\(",
+			"grab",
+			"velocity",
+			"logic",
+			"integrate",
+			"make_movin",
+			"grab",
+			"wait_until",
+			"_move",
+			"move_",
+			"thread",
+			"JointTraject",
 			"move",
 			"boost::thread",
 			"controller",
@@ -846,51 +872,7 @@
 			"xyz_st",
 			"default_bin_origin",
 			"tf::",
-			"drop",
-			"end_delay",
-			"rotation_offs",
-			"set_rotatio",
-			"Euler",
-			"euler",
-			"minidrop",
-			"grab",
-			"logical_camera_4_piston_rod_part_2_frame",
-			"transform_from",
-			"minidro",
-			"minidrop",
-			"0\\.1",
-			"identity",
-			"rotation_offse",
-			"rotation_offsetr",
-			"setRotati",
-			"drop_po",
-			"blocking_call",
-			"qual3a",
-			"qual3b",
-			"grab",
-			"set_convey",
-			"set_conveyor",
-			"sleep\\(",
-			"\n#",
-			"nodeptr_",
-			"part_waiting",
-			"qual3",
-			"set_convey",
-			"thread",
-			"conveyor",
-			"toggle_va",
-			"received_ord",
-			"wait_for",
-			"drop",
-			"plan\\(",
-			"to_grab",
-			"generate_intermediate",
-			"execute",
-			"grab\\(",
-			"world",
-			"\\\"1\\\"",
-			"world",
-			"delete"
+			"drop"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -933,84 +915,24 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1357,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1356,
-								1356
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/YAML/YAML.sublime-syntax",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2233,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								584,
-								584
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/YAML/YAML.sublime-syntax",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
 					"file": "include/object_manager.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 17098,
+						"buffer_size": 16851,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								11146,
-								11146
+								14191,
+								14191
 							]
 						],
 						"settings":
@@ -1019,42 +941,43 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3655.0,
+						"translation.y": 3949.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
-					"file": "/home/matt/ariac_ws/src/static_info",
+					"buffer": 1,
+					"file": "src/solution_node.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 136,
+						"buffer_size": 48639,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								128,
-								128
+								18218,
+								18218
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 7347.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 2,
 					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
 					"semi_transient": false,
 					"settings":
@@ -1077,10 +1000,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 507.0,
+						"translation.y": 39.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]

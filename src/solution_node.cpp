@@ -590,6 +590,7 @@ public:
 	Planner() : arm_control_group("manipulator"), plan_thread(boost::bind(&Planner::parallel_plan,this)) {
 		arm_control_group.setPoseReferenceFrame("/world");
 		arm_control_group.setWorkspace(-20000,-20000,-20000,20000,20000,20000);
+		generic_state = new moveit::core::RobotState(*(arm_control_group.getCurrentState()));
 	}
 
 	void wait_for_plan_complete() {
@@ -630,8 +631,8 @@ public:
 		if ((to_plan->parent != NULL) && (to_plan->start_state == NULL)) {
 			const trajectory_msgs::JointTrajectory plan_trajectory = to_plan->parent->plan->trajectory_.joint_trajectory;
 			size_t pose_number = plan_trajectory.points.size() - 1;
-			to_plan->start_state = new moveit::core::RobotState(*(to_plan->parent->start_state));
-			moveit::core::jointTrajPointToRobotState (plan_trajectory, pose_number, *(to_plan->start_state));
+			to_plan->start_state = generic_state;
+			moveit::core::jointTrajPointToRobotState(plan_trajectory, pose_number, *(to_plan->start_state));
 		}
 		ROS_INFO("PLAN_A");
 		if (to_plan->parent == NULL) {
@@ -757,6 +758,7 @@ public:
 	}
 
 protected:
+	moveit::core::RobotState * generic_state;
 	moveit::planning_interface::MoveGroup arm_control_group;
 	boost::condition_variable plan_condition;
 	boost::condition_variable current_plan_condition; 
@@ -782,7 +784,7 @@ public:
 
 	void move(arm_action * to_move) {
 		ROS_INFO("MOVE STARTING!");
-		moveit::core::robotStateToRobotStateMsg (*(arm_control_group.getCurrentState()), to_move->plan->start_state_); 
+		//moveit::core::robotStateToRobotStateMsg (*(arm_control_group.getCurrentState()), to_move->plan->start_state_); 
 		//possibly remove any start state requirement more than it already is
 		arm_control_group.setStartStateToCurrentState();
 		arm_control_group.execute(*(to_move->plan));
@@ -1155,7 +1157,7 @@ public:
 
 	void execute_grab_moving(std::string part_name) {
 		//tf::Pose testpose(identity,tf::Vector3(0,0,-0.5));
-		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,ros::Time::now()+ros::Duration(1.22));
+		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,ros::Time::now()+ros::Duration(0.1));
 		arm_action * dummy_action = new arm_action(current_grab,NULL);
 		dummy_action->vacuum_enabled_end = true;
 		dummy_action->plan = NULL;
@@ -1174,25 +1176,26 @@ public:
 			ROS_INFO("ITER COMPLETE");
 			ros::Time end_time = ros::Time::now() + dummy_action->plan->trajectory_.joint_trajectory.points.back().time_from_start;
 			ROS_INFO("duration is %f",dummy_action->plan->trajectory_.joint_trajectory.points.back().time_from_start.toSec());
-			current_grab = ObjectTracker::get_grab_pose(part_name,end_time + ros::Duration(1.22));
+			current_grab = ObjectTracker::get_grab_pose(part_name,end_time + ros::Duration(0.1));
 		} 
-		double dist = 0.2;
-		tf::Pose transform_pose = tf::Pose(identity,tf::Vector3(0,dist,0)) * current_grab;
+		double dist = 0.1;
+		tf::Pose transform_pose = tf::Pose(identity,tf::Vector3(0,-dist,0)) * current_grab;
 		arm_action * slide_action = new arm_action(transform_pose,dummy_action);
 		slide_action->vacuum_enabled_end = true;
 		slide_action->plan = NULL;
-		slide_action->parent = NULL;
+		slide_action->parent = dummy_action;
 		slide_action->start_state = NULL;
 		planner.add_action(slide_action);
 		planner.wait_until_planned(slide_action);
 		homogenize_for_belt(slide_action->plan->trajectory_.joint_trajectory,dist);
-		integrate(dummy_action,slide_action);
+		//integrate(dummy_action,slide_action);
 
 
 		controller.add_action(dummy_action);
+		controller.add_action(slide_action);
 		controller.wait_until_executed(dummy_action);
-		delete dummy_action;
-		delete slide_action;
+		//delete dummy_action;
+		//delete slide_action;
 	}
 
 	//---------------control logic
