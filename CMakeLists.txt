@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   moveit_ros_planning_interface
   moveit_core
+  control_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS thread)

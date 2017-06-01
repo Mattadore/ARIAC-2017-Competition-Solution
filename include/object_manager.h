@@ -79,52 +79,6 @@ enum part_location {
 	LOCATION_NUM
 };
 
-/*
-const string pattern = "(abc)(def)";  
-const string target = "abcdef"; 
-
-boost::regex regexPattern(pattern, boost::regex::extended); 
-boost::smatch what; 
-
-bool isMatchFound = boost::regex_match(target, what, regexPattern); 
-if (isMatchFound) 
-{ 
-    for (unsigned int i=0; i < what.size(); i++) 
-    { 
-        cout << "WHAT " << i << " " << what[i] << endl; 
-    } 
-} 
-*/
-/*
-struct ObjectTrackStruct {
-	std::string object_input_tf;
-	std::string object_output_tf;
-	std::string reference;
-	//tf::StampedPose last_observation;
-	tf::StampedPose anchor_pose; //pose for offset calculations
-	tf::StampedPose recent_pose; //most recent published pose
-	object_tracker_struct(unsigned char initial_location_type);
-	unsigned char num_averaged;
-	//make a method that can determine where everything is
-	//have some thing to determine where everything starts?
-	ObjectTrackStruct() { //pass in pose, where it is, what type of thing it's on, all that stuff
-		num_averaged = 3;
-	}
-	void attach_to_arm() {
-		reference = "/vacuum_gripper_link";
-		num_averaged = 5; //weight of known value
-	}
-	void drop_on_agv1() {
-		//reference = "/vacuum_gripper_link";
-		//num_averaged = 5; //weight of known value
-	}
-	void drop_on_agv2() {
-
-	}
-}
-*/
-
-
 
 
 struct ObjectTypeData {
@@ -152,6 +106,9 @@ public:
 	}
 	std::string & get_reference_frame() {
 		return reference_frame;
+	}
+	tf::Vector3 get_velocity() {
+		return relative_motion;
 	}
 	ObjectData(std::string name,std::string reference,ObjectTypeData * typedata,bool on_conveyor = false) {
 		reference_frame = reference;
@@ -185,7 +142,7 @@ public:
 			++total;
 			ros::Duration inter_frame_time = average_list[i_last].stamp_ - average_list[i].stamp_;
 			if (inter_frame_time < ros::Duration(0.5)) { //just in case
-				tf::Vector3 next_v = (average_list[i_last].getOrigin() - average_list[i].getOrigin())/inter_frame_time.toSec();
+				tf::Vector3 next_v = tf::Vector3(0,(average_list[i_last].getOrigin().getY() - average_list[i].getOrigin().getY())/inter_frame_time.toSec(),0);
 				if (total == 1) {
 					result_v = next_v;
 				}
@@ -199,7 +156,7 @@ public:
 			i_last = i;
 		}
 		result_v = result_v / ((double)(average_list_valid-1));
-		result_v = tf::Vector3(0,0,0);
+		//result_v = tf::Vector3(0,0,0);
 		total = 1;
 		i_last = average_list_index;
 		char max_iter = std::min(average_list_valid,average_list_position_size);
@@ -222,6 +179,9 @@ public:
 
 		current_location = pose_out;
 		relative_motion = result_v;
+		//relative_motion.setX(0);
+		//relative_motion.setZ(0);
+		//TODO: if relative_motion magnitude < some number, set 0 vector
 
 		average_list_index = (average_list_index+1) % average_list_size; //increment with possible loop back to start
 	}
@@ -252,6 +212,15 @@ public:
 		tf::StampedTransform out = current_location;
 		out.stamp_ = ros::Time::now();
 		double duration = ros::Duration(ros::Time::now() - current_location.stamp_).toSec();
+		//because we're in relative frame, using velocity in relative frame, we transform before we combine part space
+		out.setData(tf::Pose(tf::Quaternion(0,0,0,1),relative_motion*duration)*current_location);
+		//ROS_INFO("%s: %f %f %f",part_name.c_str(),relative_motion.getX(),relative_motion.getY(),relative_motion.getZ());
+		return out;
+	}
+	tf::StampedTransform get_location_at_time(ros::Time at_time) {
+		tf::StampedTransform out = current_location;
+		out.stamp_ = at_time;
+		double duration = ros::Duration(at_time - current_location.stamp_).toSec();
 		//because we're in relative frame, using velocity in relative frame, we transform before we combine part space
 		out.setData(tf::Pose(tf::Quaternion(0,0,0,1),relative_motion*duration)*current_location);
 		//ROS_INFO("%s: %f %f %f",part_name.c_str(),relative_motion.getX(),relative_motion.getY(),relative_motion.getZ());
@@ -309,6 +278,9 @@ public:
 		listener->lookupTransform(start,end,ros::Time(0),transform_out);
 		return transform_out;
 	}
+	/*static tf::Pose get_current_end_location() {
+		listener->lookupTransform("world","vacuum_gr",ros::Time(0),reference_transformation);
+	}*/
 
 	static void publish_tfs() {
 		for (std::map<std::string,ObjectData *>::iterator it = lookup_map.begin(); it != lookup_map.end(); ++it) {
@@ -323,11 +295,11 @@ public:
 
 	//gets the location and orientation you should use to grab the part
 	//automatically adjusts if the part seems to be upside down
-	static tf::Pose get_grab_pose(std::string part_name,double grab_offset = -0.014) {
+	static tf::Pose get_grab_pose(std::string part_name,ros::Time at_time = ros::Time::now(),double grab_offset = -0.014) {
 		const tf::Quaternion identity(0,0,0,1);
 		ObjectData & part_to_grab = *(lookup_map[part_name]);
 		ObjectTypeData * part_typedata = part_to_grab.get_type_info();
-		tf::Pose out_pose, object_true_location = get_recent_transform("world", part_to_grab.get_reference_frame()) * part_to_grab.get_current_location();
+		tf::Pose out_pose, object_true_location = part_to_grab.get_location_at_time(at_time);
 		bool is_inverted = is_upside_down(object_true_location);
 		double true_face_from_tf = true_bin_height - part_typedata->tf_base_offset;
 		if (is_inverted) {
@@ -349,6 +321,11 @@ public:
 		return tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0.3,-3.15,0.75));
 	}
 
+	static bool part_exists(std::string part_name) {
+		return lookup_map.count(part_name);
+	}
+
+	
 protected:
 	template<class M>
 	static void subscribe(std::string name,uint32_t size,void(*fp)(M)) {

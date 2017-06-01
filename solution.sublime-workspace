@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"w",
+				"wait_until_executed"
+			],
+			[
+				"gra",
+				"grab_pose\ttf::Pose grab_pose"
+			],
+			[
 				"get",
 				"getOrigin\ttf::Vector3 & Transform::getOrigin()"
 			],
@@ -506,25 +514,24 @@
 			[
 				"currently_",
 				"currently_executing"
-			],
-			[
-				"add",
-				"add_subscriptions"
-			],
-			[
-				"debug",
-				"debugEnd"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "src/solution_node.cpp",
+			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
 			"settings":
 			{
-				"buffer_size": 44294,
-				"encoding": "UTF-8",
+				"buffer_size": 1357,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
+			"settings":
+			{
+				"buffer_size": 2233,
 				"line_ending": "Unix"
 			}
 		},
@@ -532,8 +539,19 @@
 			"file": "include/object_manager.h",
 			"settings":
 			{
-				"buffer_size": 16844,
+				"buffer_size": 17098,
 				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "rosrun tf static_transform_publisher 0.3 -3.15 0.75 0 0 0 1 world kit_tray_2\n\nrosrun tf static_transform_publisher 0.3 3.15 0.75 0 0 1 0",
+			"file": "/home/matt/ariac_ws/src/static_info",
+			"file_size": 153,
+			"file_write_time": 131402134302230689,
+			"settings":
+			{
+				"buffer_size": 136,
 				"line_ending": "Unix"
 			}
 		},
@@ -600,10 +618,10 @@
 	],
 	"file_history":
 	[
+		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/ariac_ws/src/start_sim_qual2",
 		"/home/matt/ariac_ws/src/competition_solution/include/advanced_publisher.h",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/PopulationState.msg",
-		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/matt/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
 		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
@@ -745,6 +763,30 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"move",
+			"boost::thread",
+			"controller",
+			"number_orders",
+			"grab",
+			"0,0,0",
+			"}\n",
+			"part",
+			"enabled_end",
+			"toggle_va",
+			"toggle_vacu",
+			"pulley",
+			"0.2",
+			"ros::duration",
+			"ros::Du",
+			"velocity",
+			"grab",
+			"toggle_v",
+			"gripper",
+			"vacuum_g",
+			"PULL",
+			"gea",
+			"pulley_",
+			"blocking_ca",
 			"ObjectData",
 			"get_current_lo",
 			"current_trans",
@@ -848,31 +890,7 @@
 			"world",
 			"\\\"1\\\"",
 			"world",
-			"delete",
-			"insert",
-			"generate_interme",
-			"\n\t",
-			"])))\n",
-			"utility",
-			"order",
-			"thread",
-			"logic_thread",
-			"utility",
-			"arm_process",
-			"vector<",
-			"listener",
-			"new",
-			"competitionmana",
-			"~",
-			"map",
-			"!\");\n",
-			"PLAN_COMP",
-			"pose_d",
-			"action_d",
-			"manager",
-			"pose_list",
-			"plan",
-			"vector3"
+			"delete"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -915,69 +933,128 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "src/solution_node.cpp",
+					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 44294,
+						"buffer_size": 1357,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								41973,
-								41973
+								1356,
+								1356
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
+							"syntax": "Packages/YAML/YAML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 16282.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "include/object_manager.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 16844,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								8147,
-								8163
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 2482.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
+					"buffer": 1,
+					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2233,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								584,
+								584
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/YAML/YAML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
 					"buffer": 2,
+					"file": "include/object_manager.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 17098,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								11146,
+								11146
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 3655.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/home/matt/ariac_ws/src/static_info",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 136,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								128,
+								128
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
 					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
 					"semi_transient": false,
 					"settings":
@@ -1003,7 +1080,7 @@
 						"translation.y": 507.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 4,
 					"type": "text"
 				}
 			]

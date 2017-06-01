@@ -40,12 +40,13 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp> 
 
+#include <control_msgs/JointTrajectoryControllerState.h>
+
 #include <geometry_msgs/Pose.h>
 #include <moveit/move_group_interface/move_group.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 #include "object_manager.h"
-
 
 //core constants
 const double AGV_acceptable_range_ = 0.03; //acceptable radius (magic number, but should work fine?)
@@ -598,6 +599,7 @@ public:
 		}
 	}
 
+
 	//TODO: send condition notificiation when planning queue is cleared
 	//TODO we can do this with a flag to indicate that the thread is blocking on an arm action in the planner
 	void wait_until_planned(arm_action * to_wait) {
@@ -619,24 +621,19 @@ public:
 		}
 		geometry_msgs::Pose geometry_pose;
 		tf::poseTFToMsg(to_add,geometry_pose);
+		ROS_INFO("PLAN_B");
 
 		pose_list.push_back(geometry_pose);
 
 		//set plan state to parent traj last state
 		//moveit::core::RobotState start_state;
-		//ROS_INFO_THROTTLE(1,to_plan->parent == )
-		if ((to_plan->parent == NULL) && (to_plan->start_state == NULL)) {
-			//arm_control_group.getCurrentState();
-			to_plan->start_state = new moveit::core::RobotState(*(arm_control_group.getCurrentState()));
-		}
-		else {
+		if ((to_plan->parent != NULL) && (to_plan->start_state == NULL)) {
 			const trajectory_msgs::JointTrajectory plan_trajectory = to_plan->parent->plan->trajectory_.joint_trajectory;
-			size_t pose_number = plan_trajectory.points.size() - 1; 
+			size_t pose_number = plan_trajectory.points.size() - 1;
 			to_plan->start_state = new moveit::core::RobotState(*(to_plan->parent->start_state));
 			moveit::core::jointTrajPointToRobotState (plan_trajectory, pose_number, *(to_plan->start_state));
 		}
-
-		//TODO: possibly make second control group for just planning
+		ROS_INFO("PLAN_A");
 		if (to_plan->parent == NULL) {
 			arm_control_group.setStartStateToCurrentState();
 		}
@@ -646,14 +643,15 @@ public:
 		//arm_control_group.setStartStateToCurrentState();
 
 		//compute trajectory
-
+		double fraction;
 		if (to_plan->lock_arm) {
 			moveit_msgs::Constraints constrained = make_constraint(to_add);
-			double fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, constrained, false);
+			fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, constrained, false);
 		}
 		else {
-			double fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, true);
+			fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, true);
 		}
+
 		/*do time parameterization
 		robot_trajectory::RobotTrajectory traj(to_plan->start_state->getRobotModel(), "manipulator");
 		traj.setRobotTrajectoryMsg(*(to_plan->start_state), traj_msg);
@@ -746,6 +744,7 @@ public:
 			//gets kicked out at the end of planning anyway
 		}
 	}
+
 	void clear() {
 		boost::unique_lock<boost::mutex> plan_lock(plan_mutex);
 		for (std::list<arm_action*>::iterator i = plan_queue.begin(); i != plan_queue.end(); ++i) {
@@ -807,6 +806,10 @@ public:
 			ROS_INFO("Waiting; queried order status is: %d",to_wait->execution_status);
 		}
 	}
+
+	void move_blocking() {
+	}
+
 	//---------------controller logic
 	void parallel_control() {
 		ros::Duration wait(0.01);
@@ -829,14 +832,20 @@ public:
 					planner->wait_until_planned(currently_executing);
 				}
 				move(currently_executing); //execute (blocking) move call
+
+				//boost::thread block_move_thread(boost::bind(&Controller::parallel_control,this));
+				//block_move_thread.
+				//while ()
+
+
 				//reset system, prepare to lose lock
 				currently_executing->execution_status = PIPELINE_COMPLETE;
+
 				//currently_executing = NULL;
 			}
 			current_control_condition.notify_all();
 		}
 	}
-
  
 	void add_actions(std::vector<arm_action *> * to_move) {
 		{ //scope kills lock appropriately
@@ -909,6 +918,14 @@ class CompetitionManager {
 public:
 
 
+	//for testing
+	void make_moving(trajectory_msgs::JointTrajectory & a) {
+		//double pos_at_start = a.points[0].positions[1];
+		for (int i=1;i<a.points.size();++i) {
+			a.points[i].velocities[1] -= 0.2;
+			a.points[i].positions[1] -= a.points[i].time_from_start.toSec()*0.2;
+		}
+	}
 	//TODO: make sure this is finished
 	std::string get_closest_part(std::string part_name) {
 		//TODO: do not go for parts that are out of play
@@ -1018,6 +1035,19 @@ public:
 
 	}
 */
+	//integrate b into a, maybe have switches happen at given times
+	void integrate(arm_action * a, arm_action * b) {
+		ros::Duration a_end_time = a->plan->trajectory_.joint_trajectory.points.back().time_from_start;
+		for (int i=1;i<b->plan->trajectory_.joint_trajectory.points.size();++i) {
+			b->plan->trajectory_.joint_trajectory.points[i].time_from_start += a_end_time;
+			a->plan->trajectory_.joint_trajectory.points.push_back(b->plan->trajectory_.joint_trajectory.points[i]);
+		}
+	}
+
+	void combine_actions(std::vector<arm_action*> * action_list) {
+		
+	}
+
 	//testing
 	void grab(std::string action_name,std::string part_name) {
 		tf::Pose grab_pose = ObjectTracker::get_grab_pose(part_name);
@@ -1025,7 +1055,12 @@ public:
 	 	motion_paths[action_name]->push_back(new arm_action(grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),NULL));
 	 	motion_paths[action_name]->back()->vacuum_enabled_end = true;
 	 	motion_paths[action_name]->push_back(new arm_action(grab_pose,motion_paths[action_name]->back()));
+	 	//motion_paths[action_name]->push_back(new arm_action(grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),motion_paths[action_name]->back()));
 	 	planner.add_actions(motion_paths[action_name]);
+	 	planner.wait_until_planned(motion_paths[action_name]->back());
+	 	//integrate(motion_paths[action_name]->front(),motion_paths[action_name]->back());
+	 	//make_moving(motion_paths[action_name]->front()->plan->trajectory_.joint_trajectory);
+	 	//motion_paths[action_name]->pop_back();
 	 	controller.add_actions(motion_paths[action_name]);
 	}
 
@@ -1097,10 +1132,68 @@ public:
 	}
 
 
-
 	//TODO: write method to do a kit here, part by part
 	//if during the completion of a part, we find out that there is a new priority kit
 	//go work on that once current part is finished placing
+	void execute_kit_simple() {
+
+	}
+
+	//make motion along belt have v = 0.2 ish
+	void homogenize_for_belt(trajectory_msgs::JointTrajectory & a,double distance) {
+		//double pos_at_start = a.points[0].positions[1];
+		double point_num = a.points.size();
+		double velocity = 0.2;
+		double time_per = (distance/velocity)/point_num;
+		double total_time = a.points.back().time_from_start.toSec();
+		ROS_INFO("0 member name: %s",a.joint_names[0].c_str());
+		for (int i=0;i<a.points.size();++i) {
+			a.points[i].velocities[0] = -0.2; //probably will help
+			a.points[i].time_from_start = ros::Duration(i*time_per);
+		}
+	}
+
+	void execute_grab_moving(std::string part_name) {
+		//tf::Pose testpose(identity,tf::Vector3(0,0,-0.5));
+		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,ros::Time::now()+ros::Duration(1.22));
+		arm_action * dummy_action = new arm_action(current_grab,NULL);
+		dummy_action->vacuum_enabled_end = true;
+		dummy_action->plan = NULL;
+		dummy_action->parent = NULL;
+		dummy_action->start_state = NULL;
+		//dummy_action->start_state = new moveit::core::RobotState(*(arm_control_group.getCurrentState()));
+		for (char i=0;i<8;++i) {
+			dummy_action->trajectory_end = current_grab;
+			if (i>0) {
+				delete dummy_action->plan;
+				dummy_action->plan = NULL;
+				dummy_action->planning_status = PIPELINE_NONE;
+			}
+			planner.add_action(dummy_action);
+			planner.wait_until_planned(dummy_action);
+			ROS_INFO("ITER COMPLETE");
+			ros::Time end_time = ros::Time::now() + dummy_action->plan->trajectory_.joint_trajectory.points.back().time_from_start;
+			ROS_INFO("duration is %f",dummy_action->plan->trajectory_.joint_trajectory.points.back().time_from_start.toSec());
+			current_grab = ObjectTracker::get_grab_pose(part_name,end_time + ros::Duration(1.22));
+		} 
+		double dist = 0.2;
+		tf::Pose transform_pose = tf::Pose(identity,tf::Vector3(0,dist,0)) * current_grab;
+		arm_action * slide_action = new arm_action(transform_pose,dummy_action);
+		slide_action->vacuum_enabled_end = true;
+		slide_action->plan = NULL;
+		slide_action->parent = NULL;
+		slide_action->start_state = NULL;
+		planner.add_action(slide_action);
+		planner.wait_until_planned(slide_action);
+		homogenize_for_belt(slide_action->plan->trajectory_.joint_trajectory,dist);
+		integrate(dummy_action,slide_action);
+
+
+		controller.add_action(dummy_action);
+		controller.wait_until_executed(dummy_action);
+		delete dummy_action;
+		delete slide_action;
+	}
 
 	//---------------control logic
 	void arm_process() {
@@ -1111,13 +1204,41 @@ public:
 			wait_rate.sleep();
 		}*/
 
-
-		tf::StampedTransform arm_pose,temp;
-		tf::Pose temp2;
-
 		CompetitionInterface::toggle_vacuum(false);
 		ros::Duration(4.0).sleep();
-		blocking_call(grab, "piston_rod_part_3", "piston_rod_part_4")
+
+
+
+		// tf::StampedTransform arm_trans;
+		// listener.lookupTransform("world","vacuum_gripper_link",ros::Time(0),arm_trans);
+		// arm_trans.setData(tf::Pose(identity,tf::Vector3(1,2,0.3)+ arm_trans.getOrigin()));
+		// arm_action * align_action = new arm_action(arm_trans,NULL);
+		// planner.add_action(align_action);
+		// controller.add_action(align_action);
+
+		trajectory_msgs::JointTrajectory traj;
+		control_msgs::JointTrajectoryControllerState jointmsg;
+		ROS_INFO("Rotating");
+		if (ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>("/ariac/arm/state") == NULL) {
+			ROS_INFO("carp");
+		}
+		jointmsg  = *ros::topic::waitForMessage<control_msgs::JointTrajectoryControllerState>("/ariac/arm/state");
+		jointmsg.desired.positions[1]+=M_PI;
+		jointmsg.desired.positions[0]+=0.8;
+		jointmsg.desired.time_from_start = ros::Duration(0.1);
+		traj.points.push_back(jointmsg.desired);
+		traj.joint_names = jointmsg.joint_names;
+		joint_pub.publish(traj);
+
+
+
+		ros::Rate part_wait_rate(30);
+		while (!ObjectTracker::part_exists("piston_rod_part_clone_0")) {
+			part_wait_rate.sleep();
+		}
+		ros::Duration(13.0).sleep();
+		execute_grab_moving("piston_rod_part_clone_0");
+		//blocking_call(grab, "piston_rod_part_3", "pulley_part_2")
 		//CompetitionInterface::start_competition();
 
 		//do stuff
@@ -1136,7 +1257,7 @@ public:
 
 
 		//wait on order queue
-
+		//ASSIGN THE AGV NEAR CONVEYOR START TO FIRST ORDER, SECOND TO SECOND
 
 		//assign a kit to an AGV (assign multiple?)
 			//pop kit from tally index
@@ -1144,6 +1265,7 @@ public:
 			//keep track of added parts in agv
 			//only if there are no parts on the tray can you change the agv task.
 			//only if all the tray parts correspond to the kit parts, send the kit.
+
 
 
 	}
@@ -1225,6 +1347,8 @@ public:
 	CompetitionManager(ros::NodeHandle * nodeptr_) : listener(ros::Duration(1.0)), controller(&planner), 
 	logic_thread(boost::bind(&CompetitionManager::arm_process,this)) {
 		nodeptr = nodeptr_;
+		joint_pub = nodeptr->advertise<trajectory_msgs::JointTrajectory>("/ariac/arm/command", 20);
+
 		terminated = false;
 		number_orders = 0;
 	  	//ensure buffer is completely initialized?
@@ -1284,6 +1408,7 @@ protected:
 
 	bool part_waiting;
 	std::string waiting_for;
+	ros::Publisher joint_pub;
 
 	//std::list transitions[ARM_REGION_NUM];
 
