@@ -3,6 +3,7 @@ project(competition_solution)
 
 add_definitions(-std=c++11)
 
+
 find_package(catkin REQUIRED COMPONENTS
   osrf_gear
   roscpp
@@ -19,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
+include_directories(./ include ${catkin_INCLUDE_DIRS})
 #todo: add dependencies
 catkin_package()
 
@@ -26,11 +28,11 @@ catkin_package()
 ## Build ##
 ###########
 
-include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Declare a C++ executable
 add_executable(solution_node src/solution_node.cpp)
 target_link_libraries(solution_node ${catkin_LIBRARIES})
+## target_include_directories(include)
 
 #############
 ## Install ##

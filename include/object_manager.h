@@ -293,6 +293,12 @@ public:
 		}
 	}
 
+	static tf::StampedTransform get_gripper_pose(ros::Time time_in = ros::Time::now()) {
+		tf::StampedTransform transform_out;
+		listener->lookupTransform("world","vacuum_gripper_link",ros::Time(0),transform_out);
+		return transform_out;
+	}
+
 	//gets the location and orientation you should use to grab the part
 	//automatically adjusts if the part seems to be upside down
 	static tf::Pose get_grab_pose(std::string part_name,ros::Time at_time = ros::Time::now(),double grab_offset = -0.014) {
