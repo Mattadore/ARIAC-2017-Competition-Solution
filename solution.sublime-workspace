@@ -4,6 +4,130 @@
 		"selected_items":
 		[
 			[
+				"pipe",
+				"pipeline_data"
+			],
+			[
+				"pipeline",
+				"pipeline_data\tpipeline_data"
+			],
+			[
+				"acti",
+				"action_name"
+			],
+			[
+				"traject",
+				"trajectory_end"
+			],
+			[
+				"waiut",
+				"wait_until_planned"
+			],
+			[
+				"transiti",
+				"transition_delay"
+			],
+			[
+				"pla",
+				"plan\tmoveit::planning_interface::MoveGroup::Plan * plan"
+			],
+			[
+				"emp",
+				"empty\tbool empty() const"
+			],
+			[
+				"vel",
+				"velocities"
+			],
+			[
+				"curre",
+				"current_velocity"
+			],
+			[
+				"wait_until",
+				"wait_until_planned"
+			],
+			[
+				"pl",
+				"plan\tmoveit::planning_interface::MoveGroup::Plan * plan"
+			],
+			[
+				"ve",
+				"velocities\t_velocities_type velocities"
+			],
+			[
+				"pull",
+				"pull_pose"
+			],
+			[
+				"e",
+				"end_delay\tdouble end_delay"
+			],
+			[
+				"g",
+				"get_grab_pose\ttf::Pose get_grab_pose(std::string part_name)"
+			],
+			[
+				"get",
+				"get_state\tunsigned char get_state(unsigned char index)"
+			],
+			[
+				"currently",
+				"currently_executing"
+			],
+			[
+				"curren",
+				"currently_executing"
+			],
+			[
+				"Po",
+				"Pose\tPose"
+			],
+			[
+				"inte",
+				"intermediate_action\tarm_action intermediate_action"
+			],
+			[
+				"inter",
+				"intermediate_plan"
+			],
+			[
+				"int",
+				"intermediate_plan"
+			],
+			[
+				"intermed",
+				"intermediate_points"
+			],
+			[
+				"joi",
+				"joint_trajectory"
+			],
+			[
+				"pu",
+				"push_back\tvoid push_back(value_type &&__x)"
+			],
+			[
+				"ms",
+				"_mm_srli_si128\t_mm_srli_si128(a, count)"
+			],
+			[
+				"JointTrajectoryP",
+				"JointTrajectoryPoint\tJointTrajectoryPoint"
+			],
+			[
+				"trans",
+				"transform_out\ttf::StampedTransform transform_out"
+			],
+			[
+				"NE",
+				"BOOST_NOEXCEPT_EXPR\tBOOST_NOEXCEPT_EXPR(Expression)"
+			],
+			[
+				"use",
+				"use_intermediate"
+			],
+			[
 				"velo",
 				"velocity"
 			],
@@ -84,10 +208,6 @@
 				"toSec\tdouble DurationBase<Duration>::toSec() const"
 			],
 			[
-				"pl",
-				"plan"
-			],
-			[
 				"act",
 				"action_name\tstd::string action_name"
 			],
@@ -108,10 +228,6 @@
 				"grab_pose\ttf::Pose grab_pose"
 			],
 			[
-				"get",
-				"getOrigin\ttf::Vector3 & Transform::getOrigin()"
-			],
-			[
 				"Stamped",
 				"StampedTransform\tStampedTransform"
 			],
@@ -126,10 +242,6 @@
 			[
 				"Sam",
 				"StampedTransform\tStampedTransform"
-			],
-			[
-				"int",
-				"inter_frame_time"
 			],
 			[
 				"resul",
@@ -202,10 +314,6 @@
 			[
 				"old",
 				"old_vector"
-			],
-			[
-				"g",
-				"getZ\tconst tfScalar & getZ() const"
 			],
 			[
 				"res",
@@ -376,10 +484,6 @@
 				"CompetitionManager"
 			],
 			[
-				"currently",
-				"currently_planning"
-			],
-			[
 				"con",
 				"controller"
 			],
@@ -408,112 +512,8 @@
 				"INTERMEDIATE_AGV_1"
 			],
 			[
-				"curre",
-				"current_location"
-			],
-			[
 				"ARM_",
 				"ARM_REGION_NUM"
-			],
-			[
-				"AR",
-				"ARM_REGION_NUM"
-			],
-			[
-				"INTER",
-				"INTERMEDIATE_AGV_2"
-			],
-			[
-				"AGV_1",
-				"AGV_1_PREDROP"
-			],
-			[
-				"COMPE",
-				"COMPETITION_READY"
-			],
-			[
-				"end",
-				"end_competition"
-			],
-			[
-				"COM",
-				"COMPETITION_STATE"
-			],
-			[
-				"curren",
-				"current_plan_"
-			],
-			[
-				"height",
-				"height_offset"
-			],
-			[
-				"getRO",
-				"getRobotModel"
-			],
-			[
-				"waiti",
-				"waiting_for"
-			],
-			[
-				"gas",
-				"gasket_part_1_frame"
-			],
-			[
-				"tf",
-				"tf_exists"
-			],
-			[
-				"intermedi",
-				"intermediate_pose"
-			],
-			[
-				"basic",
-				"basic_get_intermediate"
-			],
-			[
-				"grasp",
-				"grasp_offset"
-			],
-			[
-				"pa",
-				"parallel_logic"
-			],
-			[
-				"toggle_",
-				"toggle_vacuum"
-			],
-			[
-				"current",
-				"current_plan"
-			],
-			[
-				"INTERMEDI",
-				"INTERMEDIATE_AGV_1"
-			],
-			[
-				"AGV_2_",
-				"AGV_2_PREDROP"
-			],
-			[
-				"nodep",
-				"nodeptr"
-			],
-			[
-				"agv_t",
-				"AGV_topic"
-			],
-			[
-				"set",
-				"setEuler"
-			],
-			[
-				"traje",
-				"trajectoryEnd"
-			],
-			[
-				"PI",
-				"PIPELINE_NONE"
 			]
 		]
 	},
@@ -523,7 +523,7 @@
 			"file": "include/object_manager.h",
 			"settings":
 			{
-				"buffer_size": 16851,
+				"buffer_size": 17090,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -532,7 +532,7 @@
 			"file": "src/solution_node.cpp",
 			"settings":
 			{
-				"buffer_size": 49619,
+				"buffer_size": 57742,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -541,7 +541,7 @@
 			"file": "CMakeLists.txt",
 			"settings":
 			{
-				"buffer_size": 1274,
+				"buffer_size": 1252,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -551,15 +551,6 @@
 			"settings":
 			{
 				"buffer_size": 4979,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
-			"settings":
-			{
-				"buffer_size": 9269,
-				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		}
@@ -617,6 +608,11 @@
 	],
 	"file_history":
 	[
+		"/opt/ros/indigo/lib/python2.7/dist-packages/roslaunch/nodeprocess.py",
+		"/opt/ros/indigo/include/std_msgs/Float64MultiArray.h",
+		"/opt/ros/indigo/include/std_msgs/Float64.h",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
+		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/ompl_planning.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ConveyorBeltPlugin.hh",
 		"/home/matt/ariac_ws/src/competition_solution/package.xml",
 		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
@@ -662,7 +658,6 @@
 		"/home/matt/qual3_sub/b/log/performance.log",
 		"/home/matt/ariac_ws/src/competition_example/config/sampe",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3a.yaml",
-		"/opt/ros/indigo/lib/python2.7/dist-packages/roslaunch/nodeprocess.py",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/gear_part/model.sdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part/model.sdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part_ariac/model.sdf",
@@ -740,11 +735,7 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_scenario3.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/KitObject.msg",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/KitTray.msg",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ROSAriacKitTrayPlugin.hh",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/srv/VacuumGripperControl.srv",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/srv/SubmitTray.srv",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/Kit",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_scenario_drop.yaml"
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ROSAriacKitTrayPlugin.hh"
 	],
 	"find":
 	{
@@ -762,6 +753,47 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"pipeline_data",
+			"while",
+			"NULL",
+			"bind",
+			"OCELOT",
+			"&",
+			"&&",
+			"&",
+			"arm_action\\s?\\*",
+			"arm_action",
+			"move",
+			"execute",
+			"2.0",
+			"5.0",
+			"velocity",
+			"grab_action",
+			"0.1",
+			"\\>.*?0",
+			"2.0",
+			"plan\\(",
+			"for",
+			"end_delay",
+			"end_Delay",
+			"end_Delayt",
+			"toggle attempted",
+			"grab_action",
+			"plan\\(",
+			"planner",
+			"get_state",
+			"move",
+			"0.4",
+			"arm_trans",
+			"jointmsg",
+			"parent\\s+=",
+			"NEGATIVE",
+			";\n",
+			"vector",
+			"controller",
+			"competitioninterf",
+			"include",
+			"ei",
 			"controller",
 			"move",
 			"void void",
@@ -848,48 +880,7 @@
 			"PULL",
 			"gea",
 			"pulley_",
-			"blocking_ca",
-			"ObjectData",
-			"get_current_lo",
-			"current_trans",
-			"lookup_map",
-			"publish",
-			"min",
-			"\n\t\t\t",
-			"result_v",
-			"0.02",
-			"handle_pose",
-			"tf::Vector3\\(0,0,(0\\.\\d+)\\)",
-			"move",
-			"logic",
-			"arm_action",
-			"add_new_pose",
-			"result_v",
-			"max_aver",
-			"get_current_",
-			"publisher",
-			"parent",
-			"Time\\(",
-			"\\(\\)\\(",
-			"lookupTransform",
-			"\\(\\)",
-			"\\(\\)\\(\\)",
-			"()()",
-			"full_name",
-			"reference_frame",
-			"Vector3",
-			"disk_part",
-			"add_new",
-			"tf_pu",
-			"relative_tf",
-			"TransformStamped",
-			"stamped<tf::pose>",
-			"\t\t\n",
-			"install",
-			"type_data",
-			"clone",
-			"start_competition",
-			"nodeha"
+			"blocking_ca"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -897,6 +888,12 @@
 		"regex": true,
 		"replace_history":
 		[
+			"nullptr",
+			"&&",
+			"",
+			"OCELOT",
+			"",
+			"arm_action::Ptr",
 			"result_p",
 			"handle_transform",
 			"$1",
@@ -932,7 +929,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -941,15 +938,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 16851,
+						"buffer_size": 17090,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								164,
-								164
+								6217,
+								6217
 							]
 						],
 						"settings":
@@ -958,10 +955,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1611.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -970,15 +967,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 49619,
+						"buffer_size": 57742,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								236,
-								236
+								46670,
+								46670
 							]
 						],
 						"settings":
@@ -987,10 +984,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 16154.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -999,15 +996,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1274,
+						"buffer_size": 1252,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								143,
-								143
+								95,
+								95
 							]
 						],
 						"settings":
@@ -1020,7 +1017,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
@@ -1050,37 +1047,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 9269,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								991,
-								991
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Text/Plain text.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 39.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -1175,7 +1142,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 177.0,
+	"side_bar_width": 147.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
