@@ -4,6 +4,102 @@
 		"selected_items":
 		[
 			[
+				"stand",
+				"standard_actions"
+			],
+			[
+				"push",
+				"push_back\tvoid push_back(value_type &&__x)"
+			],
+			[
+				"retrac",
+				"retract_action"
+			],
+			[
+				"last",
+				"last_action"
+			],
+			[
+				"arm_",
+				"arm_action\tarm_action"
+			],
+			[
+				"regio",
+				"region_"
+			],
+			[
+				"wait_unt",
+				"wait_until_executed"
+			],
+			[
+				"move_to",
+				"move_to_tray\tarm_action::Ptr move_to_tray"
+			],
+			[
+				"u",
+				"use_conveyor\tbool use_conveyor"
+			],
+			[
+				"use",
+				"use_trash\tbool use_trash"
+			],
+			[
+				"get_a",
+				"get_tray_pose"
+			],
+			[
+				"data",
+				"data_in"
+			],
+			[
+				"b",
+				"back\treference back()"
+			],
+			[
+				"grab_",
+				"grab_action\tarm_action::Ptr grab_action"
+			],
+			[
+				"arm",
+				"arm_action\tarm_action"
+			],
+			[
+				"Compe",
+				"CompetitionInterface\tCompetitionInterface"
+			],
+			[
+				"AGV",
+				"AGV1_callback\tvoid AGV1_callback(const std_msgs::String::ConstPtr msg)"
+			],
+			[
+				"AGV_st",
+				"AGV_status_lookup"
+			],
+			[
+				"AGV_sta",
+				"AGV_status_lookup\tstd::map<std::string, char> AGV_status_lookup"
+			],
+			[
+				"c",
+				"competition_solution"
+			],
+			[
+				"Jo",
+				"JointTrajectoryPoint_\tJointTrajectoryPoint_<class ContainerAllocator>"
+			],
+			[
+				"joint",
+				"joint_trajectory"
+			],
+			[
+				"p",
+				"plan"
+			],
+			[
+				"vacu",
+				"vacuum_enabled_end"
+			],
+			[
 				"pipe",
 				"pipeline_data"
 			],
@@ -124,10 +220,6 @@
 				"BOOST_NOEXCEPT_EXPR\tBOOST_NOEXCEPT_EXPR(Expression)"
 			],
 			[
-				"use",
-				"use_intermediate"
-			],
-			[
 				"velo",
 				"velocity"
 			],
@@ -168,20 +260,12 @@
 				"align_action\tarm_action * align_action"
 			],
 			[
-				"arm",
-				"arm_trans\tint arm_trans"
-			],
-			[
 				"St",
 				"StampedTransform"
 			],
 			[
 				"plan",
 				"planning_status\tchar planning_status"
-			],
-			[
-				"p",
-				"plan\tint * plan"
 			],
 			[
 				"add_",
@@ -412,10 +496,6 @@
 				"drop_offset"
 			],
 			[
-				"arm_",
-				"arm_process"
-			],
-			[
 				"gene",
 				"generate_intermediate"
 			],
@@ -434,123 +514,17 @@
 			[
 				"ac",
 				"action_name"
-			],
-			[
-				"transform_",
-				"transform_from_vector"
-			],
-			[
-				"vacuu",
-				"vacuum_gripper_link"
-			],
-			[
-				"lis",
-				"listener"
-			],
-			[
-				"qual",
-				"qual3a"
-			],
-			[
-				"z_",
-				"z_local"
-			],
-			[
-				"loo",
-				"lookupTransform"
-			],
-			[
-				"kit_",
-				"kit_tally"
-			],
-			[
-				"recei",
-				"received_orders"
-			],
-			[
-				"off",
-				"offset"
-			],
-			[
-				"tat",
-				"target"
-			],
-			[
-				"targ",
-				"target_transform"
-			],
-			[
-				"Comp",
-				"CompetitionManager"
-			],
-			[
-				"con",
-				"controller"
-			],
-			[
-				"vec",
-				"Vector3"
-			],
-			[
-				"star",
-				"start_state"
-			],
-			[
-				"INTE",
-				"INTERMEDIATE_AGV_1"
-			],
-			[
-				"INT",
-				"INTERMEDIATE_BIN"
-			],
-			[
-				"IN",
-				"INTERMEDIATE_CONVEYOR"
-			],
-			[
-				"I",
-				"INTERMEDIATE_AGV_1"
-			],
-			[
-				"ARM_",
-				"ARM_REGION_NUM"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "include/object_manager.h",
-			"settings":
-			{
-				"buffer_size": 17090,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "src/solution_node.cpp",
 			"settings":
 			{
-				"buffer_size": 57742,
+				"buffer_size": 65691,
 				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "CMakeLists.txt",
-			"settings":
-			{
-				"buffer_size": 1252,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/src/ConveyorBeltPlugin.cc",
-			"settings":
-			{
-				"buffer_size": 4979,
 				"line_ending": "Unix"
 			}
 		}
@@ -579,7 +553,7 @@
 				"EasyClangComplete: Clean current CMake cache"
 			]
 		],
-		"width": 458.0
+		"width": 467.0
 	},
 	"console":
 	{
@@ -608,23 +582,57 @@
 	],
 	"file_history":
 	[
+		"/home/matt/ariac_ws/src/universal_robot/ur_driver/src/ur_driver/driver.py",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ConveyorBeltPlugin.cc",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/worlds/gear.world.template",
+		"/home/matt/ariac_ws/src/competition_solution/config/gear_configuration.yaml",
+		"/home/matt/ariac_ws/src/start_sim_qual2",
+		"/home/matt/ariac_ws/src/competition_solution/config/test_config.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/custom_config_test.yaml",
+		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
+		"/home/matt/ariac_ws/src/qualifier2_actual/config/gear_configuration.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/testpoint",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3b.yaml",
+		"/home/matt/ariac_ws/src/universal_robot/ur_gazebo/launch/ur10.launch",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3a.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/SideContactPlugin.cc",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/example_custom_config.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_user_config.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/launch/linear_arm_actuator/linear_arm_actuator.urdf.xacro",
+		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/joint_limits.yaml",
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/joint_limits.yaml",
+		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/ompl_planning.yaml",
+		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/ur10.srdf",
+		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/ls",
+		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10_joint_limited_robot.urdf.xacro",
+		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10.urdf.xacro",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/VacuumGripperPlugin.cc",
+		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
+		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10_robot.urdf.xacro",
+		"/home/matt/ariac_ws/src/universal_robot/ur_bringup/launch/ur10_bringup.launch",
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/kinematics.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/launch/ur10/arm_controller_ur10_custom.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/simple_arm_vacuum_gripper/model.sdf",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/simple_arm_vacuum_gripper/model.config",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/simple_arm_vacuum_gripper/model.",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/warehouse_robot_ariac/model.sdf",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/warehouse_robot_ariac/model.config",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/warehouse_robot_ariac/model.",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/scenes/ariac.scene",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/rviz/ariac.rviz",
 		"/opt/ros/indigo/lib/python2.7/dist-packages/roslaunch/nodeprocess.py",
 		"/opt/ros/indigo/include/std_msgs/Float64MultiArray.h",
 		"/opt/ros/indigo/include/std_msgs/Float64.h",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
-		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/ompl_planning.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ConveyorBeltPlugin.hh",
 		"/home/matt/ariac_ws/src/competition_solution/package.xml",
-		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
 		"/home/matt/Desktop/pseudocode",
 		"/home/matt/ariac_ws/src/moveit_start",
-		"/home/matt/ariac_ws/src/start_sim_qual2",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
 		"/opt/ros/indigo/share/moveit_msgs/msg/RobotTrajectory.msg",
-		"/home/matt/ariac_ws/src/competition_solution/config/gear_configuration.yaml",
 		"/home/matt/ariac_ws/src/static_info",
-		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/include/advanced_publisher.h",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/PopulationState.msg",
 		"/home/matt/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
@@ -637,9 +645,7 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/part1_ariac/model.sdf",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/part1_ariac/model.config",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/part1_ariac/model.",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3b.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/comp_conf2.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_user_config.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample.yaml",
 		"/home/matt/ariac_ws/src/qualifier2_actual/src/qual2_actual_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/include",
@@ -652,16 +658,13 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/script/startup.sh",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/pulley_part_ariac/model.sdf",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/piston_rod_part_ariac/model.sdf",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
 		"/home/matt/ariac_ws/src/qualifier2_solution/config/gear_configuration.yaml",
 		"/home/matt/ariac_ws/src/qualifier2_solution/src/qual2_node.cpp",
 		"/home/matt/qual3_sub/b/log/performance.log",
 		"/home/matt/ariac_ws/src/competition_example/config/sampe",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3a.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/gear_part/model.sdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part/model.sdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part_ariac/model.sdf",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/kinematics.yaml",
 		"/home/matt/ariac_ws/src/nistinfo.txt",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/controller/arm_controller_ur10.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/vendor/ur_description/urdf/ur10.urdf.xacro",
@@ -673,17 +676,14 @@
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/ur10_moveit_planning_execution.launch",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/move_group.launch",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/launch/ur10.launch",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/joint_limits.yaml",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/ompl_planning.yaml",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/controllers.yaml",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/ur10.srdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/vendor/ur_description/urdf/ur.transmission.xacro",
 		"/tmp/ariac/gear.launch",
 		"/tmp/ariac/gear.",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/worlds/gear.world.template",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/launch/ur10_joint_limited.launch",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part_ariac/model.config",
-		"/home/matt/ariac_ws/src/qualifier2_actual/config/gear_configuration.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/qual2a.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/qual2b.yaml",
 		"/home/matt/ariac_qual2/my_team.txt",
@@ -706,36 +706,10 @@
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/comp_conf1.yaml",
 		"/home/matt/.bashrc",
 		"/home/matt/Desktop/notes.txt",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/VacuumGripperPlugin.cc",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/osrf_gear/VacuumGripperPlugin.hh",
 		"/home/matt/ariac_ws/src/qualifier2_solution/src",
 		"/home/matt/ariac_ws/src/competition_example/config/sample_gear_conf.yaml",
-		"/home/matt/ariac_ws/src/qualifier2_solution/assets/ariac.scene",
-		"/home/matt/ariac_ws/src/qualifier2_solution/scenes/ariac.scene",
-		"/home/matt/ariac_ws/src/qualifier2_solution/config/sample_gear_conf.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSVacuumGripperPlugin.cc",
-		"/home/matt/ariac_ws/src/src/VacuumGripperPlugin.cc",
-		"/home/matt/ariac_ws/src/src/ROSVacuumGripperPlugin.cc",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/AriacScorer.cpp",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/moveit_rviz.launch",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/moveit.rviz",
-		"/home/matt/ariac_ws/src/competition_example/launch/default_launch.launch",
-		"/home/matt/ariac_ws/src/start_sim",
-		"/home/matt/ariac_ws/src/competition_example/package.xml",
-		"/home/matt/ariac_ws/src/competition_example/CMakeLists.txt",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/comp_conf1.yaml",
-		"/home/matt/ariac_ws/src/competition_example/launch/rosrun",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/default_warehouse_db.launch",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1b.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAriacKitTrayPlugin.cc",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/sr",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/Kit.msg",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/Order.msg",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/LogicalCameraImage.msg",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_scenario3.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/KitObject.msg",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/KitTray.msg",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ROSAriacKitTrayPlugin.hh"
+		"/home/matt/ariac_ws/src/qualifier2_solution/assets/ariac.scene"
 	],
 	"find":
 	{
@@ -753,6 +727,64 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"planner",
+			"number_orders",
+			"vector",
+			"new_region",
+			"execute\\(",
+			" we ",
+			"pullup_",
+			"static",
+			"vacuum_enabled",
+			"vacuum_enabled_end",
+			"POSITIVE_INTERMEDIATE",
+			"NEGATIVE_INTERMEDIATE",
+			"negative_intermed",
+			"joints",
+			"start_competition",
+			"within_toler",
+			"toleran",
+			"todo",
+			"agv_status",
+			"AGV_base",
+			"agv_info",
+			"callback",
+			"todo",
+			"arm_control",
+			"\t\t\t",
+			"TODO",
+			"todo",
+			"world",
+			"frame",
+			"_frame",
+			"frame",
+			"logical.camera",
+			"camera",
+			"faul",
+			"gazebo",
+			"belt",
+			":\n",
+			"belt",
+			"result_v",
+			"filter",
+			"conveyor",
+			"timing",
+			"acceleration",
+			"has_acceleration_limits: true",
+			"velocity",
+			"control_msg",
+			"joint_con",
+			"get_tra",
+			"jointtrajectorypoint",
+			"  ",
+			"plan_interm",
+			"use_intermediate",
+			"intermediate",
+			"delete",
+			"use_intermed",
+			"arm_trans",
+			"static",
+			"type_data",
 			"pipeline_data",
 			"while",
 			"NULL",
@@ -822,65 +854,7 @@
 			"new arm_action",
 			"plan_b",
 			"\\(temp",
-			"joint_trajectory",
-			"trajectory",
-			"velocities",
-			"velocity",
-			"drop",
-			"intermed",
-			"intermediate",
-			"at_time",
-			"get_current_location",
-			"now",
-			"shared_ptr",
-			"logic",
-			"vacuum_gripp",
-			"vacuum_gr",
-			"wait",
-			"get_grab_pose",
-			"ros::duration",
-			"start_state",
-			"correlation",
-			"integrate",
-			"6.0",
-			"add_actions",
-			"add_action",
-			"now*\\(",
-			"grab",
-			"velocity",
-			"logic",
-			"integrate",
-			"make_movin",
-			"grab",
-			"wait_until",
-			"_move",
-			"move_",
-			"thread",
-			"JointTraject",
-			"move",
-			"boost::thread",
-			"controller",
-			"number_orders",
-			"grab",
-			"0,0,0",
-			"}\n",
-			"part",
-			"enabled_end",
-			"toggle_va",
-			"toggle_vacu",
-			"pulley",
-			"0.2",
-			"ros::duration",
-			"ros::Du",
-			"velocity",
-			"grab",
-			"toggle_v",
-			"gripper",
-			"vacuum_g",
-			"PULL",
-			"gea",
-			"pulley_",
-			"blocking_ca"
+			"joint_trajectory"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -888,6 +862,10 @@
 		"regex": true,
 		"replace_history":
 		[
+			"vacuum_enabled",
+			"POSITIVE_CONFIGURATION",
+			"NEGATIVE_CONFIGURATION",
+			"AGV_status",
 			"nullptr",
 			"&&",
 			"",
@@ -929,53 +907,24 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "include/object_manager.h",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 17090,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								6217,
-								6217
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1611.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
 					"file": "src/solution_node.cpp",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 57742,
+						"buffer_size": 65691,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								46670,
-								46670
+								44091,
+								44091
 							]
 						],
 						"settings":
@@ -984,70 +933,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 16154.0,
+						"translation.y": 14908.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "CMakeLists.txt",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1252,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								95,
-								95
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Text/Plain text.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "/home/matt/ariac_ws/src/ariac/osrf_gear/src/ConveyorBeltPlugin.cc",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4979,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3867,
-								3867
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -1142,7 +1031,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 147.0,
+	"side_bar_width": 148.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

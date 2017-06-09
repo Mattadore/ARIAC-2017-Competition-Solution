@@ -62,6 +62,9 @@
 
 //sinking, not wrong
 
+//TODO: calculate drop time on conveyor using maths
+//TODO: find conveyor top surface height
+
 namespace tracker {
 	const unsigned char max_average_num = 45;
 	const double noise_radius = 0.01; //idk something, set this later
@@ -80,7 +83,6 @@ enum part_location {
 };
 
 
-
 struct ObjectTypeData {
 	std::string part_type_name;
 	double size;
@@ -90,9 +92,33 @@ struct ObjectTypeData {
 	tf::Vector3 bin_start_rpy;
 	unsigned char bin_x_num;
 	unsigned char bin_y_num;
+	bool unique_orientation;
 };
 
-//TODO: this is ugly, we need headers
+//TODO: find rough gripper size?
+//TODO: find rough part radius?
+struct grid_structure {
+	double bias;
+	double start_x;
+	double start_y;
+	char num_x;
+	char num_y;
+};
+
+struct bin_data {
+	ObjectTypeData * type_data;
+	std::vector<grid_structure> structures_possible;
+	grid_structure current_structure_belief;
+	std::list<tf::Vector3> known_object_locations;
+	tf::Pose object_rotation_transformation; //if below is not set, use bias in objecttypedata
+	bool object_rotation_transformation_known; //lets code know if there is a known, measured rotation offset
+												//todo: latch rotation offset to above value/
+												//other values if close (depending on noise)
+
+	//TODO: have a boolean or something if the above is valid. maybe it'll just get it from grid info, actually?
+};
+
+
 
 class ObjectTracker;
 
@@ -122,8 +148,10 @@ public:
 		current_location = tf::StampedTransform(tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0,0,0)),ros::Time::now(),reference,name);
 		relative_motion = tf::Vector3(0,0,0);
 		if (on_conveyor) {
-			//TODO: MEASURE CONVEYOR SPEED OR MAKE A FILTER
-			//relative_motion = tf::Vector3(0.2,0,0);
+			relative_motion = tf::Vector3(0.2,0,0);
+		}
+		else {
+			relative_motion = tf::Vector3(0,0,0);
 		}
 	}
 	ObjectTypeData * get_type_info() {
@@ -135,27 +163,27 @@ public:
 		average_list_valid += (average_list_valid < average_list_size); //increment iff smaller than max
 		tf::Quaternion result_q = average_list[average_list_index].getRotation();
 		tf::Vector3 result_p = average_list[average_list_index].getOrigin();
-		tf::Vector3 result_v;
+		tf::Vector3 result_v = relative_motion;
 		char total = 0;
 		char i_last = average_list_index;
-		for (char i = (average_list_index-1+average_list_size)%average_list_size; i!=(average_list_index-average_list_valid+max_average_num)%average_list_size;i=(i-1+average_list_size)%average_list_size) {
-			++total;
-			ros::Duration inter_frame_time = average_list[i_last].stamp_ - average_list[i].stamp_;
-			if (inter_frame_time < ros::Duration(0.5)) { //just in case
-				tf::Vector3 next_v = tf::Vector3(0,(average_list[i_last].getOrigin().getY() - average_list[i].getOrigin().getY())/inter_frame_time.toSec(),0);
-				if (total == 1) {
-					result_v = next_v;
-				}
-				else {
-					//TODO: i feel like this would cause rounding error
-					//double weight = 1.0/(double)total;
-					//result_v = result_v.lerp(next_v,weight);
-					result_v += next_v;
-				}
-			}
-			i_last = i;
-		}
-		result_v = result_v / ((double)(average_list_valid-1));
+		// for (char i = (average_list_index-1+average_list_size)%average_list_size; i!=(average_list_index-average_list_valid+max_average_num)%average_list_size;i=(i-1+average_list_size)%average_list_size) {
+		// 	++total;
+		// 	ros::Duration inter_frame_time = average_list[i_last].stamp_ - average_list[i].stamp_;
+		// 	if (inter_frame_time < ros::Duration(0.5)) { //just in case
+		// 		tf::Vector3 next_v = tf::Vector3(0,(average_list[i_last].getOrigin().getY() - average_list[i].getOrigin().getY())/inter_frame_time.toSec(),0);
+		// 		if (total == 1) {
+		// 			result_v = next_v;
+		// 		}
+		// 		else {
+		// 			//TODO: i feel like this would cause rounding error
+		// 			//double weight = 1.0/(double)total;
+		// 			//result_v = result_v.lerp(next_v,weight);
+		// 			result_v += next_v;
+		// 		}
+		// 	}
+		// 	i_last = i;
+		// }
+		// result_v = result_v / ((double)(average_list_valid-1));
 		//result_v = tf::Vector3(0,0,0);
 		total = 1;
 		i_last = average_list_index;
@@ -181,7 +209,6 @@ public:
 		relative_motion = result_v;
 		//relative_motion.setX(0);
 		//relative_motion.setZ(0);
-		//TODO: if relative_motion magnitude < some number, set 0 vector
 
 		average_list_index = (average_list_index+1) % average_list_size; //increment with possible loop back to start
 	}
@@ -250,20 +277,8 @@ protected:
 
 class ObjectTracker {
 public:
-	/*static void toggle_vacuum(bool _enabled) {
-		ROS_INFO("Toggle requested: %d", (int)_enabled);
-		if (CompetitionInterface::get_state(GRIPPER_ENABLED) == (_enabled+1)) return;
-		ROS_INFO("Toggle attempted");
-		ros::ServiceClient vacuum_client = nodeptr->serviceClient<osrf_gear::VacuumGripperControl>("/ariac/gripper/control");
-		osrf_gear::VacuumGripperControl srv;
-		srv.request.enable = _enabled;
-		vacuum_client.call(srv);
-		if (!srv.response.success) {
-			ROS_ERROR("Unable to enable gripper");
-		}
-	}*/
 
-	//todo account for gripper size?
+	//todo account for gripper size? ???
 
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
 		nodeptr = nodeptr_; 
@@ -324,7 +339,13 @@ public:
 		if (agv_number == 1) {
 			return tf::Pose(tf::Quaternion(0,0,1,0),tf::Vector3(0.3,3.15,0.75));
 		}
-		return tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0.3,-3.15,0.75));
+		else if (agv_number == 2) {
+			return tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0.3,-3.15,0.75));
+		}
+		else {
+			ROS_ERROR("NO SUCH AGV %d",(int)agv_number);
+			return tf::Pose();
+		}
 	}
 
 	static bool part_exists(std::string part_name) {
@@ -353,20 +374,11 @@ protected:
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
 		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
-		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),4,4}; //correct
+		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),4,4,true}; //correct
 		type_data["piston_rod_part"] = {"piston_rod_part",0.007024,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2,true}; //correct
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
-		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),2,2};
-		//TODO: find values for these parts
-		//type_data["part1"] = {"part1",0.009996,0.004997,tf::Vector3(0.1,0.1,0),
-		//tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),5,5};
-		//type_data["part3"] = {"part3",0.009241,0.009615,tf::Vector3(0.2,0.2,0),
-		//tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,0),5,5};
-		type_data["part2"] = {"part2",0.009996,0.004997,tf::Vector3(0.1,0.1,0),
-		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),5,5};
-		type_data["part4"] = {"part4", 0.009879,0.009615,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,0),5,5};
+		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),2,2,false};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
 			object_data[i->first] = std::list<ObjectData>();
@@ -398,8 +410,7 @@ protected:
 				continue;
 			}
 			if (!lookup_map.count(full_name)) {
-				//TODO: support conveyor belts
-				ObjectData new_object(full_name,"world",&(type_data[part_type]));
+				ObjectData new_object(full_name,"world",&(type_data[part_type]),is_conveyor_part);
 				object_data[part_type].push_back(new_object);
 				lookup_map[full_name] = &(object_data[part_type].back());
 			}
@@ -445,9 +456,5 @@ int main(int argc, char ** argv) {
 	return 0;
 }
 */
-
-// todo:
-// subscribe to tf
-// create map of stuff
 
 
