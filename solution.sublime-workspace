@@ -4,324 +4,56 @@
 		"selected_items":
 		[
 			[
-				"REG",
-				"REGION_BIN_GRAB"
+				"laser",
+				"laser_scanner_1"
 			],
 			[
-				"add_ac",
-				"add_actions"
+				"sca",
+				"scan_pub_ptr"
 			],
 			[
-				"wait",
-				"wait_until_planned"
+				"null",
+				"nullptr"
 			],
 			[
-				"wait_",
-				"wait_until_executed"
+				"laser_",
+				"laser_scan_data_cache_size"
 			],
 			[
-				"stand",
-				"standard_actions"
+				"init",
+				"initialization"
 			],
 			[
-				"push",
-				"push_back\tvoid push_back(value_type &&__x)"
+				"num",
+				"number_of_valid_ranges"
 			],
 			[
-				"retrac",
-				"retract_action"
+				"size",
+				"size_t"
 			],
 			[
-				"last",
-				"last_action"
+				"ge",
+				"get_gripper_pose\ttf::StampedTransform get_gripper_pose()"
 			],
 			[
-				"arm_",
-				"arm_action\tarm_action"
+				"ros",
+				"ros_plan"
 			],
 			[
-				"regio",
-				"region_"
+				"x",
+				"x"
 			],
 			[
-				"wait_unt",
-				"wait_until_executed"
+				"y",
+				"y\tconst tfScalar & y() const"
 			],
 			[
-				"move_to",
-				"move_to_tray\tarm_action::Ptr move_to_tray"
-			],
-			[
-				"u",
-				"use_conveyor\tbool use_conveyor"
-			],
-			[
-				"use",
-				"use_trash\tbool use_trash"
-			],
-			[
-				"get_a",
-				"get_tray_pose"
-			],
-			[
-				"data",
-				"data_in"
-			],
-			[
-				"b",
-				"back\treference back()"
-			],
-			[
-				"grab_",
-				"grab_action\tarm_action::Ptr grab_action"
-			],
-			[
-				"arm",
-				"arm_action\tarm_action"
-			],
-			[
-				"Compe",
-				"CompetitionInterface\tCompetitionInterface"
-			],
-			[
-				"AGV",
-				"AGV1_callback\tvoid AGV1_callback(const std_msgs::String::ConstPtr msg)"
-			],
-			[
-				"AGV_st",
-				"AGV_status_lookup"
-			],
-			[
-				"AGV_sta",
-				"AGV_status_lookup\tstd::map<std::string, char> AGV_status_lookup"
-			],
-			[
-				"c",
-				"competition_solution"
-			],
-			[
-				"Jo",
-				"JointTrajectoryPoint_\tJointTrajectoryPoint_<class ContainerAllocator>"
-			],
-			[
-				"joint",
-				"joint_trajectory"
-			],
-			[
-				"p",
-				"plan"
-			],
-			[
-				"vacu",
-				"vacuum_enabled_end"
-			],
-			[
-				"pipe",
-				"pipeline_data"
-			],
-			[
-				"pipeline",
-				"pipeline_data\tpipeline_data"
-			],
-			[
-				"acti",
-				"action_name"
-			],
-			[
-				"traject",
-				"trajectory_end"
-			],
-			[
-				"waiut",
-				"wait_until_planned"
-			],
-			[
-				"transiti",
-				"transition_delay"
-			],
-			[
-				"pla",
-				"plan\tmoveit::planning_interface::MoveGroup::Plan * plan"
-			],
-			[
-				"emp",
-				"empty\tbool empty() const"
-			],
-			[
-				"vel",
-				"velocities"
-			],
-			[
-				"curre",
-				"current_velocity"
-			],
-			[
-				"wait_until",
-				"wait_until_planned"
-			],
-			[
-				"pl",
-				"plan\tmoveit::planning_interface::MoveGroup::Plan * plan"
-			],
-			[
-				"ve",
-				"velocities\t_velocities_type velocities"
-			],
-			[
-				"pull",
-				"pull_pose"
-			],
-			[
-				"e",
-				"end_delay\tdouble end_delay"
-			],
-			[
-				"g",
-				"get_grab_pose\ttf::Pose get_grab_pose(std::string part_name)"
-			],
-			[
-				"get",
-				"get_state\tunsigned char get_state(unsigned char index)"
-			],
-			[
-				"currently",
-				"currently_executing"
-			],
-			[
-				"curren",
-				"currently_executing"
-			],
-			[
-				"Po",
+				"P",
 				"Pose\tPose"
 			],
 			[
-				"inte",
-				"intermediate_action\tarm_action intermediate_action"
-			],
-			[
-				"inter",
-				"intermediate_plan"
-			],
-			[
-				"int",
-				"intermediate_plan"
-			],
-			[
-				"intermed",
-				"intermediate_points"
-			],
-			[
-				"joi",
-				"joint_trajectory"
-			],
-			[
-				"pu",
-				"push_back\tvoid push_back(value_type &&__x)"
-			],
-			[
-				"ms",
-				"_mm_srli_si128\t_mm_srli_si128(a, count)"
-			],
-			[
-				"JointTrajectoryP",
-				"JointTrajectoryPoint\tJointTrajectoryPoint"
-			],
-			[
-				"trans",
-				"transform_out\ttf::StampedTransform transform_out"
-			],
-			[
-				"NE",
-				"BOOST_NOEXCEPT_EXPR\tBOOST_NOEXCEPT_EXPR(Expression)"
-			],
-			[
-				"velo",
-				"velocity"
-			],
-			[
-				"retr",
-				"retract_action"
-			],
-			[
-				"next",
-				"nexttowardf\tfloat nexttowardf(float __x, long double __y)"
-			],
-			[
-				"na",
-				"names"
-			],
-			[
-				"time",
-				"time_from_start"
-			],
-			[
-				"tr",
-				"trajectory_end\tint trajectory_end"
-			],
-			[
-				"relat",
-				"relative_motion\tint relative_motion"
-			],
-			[
-				"node",
-				"nodeptr"
-			],
-			[
-				"ali",
-				"align_action\tarm_action * align_action"
-			],
-			[
-				"St",
-				"StampedTransform"
-			],
-			[
-				"plan",
-				"planning_status\tchar planning_status"
-			],
-			[
-				"add_",
-				"add_action"
-			],
-			[
-				"po",
-				"points"
-			],
-			[
-				"traj",
-				"joint_trajectory"
-			],
-			[
-				"wait_un",
-				"wait_until_planned"
-			],
-			[
-				"part_wa",
-				"part_wait_rate"
-			],
-			[
-				"to",
-				"toSec\tdouble DurationBase<Duration>::toSec() const"
-			],
-			[
-				"act",
-				"action_name\tstd::string action_name"
-			],
-			[
-				"trajecto",
-				"trajectory_msgs\ttrajectory_msgs::"
-			],
-			[
-				"movie",
-				"moveit_msgs\tmoveit_msgs::"
-			],
-			[
-				"w",
-				"wait_until_executed"
-			],
-			[
-				"gra",
-				"grab_pose\ttf::Pose grab_pose"
+				"get",
+				"getOrigin\ttf::Vector3 & Transform::getOrigin()"
 			],
 			[
 				"Stamped",
@@ -338,6 +70,10 @@
 			[
 				"Sam",
 				"StampedTransform\tStampedTransform"
+			],
+			[
+				"int",
+				"inter_frame_time"
 			],
 			[
 				"resul",
@@ -392,10 +128,6 @@
 				"Quaternion\tQuaternion"
 			],
 			[
-				"ge",
-				"get_type_info\tObjectTypeData * get_type_info()"
-			],
-			[
 				"ObJ",
 				"ObjectTypeData\tObjectTypeData"
 			],
@@ -410,6 +142,10 @@
 			[
 				"old",
 				"old_vector"
+			],
+			[
+				"g",
+				"getZ\tconst tfScalar & getZ() const"
 			],
 			[
 				"res",
@@ -456,6 +192,10 @@
 				"StampedTransform"
 			],
 			[
+				"St",
+				"StampedTransform\tStampedTransform"
+			],
+			[
 				"pose",
 				"poseStampedMsgToTF\tvoid poseStampedMsgToTF(const geometry_msgs::PoseStamped &msg, Stamped<Pose> &bt)"
 			],
@@ -496,12 +236,24 @@
 				"check_order"
 			],
 			[
+				"wait_un",
+				"wait_until_executed"
+			],
+			[
+				"wait",
+				"wait_for_move_complete"
+			],
+			[
 				"tray_of",
 				"tray_offset"
 			],
 			[
 				"drop",
 				"drop_offset"
+			],
+			[
+				"arm_",
+				"arm_process"
 			],
 			[
 				"gene",
@@ -514,6 +266,254 @@
 			[
 				"add_pl",
 				"add_plans"
+			],
+			[
+				"add_",
+				"add_actions"
+			],
+			[
+				"grab_o",
+				"grab_offset"
+			],
+			[
+				"ac",
+				"action_name"
+			],
+			[
+				"transform_",
+				"transform_from_vector"
+			],
+			[
+				"vacuu",
+				"vacuum_gripper_link"
+			],
+			[
+				"lis",
+				"listener"
+			],
+			[
+				"qual",
+				"qual3a"
+			],
+			[
+				"z_",
+				"z_local"
+			],
+			[
+				"loo",
+				"lookupTransform"
+			],
+			[
+				"kit_",
+				"kit_tally"
+			],
+			[
+				"recei",
+				"received_orders"
+			],
+			[
+				"off",
+				"offset"
+			],
+			[
+				"traj",
+				"trajectory_end"
+			],
+			[
+				"tat",
+				"target"
+			],
+			[
+				"targ",
+				"target_transform"
+			],
+			[
+				"Comp",
+				"CompetitionManager"
+			],
+			[
+				"currently",
+				"currently_planning"
+			],
+			[
+				"con",
+				"controller"
+			],
+			[
+				"plan",
+				"planner"
+			],
+			[
+				"vec",
+				"Vector3"
+			],
+			[
+				"star",
+				"start_state"
+			],
+			[
+				"INTE",
+				"INTERMEDIATE_AGV_1"
+			],
+			[
+				"INT",
+				"INTERMEDIATE_BIN"
+			],
+			[
+				"IN",
+				"INTERMEDIATE_CONVEYOR"
+			],
+			[
+				"I",
+				"INTERMEDIATE_AGV_1"
+			],
+			[
+				"curre",
+				"current_location"
+			],
+			[
+				"ARM_",
+				"ARM_REGION_NUM"
+			],
+			[
+				"AR",
+				"ARM_REGION_NUM"
+			],
+			[
+				"INTER",
+				"INTERMEDIATE_AGV_2"
+			],
+			[
+				"AGV_1",
+				"AGV_1_PREDROP"
+			],
+			[
+				"COMPE",
+				"COMPETITION_READY"
+			],
+			[
+				"end",
+				"end_competition"
+			],
+			[
+				"COM",
+				"COMPETITION_STATE"
+			],
+			[
+				"curren",
+				"current_plan_"
+			],
+			[
+				"height",
+				"height_offset"
+			],
+			[
+				"getRO",
+				"getRobotModel"
+			],
+			[
+				"waiti",
+				"waiting_for"
+			],
+			[
+				"gas",
+				"gasket_part_1_frame"
+			],
+			[
+				"tf",
+				"tf_exists"
+			],
+			[
+				"intermedi",
+				"intermediate_pose"
+			],
+			[
+				"basic",
+				"basic_get_intermediate"
+			],
+			[
+				"grasp",
+				"grasp_offset"
+			],
+			[
+				"pa",
+				"parallel_logic"
+			],
+			[
+				"toggle_",
+				"toggle_vacuum"
+			],
+			[
+				"current",
+				"current_plan"
+			],
+			[
+				"INTERMEDI",
+				"INTERMEDIATE_AGV_1"
+			],
+			[
+				"AGV_2_",
+				"AGV_2_PREDROP"
+			],
+			[
+				"node",
+				"nodeptr_"
+			],
+			[
+				"nodep",
+				"nodeptr"
+			],
+			[
+				"agv_t",
+				"AGV_topic"
+			],
+			[
+				"set",
+				"setEuler"
+			],
+			[
+				"traje",
+				"trajectoryEnd"
+			],
+			[
+				"PI",
+				"PIPELINE_NONE"
+			],
+			[
+				"execution",
+				"execution_status"
+			],
+			[
+				"planing",
+				"planning_status"
+			],
+			[
+				"PIPE",
+				"PIPELINE_PROCESSING"
+			],
+			[
+				"planning",
+				"planning_status"
+			],
+			[
+				"wat",
+				"wait_until_planned"
+			],
+			[
+				"current_cont",
+				"current_control_lock"
+			],
+			[
+				"current_ex",
+				"current_move_mutex"
+			],
+			[
+				"notif",
+				"notify_all"
+			],
+			[
+				"plann",
+				"planning_status"
 			]
 		]
 	},
@@ -523,8 +523,54 @@
 			"file": "src/solution_node.cpp",
 			"settings":
 			{
-				"buffer_size": 65650,
+				"buffer_size": 30809,
 				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/brual_cam/ariac_ws/src/laser_assembler/launch/laser_assembler.launch",
+			"settings":
+			{
+				"buffer_size": 405,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/brual_cam/ariac_ws/src/ariac_launch_1",
+			"settings":
+			{
+				"buffer_size": 220,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "54171 \nResearch and Development in the Physical, Engineering, and Life SciencesT\nThis industry comprises establishments primarily engaged in conducting research and experimental development in the physical, engineering, and life sciences, such as agriculture, electronics, environmental, biology, botany, biotechnology, computers, chemistry, food, fisheries, forests, geology, health, mathematics, medicine, nanotechnology, oceanography, pharmacy, physics, veterinary, and other allied subjects.\n\nEIN - 951642394\n",
+			"file": "/home/brual_cam/Desktop/OPT Extension Data/misc_data.txt",
+			"file_size": 512,
+			"file_write_time": 131410784098894209,
+			"settings":
+			{
+				"buffer_size": 513,
+				"line_ending": "Unix",
+				"name": "54171"
+			}
+		},
+		{
+			"file": "/home/brual_cam/ariac_ws/src/laser_scanner_utility/src/laser_scanner_node.cpp",
+			"settings":
+			{
+				"buffer_size": 65891,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/home/brual_cam/Desktop/Job Stuff/Job Applications 2017/git_codes/practice_codes/cpp_prog_practice/CMakeLists.txt",
+			"settings":
+			{
+				"buffer_size": 253,
 				"line_ending": "Unix"
 			}
 		}
@@ -536,10 +582,14 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 353.0,
-		"last_filter": "packa",
+		"height": 392.0,
+		"last_filter": "eas",
 		"selected_items":
 		[
+			[
+				"eas",
+				"EasyClangComplete: Clean current CMake cache"
+			],
 			[
 				"packa",
 				"Package Control: Install Package"
@@ -553,7 +603,7 @@
 				"EasyClangComplete: Clean current CMake cache"
 			]
 		],
-		"width": 458.0
+		"width": 476.0
 	},
 	"console":
 	{
@@ -574,69 +624,44 @@
 	},
 	"expanded_folders":
 	[
-		"/home/matt/ariac_ws/src/competition_solution",
-		"/home/matt/ariac_ws/src/competition_solution/config",
-		"/home/matt/ariac_ws/src/competition_solution/include",
-		"/home/matt/ariac_ws/src/competition_solution/launch",
-		"/home/matt/ariac_ws/src/competition_solution/src"
+		"/home/brual_cam/ariac_ws/src/competition_solution"
 	],
 	"file_history":
 	[
-		"/home/matt/ariac_ws/src/universal_robot/ur_driver/src/ur_driver/driver.py",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ConveyorBeltPlugin.cc",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/worlds/gear.world.template",
-		"/home/matt/ariac_ws/src/competition_solution/config/gear_configuration.yaml",
-		"/home/matt/ariac_ws/src/start_sim_qual2",
-		"/home/matt/ariac_ws/src/competition_solution/config/test_config.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/custom_config_test.yaml",
-		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
-		"/home/matt/ariac_ws/src/qualifier2_actual/config/gear_configuration.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/testpoint",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3b.yaml",
-		"/home/matt/ariac_ws/src/universal_robot/ur_gazebo/launch/ur10.launch",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3a.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/SideContactPlugin.cc",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/example_custom_config.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_user_config.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/launch/linear_arm_actuator/linear_arm_actuator.urdf.xacro",
-		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/joint_limits.yaml",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/joint_limits.yaml",
-		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/ompl_planning.yaml",
-		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/config/ur10.srdf",
-		"/home/matt/ariac_ws/src/universal_robot/ur10_moveit_config/ls",
-		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10_joint_limited_robot.urdf.xacro",
-		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10.urdf.xacro",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/VacuumGripperPlugin.cc",
-		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
-		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10_robot.urdf.xacro",
-		"/home/matt/ariac_ws/src/universal_robot/ur_bringup/launch/ur10_bringup.launch",
-		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/kinematics.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/launch/ur10/arm_controller_ur10_custom.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/simple_arm_vacuum_gripper/model.sdf",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/simple_arm_vacuum_gripper/model.config",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/simple_arm_vacuum_gripper/model.",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/warehouse_robot_ariac/model.sdf",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/warehouse_robot_ariac/model.config",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/warehouse_robot_ariac/model.",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/scenes/ariac.scene",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/rviz/ariac.rviz",
+		"/home/brual_cam/ariac_ws/src/competition_solution/include/object_manager.h",
+		"/home/brual_cam/ariac_ws/src/laser_scanner_utility/package.xml",
+		"/home/brual_cam/ariac_ws/src/ariac/osrf_gear/models/pulley_part_ariac/model.sdf",
+		"/home/brual_cam/ariac_ws/src/ariac/osrf_gear/models/gasket_part_ariac/model.sdf",
+		"/home/brual_cam/ariac_ws/src/ariac/osrf_gear/models/gasket_part_ariac/meshes/gasket.dae",
+		"/home/brual_cam/ariac_ws/src/universal_robot/ur_description/urdf/ur10.urdf.xacro",
+		"/home/brual_cam/ariac_ws/src/ariac/osrf_gear/models/pulley_part_ariac/meshes/pulley.dae",
 		"/opt/ros/indigo/lib/python2.7/dist-packages/roslaunch/nodeprocess.py",
-		"/opt/ros/indigo/include/std_msgs/Float64MultiArray.h",
-		"/opt/ros/indigo/include/std_msgs/Float64.h",
+		"/home/brual_cam/ariac_ws/src/laser_scanner_utility/solution.sublime-project",
+		"/home/brual_cam/ariac_ws/src/laser_scanner_utility/CMakeLists.txt",
+		"/home/brual_cam/ariac_ws/src/laser_scanner_utility/solution.sublime-workspace",
+		"/home/brual_cam/ariac_ws/src/laser_assembler/test/test_laser_assembler.launch",
+		"/home/brual_cam/Desktop/OMPL Planner Cofig Info",
+		"/home/brual_cam/ariac_ws/src/competition_solution/include/laser_scanner_utility.h",
+		"/home/brual_cam/ariac_ws/src/laser_assembler/launch/Untitled Document",
+		"/home/brual_cam/Downloads/review_guidance_nav_control (1)",
+		"/home/brual_cam/ariac_ws/src/competition_solution/CMakeLists.txt",
+		"/home/brual_cam/ariac_ws/src/universal_robot/ur10_moveit_config/config/ompl_planning.yaml",
+		"/home/brual_cam/ariac_ws/install/share/ur10_moveit_config/config/ompl_planning.yaml",
+		"/home/brual_cam/ariac_ws/src/ariac/osrf_gear/scenes/ariac.scene",
+		"/home/brual_cam/.ros/log/beeed96c-4718-11e7-9b8e-f48e38d78104/move_group-1*.log",
+		"/home/brual_cam/Downloads/ChargesAndPayments.csv",
+		"/home/brual_cam/.bashrc",
+		"/home/brual_cam/ariac_ws/src/universal_robot/ur3_moveit_config/config/ompl_planning.yaml",
+		"/home/brual_cam/ariac_ws/install/share/ur5_moveit_config/config/ompl_planning.yaml",
+		"/home/brual_cam/ariac_ws/install/share/ur3_moveit_config/config/ompl_planning.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ConveyorBeltPlugin.hh",
-		"/home/matt/ariac_ws/src/competition_solution/package.xml",
-		"/home/matt/Desktop/pseudocode",
-		"/home/matt/ariac_ws/src/moveit_start",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual2a.yaml",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual1a.yaml",
-		"/opt/ros/indigo/share/moveit_msgs/msg/RobotTrajectory.msg",
-		"/home/matt/ariac_ws/src/static_info",
+		"/home/matt/ariac_ws/src/start_sim_qual2",
 		"/home/matt/ariac_ws/src/competition_solution/include/advanced_publisher.h",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/msg/PopulationState.msg",
+		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/matt/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/PopulationPlugin.cc",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/osrf_gear/ARIAC.hh",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/script/gear.py",
@@ -645,10 +670,13 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/part1_ariac/model.sdf",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/part1_ariac/model.config",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/part1_ariac/model.",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3b.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/comp_conf2.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample_user_config.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/sample.yaml",
 		"/home/matt/ariac_ws/src/qualifier2_actual/src/qual2_actual_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/include",
+		"/home/matt/ariac_ws/src/competition_solution/package.xml",
 		"/home/matt/ariac_ws/src/competition_solution/src/qual2_node.cpp",
 		"/home/matt/ariac_ws/src/competition_solution/src/CMakeLists.txt",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/part4/model.sdf",
@@ -658,16 +686,20 @@
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/script/startup.sh",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/pulley_part_ariac/model.sdf",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/models/piston_rod_part_ariac/model.sdf",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
 		"/home/matt/ariac_ws/src/qualifier2_solution/config/gear_configuration.yaml",
 		"/home/matt/ariac_ws/src/qualifier2_solution/src/qual2_node.cpp",
 		"/home/matt/qual3_sub/b/log/performance.log",
 		"/home/matt/ariac_ws/src/competition_example/config/sampe",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3a.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/gear_part/model.sdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part/model.sdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part_ariac/model.sdf",
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/kinematics.yaml",
 		"/home/matt/ariac_ws/src/nistinfo.txt",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/controller/arm_controller_ur10.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/vendor/ur_description/urdf/ur10.urdf.xacro",
+		"/home/matt/ariac_ws/src/moveit_start",
 		"/home/matt/ariac_ws/install/share/osrf_gear/launch/ur10/ur10.urdf.xacro",
 		"/home/matt/ariac_ws/src/start_sim2",
 		"/home/matt/ariac_ws/src/qualifier2_solution/CMakeLists.txt",
@@ -676,14 +708,17 @@
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/ur10_moveit_planning_execution.launch",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/move_group.launch",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/launch/ur10.launch",
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/joint_limits.yaml",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/ompl_planning.yaml",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/controllers.yaml",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/ur10.srdf",
 		"/home/matt/ariac_ws/install/share/osrf_gear/vendor/ur_description/urdf/ur.transmission.xacro",
 		"/tmp/ariac/gear.launch",
 		"/tmp/ariac/gear.",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/worlds/gear.world.template",
 		"/home/matt/ariac_ws/install/share/ur_gazebo/launch/ur10_joint_limited.launch",
 		"/home/matt/ariac_ws/install/share/osrf_gear/models/piston_rod_part_ariac/model.config",
+		"/home/matt/ariac_ws/src/qualifier2_actual/config/gear_configuration.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/qual2a.yaml",
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/qual2b.yaml",
 		"/home/matt/ariac_qual2/my_team.txt",
@@ -706,14 +741,25 @@
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/comp_conf1.yaml",
 		"/home/matt/.bashrc",
 		"/home/matt/Desktop/notes.txt",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/VacuumGripperPlugin.cc",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/osrf_gear/VacuumGripperPlugin.hh",
 		"/home/matt/ariac_ws/src/qualifier2_solution/src",
 		"/home/matt/ariac_ws/src/competition_example/config/sample_gear_conf.yaml",
-		"/home/matt/ariac_ws/src/qualifier2_solution/assets/ariac.scene"
+		"/home/matt/ariac_ws/src/qualifier2_solution/assets/ariac.scene",
+		"/home/matt/ariac_ws/src/qualifier2_solution/scenes/ariac.scene",
+		"/home/matt/ariac_ws/src/qualifier2_solution/config/sample_gear_conf.yaml",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSVacuumGripperPlugin.cc",
+		"/home/matt/ariac_ws/src/src/VacuumGripperPlugin.cc",
+		"/home/matt/ariac_ws/src/src/ROSVacuumGripperPlugin.cc",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/AriacScorer.cpp",
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/moveit_rviz.launch",
+		"/home/matt/ariac_ws/install/share/ur10_moveit_config/launch/moveit.rviz",
+		"/home/matt/ariac_ws/src/competition_example/launch/default_launch.launch",
+		"/home/matt/ariac_ws/src/start_sim"
 	],
 	"find":
 	{
-		"height": 48.0
+		"height": 35.0
 	},
 	"find_in_files":
 	{
@@ -727,151 +773,141 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"SQUARE",
-			"kit_Tally",
-			"planner",
-			"number_orders",
-			"vector",
-			"new_region",
-			"execute\\(",
-			" we ",
-			"pullup_",
-			"static",
-			"vacuum_enabled",
-			"vacuum_enabled_end",
-			"POSITIVE_INTERMEDIATE",
-			"NEGATIVE_INTERMEDIATE",
-			"negative_intermed",
-			"joints",
-			"start_competition",
-			"within_toler",
-			"toleran",
-			"todo",
-			"agv_status",
-			"AGV_base",
-			"agv_info",
-			"callback",
-			"todo",
-			"arm_control",
-			"\t\t\t",
-			"TODO",
-			"todo",
-			"world",
-			"frame",
-			"_frame",
-			"frame",
-			"logical.camera",
-			"camera",
-			"faul",
-			"gazebo",
-			"belt",
-			":\n",
-			"belt",
-			"result_v",
-			"filter",
-			"conveyor",
-			"timing",
-			"acceleration",
-			"has_acceleration_limits: true",
-			"velocity",
-			"control_msg",
-			"joint_con",
-			"get_tra",
-			"jointtrajectorypoint",
-			"  ",
-			"plan_interm",
-			"use_intermediate",
-			"intermediate",
-			"delete",
-			"use_intermed",
-			"arm_trans",
-			"static",
-			"type_data",
 			"pipeline_data",
-			"while",
-			"NULL",
-			"bind",
-			"OCELOT",
-			"&",
-			"&&",
-			"&",
-			"arm_action\\s?\\*",
-			"arm_action",
+			"ros::Time",
+			"tf::vec",
+			"tf_publish",
+			"tf_callback",
+			"lookup_map",
+			"tf_publisher",
+			"TransformStamped",
+			"publiser",
+			"pub",
+			"iost",
+			"compe",
+			"compe\n",
+			"logical_camera_callback",
+			"CompetitionInterface",
+			"laser_profiler_callback",
+			"competition_callback",
 			"move",
-			"execute",
-			"2.0",
-			"5.0",
-			"velocity",
-			"grab_action",
-			"0.1",
-			"\\>.*?0",
-			"2.0",
-			"plan\\(",
-			"for",
-			"end_delay",
-			"end_Delay",
-			"end_Delayt",
-			"toggle attempted",
-			"grab_action",
-			"plan\\(",
-			"planner",
-			"get_state",
+			"ros_plan",
+			"manip",
+			"lookup_",
+			"world",
+			"MoveGroup",
+			"Planner",
+			"StampedTransform",
+			"getX",
+			"StampedTransform",
+			"PLAN STA",
+			"poseStampedTFToMsg",
+			"listener",
+			"moveit::",
+			"geome",
+			"Pose",
+			"current",
+			"generate_intermediate",
+			"identity",
+			"plan",
+			"grab(",
+			"grab",
+			"ObjectData",
+			"get_current_lo",
+			"current_trans",
+			"lookup_map",
+			"publish",
+			"min",
+			"\n\t\t\t",
+			"result_v",
+			"0.02",
+			"handle_pose",
+			"tf::Vector3\\(0,0,(0\\.\\d+)\\)",
 			"move",
-			"0.4",
-			"arm_trans",
-			"jointmsg",
-			"parent\\s+=",
-			"NEGATIVE",
-			";\n",
-			"vector",
-			"controller",
-			"competitioninterf",
-			"include",
-			"ei",
-			"controller",
-			"move",
-			"void void",
-			"void voif",
-			"void void",
-			"execute_",
-			"toggle_",
-			"vacuum_gripper",
-			"vacuum_enabled",
-			"dist",
-			"0.2",
-			"vacuum",
-			"vacuum_gripper",
-			"1.5",
-			"kMaxBeltLinVel",
-			"beltVeloc",
-			"0.2",
-			"arm_location",
-			"execute_",
-			"generic_state",
-			"start_state",
-			"integrate",
-			"keybo",
 			"logic",
-			"dummy_action",
-			"new arm_action",
-			"plan_b"
+			"arm_action",
+			"add_new_pose",
+			"result_v",
+			"max_aver",
+			"get_current_",
+			"publisher",
+			"parent",
+			"Time\\(",
+			"\\(\\)\\(",
+			"lookupTransform",
+			"\\(\\)",
+			"\\(\\)\\(\\)",
+			"()()",
+			"full_name",
+			"reference_frame",
+			"Vector3",
+			"disk_part",
+			"add_new",
+			"tf_pu",
+			"relative_tf",
+			"TransformStamped",
+			"stamped<tf::pose>",
+			"\t\t\n",
+			"install",
+			"type_data",
+			"clone",
+			"start_competition",
+			"nodeha",
+			"subscribe",
+			"modeltype",
+			"clone",
+			"public",
+			"current_sc",
+			"subscrib",
+			"0.3",
+			"subscriptions",
+			"static",
+			"subscr",
+			"subscri",
+			"object_output",
+			"print",
+			"xyz_start",
+			"model_to_spawn_dic",
+			"xyz_st",
+			"default_bin_origin",
+			"tf::",
+			"drop",
+			"end_delay",
+			"rotation_offs",
+			"set_rotatio",
+			"Euler",
+			"euler",
+			"minidrop",
+			"grab",
+			"logical_camera_4_piston_rod_part_2_frame",
+			"transform_from",
+			"minidro",
+			"minidrop",
+			"0\\.1",
+			"identity",
+			"rotation_offse",
+			"rotation_offsetr",
+			"setRotati",
+			"drop_po",
+			"blocking_call",
+			"qual3a",
+			"qual3b",
+			"grab",
+			"set_convey",
+			"set_conveyor",
+			"sleep\\(",
+			"\n#",
+			"nodeptr_",
+			"part_waiting",
+			"qual3",
+			"set_convey"
 		],
 		"highlight": true,
 		"in_selection": false,
 		"preserve_case": false,
-		"regex": true,
+		"regex": false,
 		"replace_history":
 		[
-			"vacuum_enabled",
-			"POSITIVE_CONFIGURATION",
-			"NEGATIVE_CONFIGURATION",
-			"AGV_status",
-			"nullptr",
-			"&&",
-			"",
-			"OCELOT",
-			"",
-			"arm_action::Ptr",
 			"result_p",
 			"handle_transform",
 			"$1",
@@ -907,7 +943,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 4,
 			"sheets":
 			[
 				{
@@ -916,35 +952,171 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 65650,
+						"buffer_size": 30809,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3721,
-								3721
+								8273,
+								8273
 							]
 						],
 						"settings":
 						{
-							"history_list_is_closing": true,
 							"syntax": "Packages/C++/C++.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 10696.0,
+						"translation.y": 5219.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/home/brual_cam/ariac_ws/src/laser_assembler/launch/laser_assembler.launch",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 405,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								405,
+								405
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/home/brual_cam/ariac_ws/src/ariac_launch_1",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 220,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								220,
+								220
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/home/brual_cam/Desktop/OPT Extension Data/misc_data.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 513,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								513,
+								513
+							]
+						],
+						"settings":
+						{
+							"auto_name": "54171",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/home/brual_cam/ariac_ws/src/laser_scanner_utility/src/laser_scanner_node.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 65891,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2822,
+								2822
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1471.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "/home/brual_cam/Desktop/Job Stuff/Job Applications 2017/git_codes/practice_codes/cpp_prog_practice/CMakeLists.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 253,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								37,
+								37
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
 				}
-			]
-		},
-		{
-			"sheets":
-			[
 			]
 		}
 	],
@@ -965,12 +1137,6 @@
 				0,
 				1,
 				1
-			],
-			[
-				0,
-				1,
-				1,
-				2
 			]
 		],
 		"cols":
@@ -981,7 +1147,6 @@
 		"rows":
 		[
 			0.0,
-			0.797697368421,
 			1.0
 		]
 	},
@@ -1002,7 +1167,7 @@
 	"project": "solution.sublime-project",
 	"replace":
 	{
-		"height": 90.0
+		"height": 48.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1044,7 +1209,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": false,
-	"side_bar_width": 148.0,
+	"side_bar_width": 177.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
