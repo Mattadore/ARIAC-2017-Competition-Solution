@@ -1,3 +1,6 @@
+#ifndef OBJECT_MANAGER_H_
+#define OBJECT_MANAGER_H_
+
 #include <algorithm>
 #include <vector>
 #include <utility>
@@ -30,7 +33,6 @@
 #include <boost/thread.hpp>
 #include <boost/regex.hpp> 
 #include <geometry_msgs/Pose.h>
-#include <moveit/move_group_interface/move_group.h>
 #include <moveit/robot_state/conversions.h>
 
 //tf_publisher_data data;
@@ -62,8 +64,6 @@
 
 //sinking, not wrong
 
-//TODO: calculate drop time on conveyor using maths
-//TODO: find conveyor top surface height
 
 namespace tracker {
 	const unsigned char max_average_num = 45;
@@ -90,15 +90,16 @@ struct ObjectTypeData {
 	tf::Vector3 bin_start_point;
 	tf::Vector3 bin_end_point;
 	tf::Vector3 bin_start_rpy;
+	tf::Vector3 conveyor_start_rpy;
 	unsigned char bin_x_num;
 	unsigned char bin_y_num;
 	bool unique_orientation;
+	double radius;
 };
 
 //TODO: find rough gripper size?
 //TODO: find rough part radius?
 struct grid_structure {
-	double bias;
 	double start_x;
 	double start_y;
 	char num_x;
@@ -106,6 +107,7 @@ struct grid_structure {
 };
 
 struct bin_data {
+	std::string bin_name;
 	ObjectTypeData * type_data;
 	std::vector<grid_structure> structures_possible;
 	grid_structure current_structure_belief;
@@ -308,6 +310,10 @@ public:
 		}
 	}
 
+	static void part_pick_occurred() {
+		//do something when part pick occurs
+	}
+
 	static tf::StampedTransform get_gripper_pose(ros::Time time_in = ros::Time::now()) {
 		tf::StampedTransform transform_out;
 		listener->lookupTransform("world","vacuum_gripper_link",ros::Time(0),transform_out);
@@ -370,15 +376,15 @@ protected:
 	}
 	static void initialize_object_types() {
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,true}; //correct
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,true}; //correct
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
-		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),4,4,true}; //correct
+		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0),4,4,true}; //correct
 		type_data["piston_rod_part"] = {"piston_rod_part",0.007024,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),2,2,true}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,true}; //correct
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
-		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),2,2,false};
+		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,false};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
 			object_data[i->first] = std::list<ObjectData>();
@@ -428,6 +434,7 @@ protected:
 	static std::map<std::string,std::list<ObjectData> > object_data;
 	static std::map<std::string,ObjectTypeData> type_data;
 	static std::map<std::string,ros::Subscriber> subscriptions;
+	static std::map<std::string,bin_data *> bin_data_lookup;
 	static tf::TransformListener * listener;
 	static ros::NodeHandle * nodeptr;
 	static ros::Publisher tf_publisher;
@@ -457,4 +464,59 @@ int main(int argc, char ** argv) {
 }
 */
 
+//Grid structure:
+//list of possible grid alignments
+//generate new grid alignments:
+	//observation based
+		//keep list of observations
+			//positive pose observations + grab poses
+			//negative pose observations + grab poses
+	//have certain observations weighted more heavily
+	//when we get back the location of a part, compare with expected
+	
+	//need method that, given a specific number of x and y parts as well as offsets,
+	//returns a list of part locations, corresponding to what we'd expect
+	//needs to work when there are multiple of a kind of part bin
 
+	//needs a bin tracker with bin properties
+	//bin structs maintain grids?
+	//should we instead expand the object type struct?
+	//would make the flow clearer
+
+	//need to make object tracker track picked up parts
+	//need to automatically link the likeliest picked up part when a part is picked up
+
+	//give tenative generated possibilities lower weights
+	
+	//have both a bin tracker and a part type tracker, but use part type tracker primairly
+	
+//properties:
+	//should be able to be fed in observations
+	//should be able to return the "best" pickup pose, covers most bases
+	//when determining which part to grab, possibly grab from lower bins if it seems that we're out of parts
+
+	//whenever a part is picked up, update each possible grid's likelihood once the transform is known
+	//try to find grid that best explains data
+	//maybe have grid offsets, random permutations?
+	//!!TREAT X AND Y ERROR SEPARATELY
+	//Be mindful of minimum possible spacing:
+
+	//give each alignment number a set of possible spacings
+	//possible algorithm:
+		//always pick a point that grabs from most likely grid
+		//never pick a center part
+
+		//pick second part from other side
+		//try to pick most "informative" part
+
+	//be aware of mirroring
+	//only break mirroring if irrefutable evidence to the contrary
+
+	//create comparator for different configurations
+
+	//what do we know once we pick a part?
+	
+	//update weights based off of how similar to an observation, as compared to other parts
+	//what is "acceptable" distance?
+
+#endif

@@ -527,6 +527,14 @@
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
+		},
+		{
+			"file": "include/object_manager.h",
+			"settings":
+			{
+				"buffer_size": 16976,
+				"line_ending": "Unix"
+			}
 		}
 	],
 	"build_system": "",
@@ -574,14 +582,11 @@
 	},
 	"expanded_folders":
 	[
-		"/home/matt/ariac_ws/src/competition_solution",
-		"/home/matt/ariac_ws/src/competition_solution/config",
-		"/home/matt/ariac_ws/src/competition_solution/include",
-		"/home/matt/ariac_ws/src/competition_solution/launch",
-		"/home/matt/ariac_ws/src/competition_solution/src"
+		"/home/matt/ariac_ws/src/competition_solution"
 	],
 	"file_history":
 	[
+		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/ariac_ws/src/universal_robot/ur_driver/src/ur_driver/driver.py",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ConveyorBeltPlugin.cc",
@@ -590,7 +595,6 @@
 		"/home/matt/ariac_ws/src/start_sim_qual2",
 		"/home/matt/ariac_ws/src/competition_solution/config/test_config.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/custom_config_test.yaml",
-		"/home/matt/ariac_ws/src/competition_solution/src/solution_node.cpp",
 		"/home/matt/ariac_ws/src/qualifier2_actual/config/gear_configuration.yaml",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/testpoint",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/config/qual3b.yaml",
@@ -713,7 +717,7 @@
 	],
 	"find":
 	{
-		"height": 48.0
+		"height": 26.0
 	},
 	"find_in_files":
 	{
@@ -923,8 +927,8 @@
 						"selection":
 						[
 							[
-								3721,
-								3721
+								24,
+								24
 							]
 						],
 						"settings":
@@ -934,7 +938,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 10696.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -943,8 +947,38 @@
 			]
 		},
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 1,
+					"file": "include/object_manager.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 16976,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -967,21 +1001,21 @@
 				1
 			],
 			[
+				1,
 				0,
-				1,
-				1,
-				2
+				2,
+				1
 			]
 		],
 		"cols":
 		[
 			0.0,
+			0.5,
 			1.0
 		],
 		"rows":
 		[
 			0.0,
-			0.797697368421,
 			1.0
 		]
 	},
@@ -1002,7 +1036,7 @@
 	"project": "solution.sublime-project",
 	"replace":
 	{
-		"height": 90.0
+		"height": 48.0
 	},
 	"save_all_on_build": true,
 	"select_file":
