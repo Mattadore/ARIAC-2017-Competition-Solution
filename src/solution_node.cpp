@@ -412,7 +412,7 @@ public:
 
  		planner.wait_until_planned(standard_actions.back());
  		controller.wait_until_executed(move_to_tray);
-
+ 
 		ros::Duration pipeline_time;
 		std::vector<arm_action::Ptr>* action_list;
 	 	if (!quality_sensor_reading.models.empty()) { //Oh boy

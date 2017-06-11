@@ -91,31 +91,119 @@ struct ObjectTypeData {
 	tf::Vector3 bin_end_point;
 	tf::Vector3 bin_start_rpy;
 	tf::Vector3 conveyor_start_rpy;
-	unsigned char bin_x_num;
-	unsigned char bin_y_num;
+	unsigned char bin_num_min;
+	unsigned char bin_num_max;
 	bool unique_orientation;
 	double radius;
 };
 
-//TODO: find rough gripper size?
-//TODO: find rough part radius?
-struct grid_structure {
-	double start_x;
-	double start_y;
-	char num_x;
-	char num_y;
-};
+
 
 struct bin_data {
+protected:
+	//bin size is 0.6
+	//only rescale axes when pertinent observations come in
+	struct grid_structure {
+		//0 is x 1 is y
+		double scale[2] = {0,0};
+		char num[2];
+		std::list<tf::Vector3> observations;
+		double radius = 0.0;
+		char elements[2] = {0,0};
+		char observations = 0;
+		grid_structure(double rad,char x, char y) {
+			radius = rad;
+			num[0] = x;
+			num[1] = y;
+		}
+		//fills iterates x outer, y inside
+		char axis_index_from_id(char axis,char number) {
+			if (axis == 0) {
+				return ((number-1)/num[0])+1;
+			}
+			else {
+				return ((number-1)%num[1])+1;
+			}
+		}
+		inline tf::Vector3 position_from_id(char number) {
+			return position_from_index(x_axis_index_from_id(number),y_axis_index_from_id(number));
+		}	
+		inline bool is_central(char axis, char id) {
+			return (((num[axis]%2)==1)&&(id==(num[axis]/2+1))); //if odd and in the center
+		}
+		inline tf::Vector3 position_from_index(char x,char y) {
+			tf::Vector3(scale[0]*get_index_scaling(0,x),scale[1]*get_index_scaling(1,y),0);
+		}
+		inline double get_index_scaling(char axis,char index) {
+			return ((double)index)-((x+1)/2.0);
+		}
+		bool incorporate(tf::Pose & location, char id_number = 0) {
+			++observations;
+			if (id_number != 0) { //if we know the id
+
+				//set unset values
+				//compare true value to false value, check if outside a range of radius from where should be
+				//scale always more than radius
+				tf::Vector3 true_location = location.getOrigin();
+				double temp_scale[2] = {0,0};
+				for (char axis=0;axis<=1;++axis) {
+					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
+						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
+							return false;
+						}
+					}
+					else {
+						double scaling_factor = get_index_scaling(axis,axis_index_from_id(axis,id_number));
+						//calculate the scaling for this input
+						temp_scale[axis] = true_location.m_floats[axis]/scaling_factor;
+
+						//do a bunch of checks
+						if (temp_scale[axis] < 2*radius){ //checks both the quadrant and the minimum spacing
+							return false;
+						}
+						if ((temp_scale[axis] * (num[axis]-1)) > (0.6-2*radius)) { //checks max spacing
+							return false;
+						}
+						if (elements[axis] != 0) { //EXISTING GRID
+							double expected_location = scaling_factor * scale[axis];
+							if (std::abs(expected_location-true_location.m_floats[axis]) > radius) { //does not align to grid
+								return false;
+							}
+							//update average
+							scale[axis] *= ((double)elements[axis])/((double)elements[axis]+1.0);
+							scale[axis] += (1.0/((double)elements[axis]+1)) * temp_scale[axis];
+						}
+						else {
+							scale[axis] = temp_scale[axis];
+						}
+						++elements[axis];
+					}
+				}
+			}
+		}
+	};
+public:
 	std::string bin_name;
 	ObjectTypeData * type_data;
-	std::vector<grid_structure> structures_possible;
-	grid_structure current_structure_belief;
-	std::list<tf::Vector3> known_object_locations;
+	std::list<grid_structure> structures_possible;
+	std::vector<tf::Pose> known_object_locations;
 	tf::Pose object_rotation_transformation; //if below is not set, use bias in objecttypedata
-	bool object_rotation_transformation_known; //lets code know if there is a known, measured rotation offset
+	std::list<tf::Pose> smart_grasp_attempts;
+	bool object_rotation_transformation_known;	//lets code know if there is a known, measured rotation offset
 												//todo: latch rotation offset to above value/
 												//other values if close (depending on noise)
+	bool grid_complete() {
+
+	}
+	void add_observation(tf::Pose pose_in, char id_number = 0) {
+		//AXIS ADJUST HERE
+		tf::Pose pose_corrected;
+		known_object_locations.push_back(pose_in);
+
+	}
+	tf::Vector3 get_grasp_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+
+	}
 
 	//TODO: have a boolean or something if the above is valid. maybe it'll just get it from grid info, actually?
 };
@@ -282,7 +370,6 @@ protected:
 
 class ObjectTracker {
 public:
-
 	//todo account for gripper size? ???
 
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
@@ -379,15 +466,15 @@ protected:
 	}
 	static void initialize_object_types() {
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,true}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,3,true,0.05}; //correct
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,true}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,3,true,0.05}; //correct
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
-		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0),4,4,true}; //correct
-		type_data["piston_rod_part"] = {"piston_rod_part",0.007024,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,true}; //correct
+		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0),1,5,true,0.04}; //correct
+		type_data["piston_rod_part"] = {"piston_rod_part",0.07024,0.004951,tf::Vector3(0.2,0.2,0),
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,4,true,0.04}; //correct
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
-		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),2,2,false};
+		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,2,false,0.1};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
 			object_data[i->first] = std::list<ObjectData>();
