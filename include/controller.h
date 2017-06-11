@@ -115,6 +115,7 @@ protected:
 			break_thread = new boost::thread(boost::bind(&Controller::grab_break,this));
 		}
 		CompetitionInterface::toggle_vacuum(to_move->vacuum_enabled);
+		CompetitionInterface::set_arm_region(to_move->region);
 		ros::Time start_time = ros::Time::now();
 		arm_control_group.execute(*(to_move->plan));
 		if (!force_stop) {

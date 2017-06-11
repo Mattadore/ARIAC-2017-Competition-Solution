@@ -129,6 +129,9 @@ public:
 	void reference_swap(std::string new_reference_name) {
 
 	}
+	void reset_filtering() {
+		
+	}
 	std::string & get_name() {
 		return part_name;
 	}
@@ -447,8 +450,6 @@ std::map<std::string,ros::Subscriber> ObjectTracker::subscriptions;
 tf::TransformListener * ObjectTracker::listener;
 ros::NodeHandle * ObjectTracker::nodeptr;
 ros::Publisher ObjectTracker::tf_publisher;
-
-
 
 /*
 int main(int argc, char ** argv) {

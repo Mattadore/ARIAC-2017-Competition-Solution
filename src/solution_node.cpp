@@ -146,7 +146,7 @@
 //TODO: calculate drop time on conveyor using maths
 //TODO: find conveyor top surface height
 
-
+//TODO: if belt part spacing is good, use belt, otherwise wait it out
 
 //!!!NOTE: possibly take all parts from conveyor and put on an agv.
 //worst case, I spend some time fishing around for parts.
@@ -238,11 +238,11 @@ public:
 
 	//actions and planning
 	void update() { //happens once per spin cycle
-		const std::vector<osrf_gear::Order>  orders = CompetitionInterface::get_orders();
+		std::vector<osrf_gear::Order> & orders = CompetitionInterface::get_orders();
 		if (orders.size() > number_orders) {
 			for (int order_i = (number_orders-1); order_i<orders.size(); ++order_i) {
 				for (int kit_i = 0; kit_i<orders[order_i].kits.size(); ++kit_i) {
-					kit_tally[orders[order_i].kits[kit_i].kit_type] = orders[order_i].kits[kit_i]; //makes new second copy of all kits
+					kit_tally[&(orders[order_i].kits[kit_i])] = kit_metadata(orders[order_i].kits[kit_i]); //makes new second copy of all kits
 				}
 			}
 			number_orders = orders.size();
@@ -434,60 +434,68 @@ public:
  		}
 	 	return pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
 	}
+
+	//---------------object space management logic
+
+	//greedy kit assignment
+	void assign_kits() {
+		if (AGV_info[0].assigned() && AGV_info[1].assigned()) {
+			return;
+		}
+		for (std::map<osrf_gear::Kit *,kit_metadata>::iterator tally_i = kit_tally.begin();tally_i!=kit_tally.end();++tally_i) {
+			if (tally_i->second.agv_number == 0) {
+				if (!(AGV_info[0].assigned())) {
+					assign_kit(tally_i->first, 1);
+				}
+				else if (!(AGV_info[1].assigned())) {
+					assign_kit(tally_i->first, 2);
+				}
+			}
+		}
+	}
+
+
+
 	//---------------control logic
 	void arm_process() {
 		ROS_INFO("Logic process started");
 		ros::Duration(1).sleep();
 		ros::Duration wait_rate(0.03);
-		/*while (received_orders.size() == 0) {
-			wait_rate.sleep();
-		}*/
-
+		
 		CompetitionInterface::toggle_vacuum(false);
-		ros::Duration(2.5).sleep();
-
-		tf::Pose agv1_pose = ObjectTracker::get_tray_pose(1);
-		arm_action::Ptr intermediate_move(new arm_action(nullptr,agv1_pose,REGION_BINS));
-		intermediate_move->use_intermediate = true;
-		ros::Time start_time = ros::Time::now();
-		planner.add_action(intermediate_move);
-		controller.add_action(intermediate_move);
-		controller.wait_until_executed(intermediate_move);
-		ros::Duration time_taken = ros::Time::now() - start_time;
-		ros::Duration expected_time = intermediate_move->plan->trajectory_.joint_trajectory.points.back().time_from_start;
-		ROS_INFO("Time expected: %fs, time taken: %fs",expected_time.toSec(),time_taken.toSec());
-
-
-		// tf::Pose arm_trans;
-		// arm_trans = ObjectTracker::get_tray_pose(1);
-		// //arm_trans=tf::Pose(identity,tf::Vector3(0,0,0.25))*arm_trans;
-
-		// arm_action::Ptr intermediate_action(new arm_action(arm_trans,nullptr));
-		// intermediate_action->use_intermediate = true;
-		// intermediate_action->trajectory_end = arm_trans;
-		// arm_action::Ptr align_action(new arm_action(arm_trans,intermediate_action));
-		// //align_action.pick_part = true;
-		// align_action->vacuum_enabled = true;
-		// align_action->end_delay = 3.0;
-		// align_action->trajectory_end = arm_trans;
-		// tf::Pose lift_pose = tf::Pose(identity,tf::Vector3(0,0,1.0))*arm_trans;
-		// arm_action::Ptr lift_action(new arm_action(lift_pose,align_action));
-		// lift_action->vacuum_enabled = true;
-		// planner.add_action(intermediate_action);
-		// planner.add_action(align_action);
-		// planner.add_action(lift_action);
-		// controller.add_action(intermediate_action);
-		// controller.add_action(align_action);
-		// controller.wait_until_executed(align_action);
-		// auto last = lift_action->plan->trajectory_.joint_trajectory.points.back();
-		// lift_action->plan->trajectory_.joint_trajectory.points.clear();
-		// lift_action->plan->trajectory_.joint_trajectory.points.push_back(last);
-		// ros::Duration(3.0).sleep();
-		// controller.add_action(lift_action);
-		// controller.wait_until_executed(lift_action);
-		//delete align_action;
-
 		CompetitionInterface::start_competition();
+
+		while (CompetitionInterface::get_state(COMPETITION_STATE) == COMPETITION_GO) {
+			wait_rate.sleep();
+			if (kit_tally.empty()) {
+				continue;
+			}
+
+			assign_kits();
+
+
+		}
+
+
+
+
+		//ros::Duration(2.5).sleep();
+
+		// tf::Pose agv1_pose = ObjectTracker::get_tray_pose(1);
+		// arm_action::Ptr intermediate_move(new arm_action(nullptr,agv1_pose,REGION_BINS));
+		// intermediate_move->use_intermediate = true;
+		// ros::Time start_time = ros::Time::now();
+		// planner.add_action(intermediate_move);
+		// controller.add_action(intermediate_move);
+		// controller.wait_until_executed(intermediate_move);
+		// ros::Duration time_taken = ros::Time::now() - start_time;
+		// ros::Duration expected_time = intermediate_move->plan->trajectory_.joint_trajectory.points.back().time_from_start;
+		// ROS_INFO("Time expected: %fs, time taken: %fs",expected_time.toSec(),time_taken.toSec());
+
+
+
+
+		//CompetitionInterface::start_competition();
 
 
 		// trajectory_msgs::JointTrajectory traj;
@@ -641,42 +649,6 @@ public:
 
 
 
-	// arm_regions locate(tf::Vector3 position) {
-	// 	if (position.getZ() < somenumber) {
-	// 		return GROUND; //hopefully never
-	// 	}
-	// 	else if (abs(position.getX()) > somenumber) {
-	// 		if (position.getZ() < somenumber) {
-	// 			//we're picking up a part
-
-	// 		}
-	// 		//it's in the region zone thing
-	// 	}ls
-	// 	else if (position.getX() < somenumber) {
-	// 		return CONVEYOR;
-	// 	}
-	// 	else {
-	// 		if (position.getY() > somenumber) {
-	// 			if (position.getZ() > somenumber) {
-	// 				return AGV_1_PREDROP;
-	// 			}
-	// 			else {
-	// 				return AGV_1; //just guessing which agv is which
-	// 			}
-	// 		}
-	// 		else if (position.getY() < somenumber) {
-	// 			if (position.getZ() > somenumber) {
-	// 				return AGV_2_PREDROP;
-	// 			}
-	// 			else {
-	// 				return AGV_2; //just guessing which agv is which
-	// 			}
-	// 		else {
-	// 			return INTERMEDIATE;
-	// 		}
-	// 	}
-	// }
-
 
 
 	//CompetitionManager() : buffer(ros::Duration(1.0)),
@@ -716,14 +688,63 @@ public:
 	Controller controller;
 
 protected:
+	void assign_kit(osrf_gear::Kit * to_assign,char agv_number) {
+		if (kit_tally.count(to_assign) == 0) {
+			ROS_ERROR("Kit does not exist");
+			return;
+		}
+		if ((agv_number!=1)&&(agv_number!=2)) {
+			ROS_ERROR("AGV does not exist");
+			return;
+		}
+		kit_metadata & data = kit_tally[to_assign];
+		AGV_metadata & agv = AGV_info[agv_number-1];
+		if (agv.current_kit == to_assign) {
+			return;
+		}
+		if (agv.current_kit != nullptr) { //if currently assigned
+			if (kit_tally.count(agv.current_kit) != 0) { //if kit exists
+				kit_tally[agv.current_kit].agv_number = 0; //reassign kit to nothing
+			}
+		}
+		data.agv_number = agv_number;
+		agv.current_kit = to_assign;
+	}
+
+	void complete_kit(osrf_gear::Kit * to_assign) {
+		if (kit_tally.count(to_assign) == 0) {
+			ROS_ERROR("Kit does not exist");
+			return;
+		}
+		kit_metadata & data = kit_tally[to_assign];
+		if ((data.agv_number!=1)&&(data.agv_number!=2)) {
+			ROS_ERROR("AGV does not exist");
+			return;
+		}
+		AGV_metadata & agv = AGV_info[data.agv_number-1];
+		
+		
+
+		data.agv_number = agv_number;
+		agv.current_kit = to_assign;
+	}
 
 	struct AGV_metadata {
 		//bool unassigned;
-		osrf_gear::Kit * current_kit;
-		AGV_metadata() : current_kit(nullptr) {}
+		osrf_gear::Kit * current_kit = nullptr;
 		bool assigned() {
 			return current_kit == nullptr;
 		}
+	};
+
+	struct kit_metadata {
+		char agv_number = 0;
+		osrf_gear::Kit kit_clone;
+		osrf_gear::Kit * kit_pointer;
+		bool assigned() {
+			return (agv_number != 0);
+		}
+		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(&kit_in) {}
 	};
 
 	//ros::Publisher joint_trajectory_publisher;
@@ -736,7 +757,7 @@ protected:
 	//keeps track of how I think kit completion is going
 	//this part metadata helps us track how we're completing the kits, and where parts go and why
 	//can be reconfigured if necessary
-	std::map<std::string, osrf_gear::Kit> kit_tally; //remove elements as able, maybe add an order version?
+	std::map<osrf_gear::Kit*, kit_metadata> kit_tally; //maps real kits to copied objects
 	AGV_metadata AGV_info[2];
 
 	std::map<std::string, std::vector<arm_action::Ptr>*> motion_paths;
@@ -751,29 +772,7 @@ protected:
 	std::string waiting_for;
 	ros::Publisher joint_pub;
 
-	//std::list transitions[ARM_REGION_NUM];
-
 };
-
-// THIS OBJECT FILE OWNS THE DEFINITIONS FOR COMPETITIONINTERFACE
-std::vector<osrf_gear::Order> CompetitionInterface::received_orders; //just an order list
-std::map<std::string, osrf_gear::Kit*> CompetitionInterface::kit_reference; //a way to look up kits
-std::map<std::string, osrf_gear::Order*> CompetitionInterface::kit_parent; //a way to look up orders from kits
-
-std::map<std::string,ros::Subscriber> CompetitionInterface::subscriptions;
-std::map<std::string,char> CompetitionInterface::AGV_status_lookup;
-double CompetitionInterface::current_score;
-sensor_msgs::JointState CompetitionInterface::current_joint_state;
-unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine info
-AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
-osrf_gear::LogicalCameraImage CompetitionInterface::last_faulty_part_scan[2];
-char CompetitionInterface::arm_region;
-
-
-// unsigned char state_diff[NUM_STATES]; //holds diff info
-// unsigned char state_old[NUM_STATES]; //holds old state machine info
-// unsigned char state_if_diff[NUM_STATES]; //holds old state machine info
-ros::NodeHandle * CompetitionInterface::nodeptr;
 
 
 int main(int argc, char ** argv) {

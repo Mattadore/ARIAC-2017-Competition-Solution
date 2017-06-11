@@ -169,7 +169,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		}
 	}
 
-	static const std::vector<osrf_gear::Order> get_orders() {
+	static std::vector<osrf_gear::Order> & get_orders() {
 		return received_orders;
 	}
 
@@ -267,15 +267,6 @@ protected:
 		ROS_INFO_STREAM("Received order:\n" << *order_msg);
 		//recheck_assignments = true; //check if AGV tray assignments have changed
 		received_orders.push_back(*order_msg);
-		for (int i = 0; i<order_msg->kits.size(); ++i) {
-			if (kit_reference.count(order_msg->kits[i].kit_type)) {
-				ROS_ERROR("MULTIPLE OF SAME KIT NAME");
-				//totally able to happen maybe, but I want to know if it does
-				//TODO: solution, make it a multi map? keep a copy for each?
-			}
-			kit_reference[order_msg->kits[i].kit_type] = &(received_orders[received_orders.size()-1].kits[i]); //references kit strings to kits
-			kit_parent[order_msg->kits[i].kit_type] = &(received_orders[received_orders.size()-1]); //points to kit parent order
-		}
 	}
 
 	static void logical_camera_callback(const osrf_gear::LogicalCameraImage::ConstPtr image_msg) {
@@ -308,5 +299,24 @@ protected:
 	static ros::NodeHandle * nodeptr;
 	CompetitionInterface() {};
 };
+
+// THIS OBJECT FILE OWNS THE DEFINITIONS FOR COMPETITIONINTERFACE
+std::vector<osrf_gear::Order> CompetitionInterface::received_orders; //just an order list
+std::map<std::string,ros::Subscriber> CompetitionInterface::subscriptions;
+std::map<std::string,char> CompetitionInterface::AGV_status_lookup;
+double CompetitionInterface::current_score;
+sensor_msgs::JointState CompetitionInterface::current_joint_state;
+unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine info
+AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
+osrf_gear::LogicalCameraImage CompetitionInterface::last_faulty_part_scan[2];
+char CompetitionInterface::arm_region;
+
+
+// unsigned char state_diff[NUM_STATES]; //holds diff info
+// unsigned char state_old[NUM_STATES]; //holds old state machine info
+// unsigned char state_if_diff[NUM_STATES]; //holds old state machine info
+ros::NodeHandle * CompetitionInterface::nodeptr;
+
+
 
 #endif

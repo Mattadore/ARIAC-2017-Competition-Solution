@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"obje",
+				"object_manager"
+			],
+			[
 				"REG",
 				"REGION_BIN_GRAB"
 			],
@@ -372,10 +376,6 @@
 				"on_exit\tint on_exit(void (*__func)(int, void *), void *__arg)"
 			],
 			[
-				"obje",
-				"object_true_location\ttf::Pose object_true_location"
-			],
-			[
 				"obj",
 				"object_true_location"
 			],
@@ -523,15 +523,35 @@
 			"file": "src/solution_node.cpp",
 			"settings":
 			{
-				"buffer_size": 65650,
+				"buffer_size": 30809,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		}
 	],
-	"build_system": "",
+	"build_system": "Packages/User/Catkin.sublime-build",
 	"build_system_choices":
 	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/Catkin.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/User/Catkin.sublime-build",
+				""
+			]
+		]
 	],
 	"build_varint": "",
 	"command_palette":
@@ -582,6 +602,13 @@
 	],
 	"file_history":
 	[
+		"/home/matt/ariac_ws/src/competition_solution/include/utility.h",
+		"/home/matt/ariac_ws/src/competition_solution/include/utiluty.h",
+		"/home/matt/ariac_ws/src/competition_solution/include/object_manager.h",
+		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
+		"/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
+		"/home/matt/ariac_ws/src/CMakeLists.txt",
+		"/home/matt/ariac_ws/src/competition_solution/solution.sublime-",
 		"/home/matt/ariac_ws/src/universal_robot/ur_driver/src/ur_driver/driver.py",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ROSAGVPlugin.cc",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/ConveyorBeltPlugin.cc",
@@ -608,7 +635,6 @@
 		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10_joint_limited_robot.urdf.xacro",
 		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10.urdf.xacro",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/src/VacuumGripperPlugin.cc",
-		"/home/matt/ariac_ws/src/competition_solution/CMakeLists.txt",
 		"/home/matt/ariac_ws/src/universal_robot/ur_description/urdf/ur10_robot.urdf.xacro",
 		"/home/matt/ariac_ws/src/universal_robot/ur_bringup/launch/ur10_bringup.launch",
 		"/home/matt/ariac_ws/install/share/ur10_moveit_config/config/kinematics.yaml",
@@ -624,7 +650,6 @@
 		"/opt/ros/indigo/lib/python2.7/dist-packages/roslaunch/nodeprocess.py",
 		"/opt/ros/indigo/include/std_msgs/Float64MultiArray.h",
 		"/opt/ros/indigo/include/std_msgs/Float64.h",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/CMakeLists.txt",
 		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/ConveyorBeltPlugin.hh",
 		"/home/matt/ariac_ws/src/competition_solution/package.xml",
 		"/home/matt/Desktop/pseudocode",
@@ -704,12 +729,7 @@
 		"/home/matt/ariac_ws/src/qualifier2_solution/include/controller.h",
 		"/home/matt/Desktop/teststuff.txt",
 		"/home/matt/ariac_ws/install/share/osrf_gear/config/comp_conf1.yaml",
-		"/home/matt/.bashrc",
-		"/home/matt/Desktop/notes.txt",
-		"/home/matt/ariac_ws/src/ariac/osrf_gear/include/osrf_gear/VacuumGripperPlugin.hh",
-		"/home/matt/ariac_ws/src/qualifier2_solution/src",
-		"/home/matt/ariac_ws/src/competition_example/config/sample_gear_conf.yaml",
-		"/home/matt/ariac_ws/src/qualifier2_solution/assets/ariac.scene"
+		"/home/matt/.bashrc"
 	],
 	"find":
 	{
@@ -724,9 +744,15 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": false,
+		"case_sensitive": true,
 		"find_history":
 		[
+			"float64",
+			"AGV_meta",
+			"constrain",
+			"make_constraint",
+			"catkin_package",
+			"include",
 			"SQUARE",
 			"kit_Tally",
 			"planner",
@@ -848,13 +874,7 @@
 			"arm_location",
 			"execute_",
 			"generic_state",
-			"start_state",
-			"integrate",
-			"keybo",
-			"logic",
-			"dummy_action",
-			"new arm_action",
-			"plan_b"
+			"start_state"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -916,15 +936,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 65650,
+						"buffer_size": 30809,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3721,
-								3721
+								15742,
+								15742
 							]
 						],
 						"settings":
@@ -934,17 +954,12 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 10696.0,
+						"translation.y": 4504.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				}
-			]
-		},
-		{
-			"sheets":
-			[
 			]
 		}
 	],
@@ -965,12 +980,6 @@
 				0,
 				1,
 				1
-			],
-			[
-				0,
-				1,
-				1,
-				2
 			]
 		],
 		"cols":
@@ -981,7 +990,6 @@
 		"rows":
 		[
 			0.0,
-			0.797697368421,
 			1.0
 		]
 	},
@@ -989,6 +997,10 @@
 	"output.cc":
 	{
 		"height": 187.0
+	},
+	"output.exec":
+	{
+		"height": 193.0
 	},
 	"output.find_results":
 	{
@@ -998,7 +1010,7 @@
 	{
 		"height": 499.0
 	},
-	"pinned_build_system": "",
+	"pinned_build_system": "Packages/User/Catkin.sublime-build",
 	"project": "solution.sublime-project",
 	"replace":
 	{
