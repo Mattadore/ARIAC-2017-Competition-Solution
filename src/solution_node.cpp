@@ -354,7 +354,6 @@ public:
 	 // 		last_action = lift_action;
 	 // 	}
 	 // 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
-	 // 	return return_data;
 		return data_in;
 	}
 	
@@ -557,6 +556,8 @@ public:
 
 			
 
+
+
 		}
 
 
@@ -736,7 +737,6 @@ public:
 
 		terminated = false;
 		number_orders = 0;
-		number_scanned_parts = 0;
 	  	//ensure buffer is completely initialized?
 
 		//std::vector<std::string> frame_names_ = tf; //add all frame names to set
@@ -802,8 +802,6 @@ protected:
 	// 	}
 	// 	AGV_metadata & agv = AGV_info[data.agv_number-1];
 		
-		
-
 	// 	data.agv_number = agv_number;
 	// 	agv.current_kit = to_assign;
 	// }
@@ -827,6 +825,7 @@ protected:
 			return kit_clone.objects.empty();
 		}
 		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(&kit_in) {}
+		kit_metadata(){}
 	};
 
 	//ros::Publisher joint_trajectory_publisher;

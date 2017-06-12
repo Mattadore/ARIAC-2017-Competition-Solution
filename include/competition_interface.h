@@ -65,8 +65,8 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		AGV_status_lookup["returning"] = AGV_RETURNING;
 		AGV_status_lookup["ready_to_deliver"] = AGV_READY_TO_DELIVER;
 		AGV_status_lookup["preparing_to_deliver"] = AGV_PREPARING_TO_DELIVER;
+		dropped = false;
 		add_subscriptions();
-
 
 
 	}
@@ -142,7 +142,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		ros::ServiceClient material_client = nodeptr->serviceClient<osrf_gear::GetMaterialLocations>("/ariac/material_locations");
 		osrf_gear::GetMaterialLocations srv;
 		srv.request.material_type = material_name;
-		conveyor_client.call(srv);
+		material_client.call(srv);
 		std::vector<std::string> bin_names;
 		for (osrf_gear::StorageUnit & unit : srv.response.storage_units) {
 			if (unit.unit_id != "belt") { //sry
@@ -336,7 +336,9 @@ protected:
 	static unsigned char state[NUM_STATES]; //holds state machine info
 	static AGV_data AGV_info[2]; //basic agv information
 	static char arm_region;
-	static bool dropped = false;
+	static bool dropped;
+	static std::string object_held;
+	static std::string object_interested;
 
 	// static unsigned char state_diff[NUM_STATES]; //holds diff info
 	// static unsigned char state_old[NUM_STATES]; //holds old state machine info
@@ -355,9 +357,9 @@ sensor_msgs::JointState CompetitionInterface::current_joint_state;
 unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine info
 AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
 char CompetitionInterface::arm_region;
-static std::string CompetitionInterface::object_held;
-static std::string CompetitionInterface::object_interested;
-int number_scanned_parts;
+bool CompetitionInterface::dropped;
+std::string CompetitionInterface::object_held;
+std::string CompetitionInterface::object_interested;
 
 // unsigned char state_diff[NUM_STATES]; //holds diff info
 // unsigned char state_old[NUM_STATES]; //holds old state machine info

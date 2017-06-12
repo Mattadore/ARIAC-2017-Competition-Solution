@@ -142,15 +142,6 @@ struct AGV_data {
 	AGV_data() {} //so I don't have to put this at the start of main construction
 };
 
-struct AGV_metadata {
-	//bool unassigned;
-	osrf_gear::Kit * current_kit;
-	AGV_metadata() : current_kit(nullptr) {}
-	bool assigned() {
-		return current_kit == nullptr;
-	}
-};
-
 struct arm_action {
 	using Ptr = std::shared_ptr<arm_action>; 
 	char planning_status = PIPELINE_NONE;

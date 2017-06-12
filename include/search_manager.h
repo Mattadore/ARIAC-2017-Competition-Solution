@@ -7,7 +7,7 @@
 #include <include/competition_interface.h>
 #include <include/object_manager.h>
 
-struct part_bin_data {
+struct part_bin_info {
 	std::string part_name;
 	unsigned char bin_num_min;
 	unsigned char bin_num_max;
@@ -18,13 +18,14 @@ struct part_bin_data {
 
 struct bin_data {
 public:
-	bin_data(std::string name,part_bin_data* data,tf::Vector3 location) {
+	bin_data(){}
+	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) {
 		bin_name = name;
 		bin_location = location;
 		type_data = data;
 		for (char x = data->bin_num_min;x<data->bin_num_max;++x) {
 			for (char y = data->bin_num_min;y<data->bin_num_max;++y) {
-				possible_grids.push_back(grid_structure(data->radius,x,y));
+				possible_grids.emplace_back(data->radius,x,y);
 			}
 		}
 		//TODO: import grasp locations
@@ -57,7 +58,10 @@ public:
 			++(type_data->index_counter);
 			tf::Vector3 offset = possible_grids.front().position_from_id(ID);
 			tf::Vector3 true_position = offset+bin_location+tf::Vector3(0,0,ObjectTracker::part_type_generic_height(type_data->part_name));
-			tf::Pose new_object_pose(get_rotation(),true_position); //yess
+			tf::StampedTransform new_object_pose;
+			new_object_pose.setData(tf::Pose(get_rotation(),true_position)); //yess
+			new_object_pose.stamp_ = ros::Time::now();
+
 			ObjectTracker::add_bin_part(type_data->part_name, type_data->index_counter, new_object_pose);
 		}
 	}
@@ -241,7 +245,7 @@ protected:
 		}
 	};
 	std::string bin_name;
-	part_bin_data * type_data;
+	part_bin_info * type_data;
 	tf::Vector3 bin_location; //TODO: maybe this should be a pose?
 	std::list<grid_structure> possible_grids;
 	std::list<tf::Vector3> mirrored_object_locations;
@@ -281,7 +285,7 @@ public:
 		}
 		//create all relevant bins
 		for (auto & index : bin_part_types) {
-			bin_lookup[index.first] = bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]);
+			bin_lookup.emplace(index.first,bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]));
 		}
 	}
 
@@ -334,7 +338,7 @@ protected:
 
 		}
 	}
-	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
+	std::map<std::string,part_bin_info> part_bin_data; //indexed by part type
 	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
 
 	std::map<std::string,std::vector<std::string> > part_locations; //ITERATE FROM FRONT
