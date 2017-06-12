@@ -7,7 +7,7 @@
 #include <include/competition_interface.h>
 #include <include/object_manager.h>
 
-struct part_bin_data {
+struct part_bin_info {
 	std::string part_name;
 	unsigned char bin_num_min;
 	unsigned char bin_num_max;
@@ -18,7 +18,7 @@ struct part_bin_data {
 
 struct bin_data {
 public:
-	bin_data(std::string name,part_bin_data* data,tf::Vector3 location) {
+	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) {
 		bin_name = name;
 		bin_location = location;
 		type_data = data;
@@ -243,7 +243,7 @@ protected:
 		}
 	};
 	std::string bin_name;
-	part_bin_data * type_data;
+	part_bin_info * type_data;
 	tf::Vector3 bin_location; //TODO: maybe this should be a pose?
 	std::list<grid_structure> possible_grids;
 	std::list<tf::Vector3> mirrored_object_locations;
@@ -336,7 +336,7 @@ protected:
 
 		}
 	}
-	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
+	std::map<std::string,part_bin_info> part_bin_data; //indexed by part type
 	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
 
 	std::map<std::string,std::vector<std::string> > part_locations; //ITERATE FROM FRONT

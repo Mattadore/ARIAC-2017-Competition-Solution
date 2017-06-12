@@ -317,24 +317,24 @@ public:
 			return data_in;
 		}
 
-		tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
-		arm_action::Ptr align_action(new arm_action(data_in.action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
-	 	align_action->vacuum_enabled = false; //just to be safe
-	 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
-	 	test_action->vacuum_enabled = true;
-	 	test_action->pick_part = true;
-	 	test_action->end_delay = 2.0;
-	 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
-	 	planner.add_action(align_action);
-	 	planner.add_action(test_action);
-	 	planner.add_action(lift_action);
-	 	controller.add_action(align_action);
-	 	controller.add_action(test_action);
-	 	controller.add_action(lift_action);
-	 	controller.wait_until_executed(test_action);
-	 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
-	 	return return_data;
-
+		// tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
+		// arm_action::Ptr align_action(new arm_action(data_in.action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
+	 // 	align_action->vacuum_enabled = false; //just to be safe
+	 // 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
+	 // 	test_action->vacuum_enabled = true;
+	 // 	test_action->pick_part = true;
+	 // 	test_action->end_delay = 2.0;
+	 // 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
+	 // 	planner.add_action(align_action);
+	 // 	planner.add_action(test_action);
+	 // 	planner.add_action(lift_action);
+	 // 	controller.add_action(align_action);
+	 // 	controller.add_action(test_action);
+	 // 	controller.add_action(lift_action);
+	 // 	controller.wait_until_executed(test_action);
+	 // 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+	 // 	return return_data;
+		return data_in;
 	}
 	
 	//testing
@@ -795,6 +795,7 @@ protected:
 		bool assigned() {
 			return (agv_number != 0);
 		}
+		kit_metadata() {}
 		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(&kit_in) {}
 	};
 
