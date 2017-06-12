@@ -1,3 +1,7 @@
+#ifndef SEARCH_MANAGER_H_
+#define SEARCH_MANAGER_H_
+
+
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <include/competition_interface.h>
@@ -58,9 +62,10 @@ public:
 		}
 	}
 	void add_observation(tf::Pose pose_in, char id_number = 0) {
-		if (grid_complete()) { //for safety tbh
-			return;
-		}
+		// if (grid_complete()) { //for safety tbh
+		// 	return;
+		// }
+		//TODO: make this safer
 		//do pose correction to point the same way
 		tf::Pose pose_corrected = pose_in;
 		tf::Vector3 z_axis(0,0,1);
@@ -69,6 +74,12 @@ public:
 			tf::Vector3 cross_axis = pose_in_z.cross(z_axis).normalize(); //hope I get this right
 			pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
 		}
+
+
+		//now in local coords
+		pose_corrected.setOrigin(pose_corrected.getOrigin()-bin_location);
+		//TODO: more pose correction, if necessary
+
 
 		if (observations == 0) {
 			angle_pose_start = pose_corrected.getRotation();
@@ -121,7 +132,7 @@ public:
 			ROS_ERROR("NO MORE GRASP LOCATIONS TO POP");
 		}
 	}
-	tf::Vector3 get_grasp_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+	tf::Vector3 get_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
 		tf::Vector3 return_v;
 		if (!mirrored_object_locations.empty()) {
 			return_v = mirrored_object_locations.front();
@@ -133,7 +144,11 @@ public:
 			ROS_ERROR("NO MORE GRASP LOCATIONS");
 		}
 		return_v += bin_location;
+		return_v.setZ(ObjectTracker::part_type_generic_grab_height(type_data->part_name));
 		return return_v;
+	}
+	bool has_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+		return ((mirrored_object_locations.empty())&&(grasp_locations.empty()));
 	}
 protected:
 	//bin size is 0.6
@@ -239,6 +254,7 @@ protected:
 	//TODO: have a boolean or something if the above is valid. maybe it'll just get it from grid info, actually?
 };
 
+//assumes we always make grasp attempts at identity? orientation
 class SearchManager {
 public:
 	SearchManager() {
@@ -270,12 +286,48 @@ public:
 			bin_lookup[index.first] = bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]);
 		}
 	}
+
+	bool unfound_parts(std::string part_type) {
+		std::vector<std::string> & bin_list = part_locations[part_type];
+		for (std::string & bin_name : bin_list) {
+			if (!bin_lookup[bin_name].grid_complete()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	tf::Vector3 search(std::string part_type) {
+		std::string bin_name = get_current_search_bin(part_type);
+		return bin_lookup[bin_name].get_search_location();
+	}
+
+	void search_success(std::string part_type) { //invoke after finishing part scan
+		std::string object_name = ObjectTracker::get_held_object();
+		if (object_name == "") {
+			ROS_ERROR("no held object");
+		}
+		std::string bin_name = get_current_search_bin(part_type);
+		tf::Pose grasp_pose = tf::Pose(tf::Quaternion(0,0,0,1),bin_lookup[bin_name].get_search_location());
+		tf::Pose offset = ObjectTracker::get_internal_transform(object_name);
 
 	}
 
-	void complete_search(std::string part_type) { //pops the thing
+	std::string get_current_search_bin(std::string part_type) {
+		std::vector<std::string> & bin_list = part_locations[part_type];
+		for (std::string & bin_name : bin_list) {
+			if (!bin_lookup[bin_name].grid_complete()) {
+				return bin_name;
+			}
+		}
+		ROS_ERROR("NO MORE SEARCH LOCATIONS FOR %s AT ALL :(",part_type.c_str());
+		return "";
+	}
 
+	void search_fail(std::string part_type) { //pops the search spot location
+		//TODO: negative confirmation
+		std::string bin_name = get_current_search_bin(part_type);
+		bin_lookup[bin_name].pop_search_location();
 	}
 
 protected:
@@ -284,7 +336,6 @@ protected:
 
 		}
 	}
-	tf::Transform grasp_location;
 	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
 	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
 
@@ -293,3 +344,5 @@ protected:
 	std::map<std::string,tf::Vector3> bin_locations; //indexed by bin name
 
 };
+
+#endif

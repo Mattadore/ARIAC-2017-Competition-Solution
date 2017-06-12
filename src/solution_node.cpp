@@ -23,6 +23,7 @@
 #include <include/utility.h>
 #include <include/planner.h>
 #include <include/controller.h>
+#include <include/search_manager.h>
 
 #include <osrf_gear/VacuumGripperState.h>
 #include <osrf_gear/VacuumGripperControl.h>
@@ -309,11 +310,37 @@ public:
 		a.points.pop_back();
 		ROS_INFO_STREAM(a);
 	}
+	//"Thorough" means it won't quit till it finds a part
+	pipeline_data simple_search_thorough(std::string part_type,pipeline_data data_in = pipeline_data()) {
+		if (!searcher.unfound_parts(part_type)) {
+			ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
+			return data_in;
+		}
+
+		tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
+		arm_action::Ptr align_action(new arm_action(data_in.action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
+	 	align_action->vacuum_enabled = false; //just to be safe
+	 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
+	 	test_action->vacuum_enabled = true;
+	 	test_action->pick_part = true;
+	 	test_action->end_delay = 2.0;
+	 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
+	 	planner.add_action(align_action);
+	 	planner.add_action(test_action);
+	 	planner.add_action(lift_action);
+	 	controller.add_action(align_action);
+	 	controller.add_action(test_action);
+	 	controller.add_action(lift_action);
+	 	controller.wait_until_executed(test_action);
+	 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+	 	return return_data;
+
+	}
 	
 	//testing
 	//TODO: give this an intermediate?
 	pipeline_data simple_grab(std::string part_name,pipeline_data data_in = pipeline_data()) {
-	 	CompetitionInterface::set_interested_object(part_name);
+	 	ObjectTracker::set_interested_object(part_name);
 		tf::Pose grab_pose = ObjectTracker::get_grab_pose(part_name);
 		arm_action::Ptr align_action(new arm_action(data_in.action,grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
 	 	align_action->vacuum_enabled = false; //just to be safe
@@ -374,8 +401,7 @@ public:
 		planner.wait_until_planned(slide_action);
 		homogenize_for_belt(slide_action->plan->trajectory_.joint_trajectory,dist);
 		integrate(dummy_action,slide_action);
-
-		CompetitionInterface::set_interested_object(part_name);
+		ObjectTracker::set_interested_object(part_name);
 		controller.add_action(dummy_action);
 		//controller.add_action(slide_action);
 		controller.wait_until_executed(dummy_action);
@@ -710,6 +736,7 @@ public:
 
 	Planner planner;
 	Controller controller;
+	SearchManager searcher;
 
 protected:
 	void assign_kit(osrf_gear::Kit * to_assign,char agv_number) {

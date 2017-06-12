@@ -391,15 +391,15 @@ public:
 		return lookup_map[part_name]->get_location();
 	}
 
-	static std::string get_object_held() {
+	static std::string get_held_object() {
 		return object_held;
 	}
 
-	static std::string get_object_interested() {
+	static std::string get_interested_object() {
 		return object_interested;
 	}
 
-	static void set_object_interested(std::string object_name) {
+	static void set_interested_object(std::string object_name) {
 		object_interested = object_name;
 	}
 
@@ -463,7 +463,7 @@ protected:
 				//ObjectData new_object(full_name,"world",&(type_data[part_type]),is_conveyor_part);
 				if (belt_camera && !(is_conveyor_part)) { //a little... forward.. I think
 					object_data[part_type].push_back(ObjectData(full_name,"vacuum_gripper_link",&(type_data[part_type]),is_conveyor_part));
-					set_object_interested(full_name); //interested in this part
+					set_interested_object(full_name); //interested in this part
 				}
 				else {
 					object_data[part_type].push_back(ObjectData(full_name,"world",&(type_data[part_type]),is_conveyor_part));

@@ -264,14 +264,14 @@ protected:
 		state[GRIPPER_ATTACHED] = (msg->attached) ? BOOL_TRUE : BOOL_FALSE;
 		state[GRIPPER_ENABLED] = (msg->enabled) ? BOOL_TRUE : BOOL_FALSE;
 		if (state[GRIPPER_ATTACHED] == BOOL_TRUE) {
-			if (ObjectTracker::get_object_held() != ObjectTracker::get_object_interested()) {
-				if (ObjectTracker::get_object_held() == "") {
+			if (ObjectTracker::get_held_object() != ObjectTracker::get_interested_object()) {
+				if (ObjectTracker::get_held_object() == "") {
 					ObjectTracker::pick_up();
 				}
 			}
 		}
 		else {
-			if (ObjectTracker::get_object_held() != "") {
+			if (ObjectTracker::get_held_object() != "") {
 				ObjectTracker::drop_off();
 			}
 		}
