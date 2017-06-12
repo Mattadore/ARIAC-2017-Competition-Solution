@@ -303,7 +303,7 @@ public:
 		ROS_INFO_STREAM(a);
 	}
 	
-	//testing
+	//testingd
 	
 	pipeline_data simple_grab(std::string part_name,pipeline_data data_in = pipeline_data()) {
 		tf::Pose grab_pose = ObjectTracker::get_grab_pose(part_name);
@@ -455,13 +455,12 @@ public:
 	}
 
 
-
 	//---------------control logic
 	void arm_process() {
 		ROS_INFO("Logic process started");
 		ros::Duration(1).sleep();
+
 		ros::Duration wait_rate(0.03);
-		
 		CompetitionInterface::toggle_vacuum(false);
 		CompetitionInterface::start_competition();
 

@@ -68,7 +68,8 @@
 namespace tracker {
 	const unsigned char max_average_num = 45;
 	const double noise_radius = 0.01; //idk something, set this later
-	const double true_bin_height = 0.005000; //the true offset bin surface height (pain to calculate)
+	const double true_bin_height_offset = 0.005000; //the true offset bin surface height (pain to calculate)
+	const double bin_height = 0.720000; //the true offset bin surface height (pain to calculate)
 }
 using namespace tracker;
 
@@ -87,127 +88,7 @@ struct ObjectTypeData {
 	std::string part_type_name;
 	double size;
 	double tf_base_offset;
-	tf::Vector3 bin_start_point;
-	tf::Vector3 bin_end_point;
-	tf::Vector3 bin_start_rpy;
-	tf::Vector3 conveyor_start_rpy;
-	unsigned char bin_num_min;
-	unsigned char bin_num_max;
-	bool unique_orientation;
-	double radius;
 };
-
-
-
-struct bin_data {
-protected:
-	//bin size is 0.6
-	//only rescale axes when pertinent observations come in
-	struct grid_structure {
-		//0 is x 1 is y
-		double scale[2] = {0,0};
-		char num[2];
-		std::list<tf::Vector3> observations;
-		double radius = 0.0;
-		char elements[2] = {0,0};
-		char observations = 0;
-		grid_structure(double rad,char x, char y) {
-			radius = rad;
-			num[0] = x;
-			num[1] = y;
-		}
-		//fills iterates x outer, y inside
-		char axis_index_from_id(char axis,char number) {
-			if (axis == 0) {
-				return ((number-1)/num[0])+1;
-			}
-			else {
-				return ((number-1)%num[1])+1;
-			}
-		}
-		inline tf::Vector3 position_from_id(char number) {
-			return position_from_index(x_axis_index_from_id(number),y_axis_index_from_id(number));
-		}	
-		inline bool is_central(char axis, char id) {
-			return (((num[axis]%2)==1)&&(id==(num[axis]/2+1))); //if odd and in the center
-		}
-		inline tf::Vector3 position_from_index(char x,char y) {
-			tf::Vector3(scale[0]*get_index_scaling(0,x),scale[1]*get_index_scaling(1,y),0);
-		}
-		inline double get_index_scaling(char axis,char index) {
-			return ((double)index)-((x+1)/2.0);
-		}
-		bool incorporate(tf::Pose & location, char id_number = 0) {
-			++observations;
-			if (id_number != 0) { //if we know the id
-
-				//set unset values
-				//compare true value to false value, check if outside a range of radius from where should be
-				//scale always more than radius
-				tf::Vector3 true_location = location.getOrigin();
-				double temp_scale[2] = {0,0};
-				for (char axis=0;axis<=1;++axis) {
-					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
-						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
-							return false;
-						}
-					}
-					else {
-						double scaling_factor = get_index_scaling(axis,axis_index_from_id(axis,id_number));
-						//calculate the scaling for this input
-						temp_scale[axis] = true_location.m_floats[axis]/scaling_factor;
-
-						//do a bunch of checks
-						if (temp_scale[axis] < 2*radius){ //checks both the quadrant and the minimum spacing
-							return false;
-						}
-						if ((temp_scale[axis] * (num[axis]-1)) > (0.6-2*radius)) { //checks max spacing
-							return false;
-						}
-						if (elements[axis] != 0) { //EXISTING GRID
-							double expected_location = scaling_factor * scale[axis];
-							if (std::abs(expected_location-true_location.m_floats[axis]) > radius) { //does not align to grid
-								return false;
-							}
-							//update average
-							scale[axis] *= ((double)elements[axis])/((double)elements[axis]+1.0);
-							scale[axis] += (1.0/((double)elements[axis]+1)) * temp_scale[axis];
-						}
-						else {
-							scale[axis] = temp_scale[axis];
-						}
-						++elements[axis];
-					}
-				}
-			}
-		}
-	};
-public:
-	std::string bin_name;
-	ObjectTypeData * type_data;
-	std::list<grid_structure> structures_possible;
-	std::vector<tf::Pose> known_object_locations;
-	tf::Pose object_rotation_transformation; //if below is not set, use bias in objecttypedata
-	std::list<tf::Pose> smart_grasp_attempts;
-	bool object_rotation_transformation_known;	//lets code know if there is a known, measured rotation offset
-												//todo: latch rotation offset to above value/
-												//other values if close (depending on noise)
-	bool grid_complete() {
-
-	}
-	void add_observation(tf::Pose pose_in, char id_number = 0) {
-		//AXIS ADJUST HERE
-		tf::Pose pose_corrected;
-		known_object_locations.push_back(pose_in);
-
-	}
-	tf::Vector3 get_grasp_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
-
-	}
-
-	//TODO: have a boolean or something if the above is valid. maybe it'll just get it from grid info, actually?
-};
-
 
 
 class ObjectTracker;
@@ -215,7 +96,7 @@ class ObjectTracker;
 class ObjectData {
 public:
 	void reference_swap(std::string new_reference_name) {
-
+		relative_motion = tf::Vector3(0,0,0);
 	}
 	void reset_filtering() {
 		
@@ -371,7 +252,9 @@ protected:
 class ObjectTracker {
 public:
 	//todo account for gripper size? ???
-
+	void add_bin_part(std::string part_type,char part_number,tf::Pose location) {
+		if lookup_map[part_type+]
+	}
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
 		nodeptr = nodeptr_; 
 		listener = listener_;
@@ -400,10 +283,6 @@ public:
 		}
 	}
 
-	static void part_pick_occurred() {
-		//do something when part pick occurs
-	}
-
 	static tf::StampedTransform get_gripper_pose(ros::Time time_in = ros::Time::now()) {
 		tf::StampedTransform transform_out;
 		listener->lookupTransform("world","vacuum_gripper_link",ros::Time(0),transform_out);
@@ -418,7 +297,7 @@ public:
 		ObjectTypeData * part_typedata = part_to_grab.get_type_info();
 		tf::Pose out_pose, object_true_location = part_to_grab.get_location_at_time(at_time);
 		bool is_inverted = is_upside_down(object_true_location);
-		double true_face_from_tf = true_bin_height - part_typedata->tf_base_offset;
+		double true_face_from_tf = true_bin_height_offset - part_typedata->tf_base_offset;
 		if (is_inverted) {
 			tf::Pose flip_transform(tf::Quaternion(tf::Vector3(1,0,0),M_PI),tf::Vector3(0,0,0)); //flips the object pose
 			tf::Pose handle_transform(identity,tf::Vector3(0,0,true_face_from_tf+grab_offset)); //specifies where the handle is
@@ -448,7 +327,15 @@ public:
 		return lookup_map.count(part_name);
 	}
 
-	
+	static double part_type_generic_grab_height(std::string part_type) {
+		double grab_offset = -0.014;
+		double object_true_height = bin_height + type_data[part_type].tf_base_offset;
+		double true_face_from_tf = true_bin_height_offset - part_typedata->tf_base_offset;
+		true_face_from_tf += part_typedata->size; //grab from top, which is "size" away from the tf
+		true_face_from_tf -= grab_offset;
+		return object_true_height + true_face_from_tf;
+	}
+
 protected:
 	template<class M>
 	static void subscribe(std::string name,uint32_t size,void(*fp)(M)) {
@@ -466,15 +353,15 @@ protected:
 	}
 	static void initialize_object_types() {
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,3,true,0.05}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,3,true,0.05}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
-		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0),1,5,true,0.04}; //correct
+		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0)}; //correct
 		type_data["piston_rod_part"] = {"piston_rod_part",0.07024,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,4,true,0.04}; //correct
+		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
-		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0),1,2,false,0.1};
+		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
 			object_data[i->first] = std::list<ObjectData>();
@@ -524,7 +411,6 @@ protected:
 	static std::map<std::string,std::list<ObjectData> > object_data;
 	static std::map<std::string,ObjectTypeData> type_data;
 	static std::map<std::string,ros::Subscriber> subscriptions;
-	static std::map<std::string,bin_data *> bin_data_lookup;
 	static tf::TransformListener * listener;
 	static ros::NodeHandle * nodeptr;
 	static ros::Publisher tf_publisher;

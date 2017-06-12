@@ -1,0 +1,229 @@
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
+
+struct part_bin_data {
+	std::string part_name;
+	unsigned char bin_num_min;
+	unsigned char bin_num_max;
+	bool unique_orientation;
+	double radius;
+};
+
+struct bin_data {
+public:
+	bin_data(std::string name,part_bin_data*data,tf::Vector3 location) {
+		bin_name = name;
+		bin_location = location;
+		type_data = data;
+		for (char x = data->bin_num_min;x<data->bin_num_max;++x) {
+			for (char y = data->bin_num_min;y<data->bin_num_max;++y) {
+				possible_grids.push_back(grid_structure(data->radius,x,y));
+			}
+		}
+		//TODO: import grasp locations
+	}
+	// 	std::string bin_name;
+	// part_bin_data * type_data;
+	// std::list<grid_structure> possible_grids;
+	// std::list<tf::Vector3> mirrored_object_locations;
+	// std::list<tf::Vector3> grasp_locations;
+	// tf::Vector3 bin_location; //TODO: maybe this should be a pose?
+	// tf::Quaternion angle_pose_start;
+	// double angle_offset_average = 0;
+	// char observations = 0;
+	bool grid_complete() {
+		return (possible_grids.size() == 1);
+	}
+	void add_observation(tf::Pose pose_in, char id_number = 0) {
+		if (grid_complete()) { //for safety tbh
+			return;
+		}
+		//do pose correction to point the same way
+		tf::Pose pose_corrected = pose_in;
+		tf::Vector3 z_axis(0,0,1);
+		tf::Vector3 pose_in_z = (pose_in(z_axis)-pose_in.getOrigin()).normalize(); //probably don't need to normalize
+		if (std::abs(z_axis.dot(pose_in_z)) < 1) {
+			tf::Vector3 cross_axis = pose_in_z.cross(z_axis).normalize(); //hope I get this right
+			pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
+		}
+
+		//
+		if (observations == 0) {
+			angle_pose_start = pose_corrected.getRotation();
+		}
+		else {
+			double angle_offset = angle_pose_start.angleShortestPath(pose_corrected.getRotation());
+			angle_offset_average *= ((double)observations)/((double)observations+1);
+			angle_offset_average += angle_offset*(1.0/((double)observations+1));
+		}
+		//puts all mirrors as grasps
+		tf::Vector3 object_location = pose_in.getOrigin();
+		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,1,1));
+		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(1,-1,1));
+		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,-1,1));
+		++observations;
+
+		//filter the models
+		for (std::list<grid_structure>::iterator iter = possible_grids.begin();iter!=possible_grids.end();) {
+			if (!iter->incorporate(pose_corrected)) {
+				iter = possible_grids.erase(iter);
+			}
+			else {
+				++iter;
+			}
+		}
+
+		if (possible_grids.size() == 1) {
+
+			//publish all as tfs, i suppose
+		}
+		else if (possible_grids.size() == 0) {
+			ROS_ERROR("ALL MODELS FAILED ON BIN %s",bin_name.c_str());
+		}
+
+	}
+	tf::Quaternion get_rotation() {
+		if (observations == 0) {
+			ROS_ERROR("No observations, cannot determine angle");
+		}
+		tf::Quaternion angle = angle_pose_start + tf::Quaternion(tf::Vector3(0,0,1),angle_offset_average);
+		return angle;
+	}
+	void pop_search_location() {
+		if (!mirrored_object_locations.empty()) {
+			mirrored_object_locations.pop_front();
+		}
+		else if (!grasp_locations.empty()) {
+			grasp_locations.pop_front();
+		}
+		else {
+			ROS_ERROR("NO MORE GRASP LOCATIONS TO POP");
+		}
+	}
+	tf::Vector3 get_grasp_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+		tf::Vector3 return_v;
+		if (!mirrored_object_locations.empty()) {
+			return_v = mirrored_object_locations.front();
+		}
+		else if (!grasp_locations.empty()) {
+			return_v = grasp_locations.front();
+		}
+		else {
+			ROS_ERROR("NO MORE GRASP LOCATIONS");
+		}
+		return_v += bin_location;
+		return return_v;
+	}
+protected:
+	//bin size is 0.6
+	//only rescale axes when pertinent observations come in
+	struct grid_structure {
+		//0 is x 1 is y
+		double scale[2] = {0,0};
+		char num[2];
+		double radius;
+		char elements[2] = {0,0};
+		grid_structure(double rad,char x, char y) {
+			radius = rad;
+			num[0] = x;
+			num[1] = y;
+		}
+		//fills iterates x outer, y inside
+		char axis_index_from_id(char axis,char number) {
+			if (axis == 0) {
+				return ((number-1)/num[0])+1;
+			}
+			else {
+				return ((number-1)%num[1])+1;
+			}
+		}
+		inline tf::Vector3 position_from_id(char number) {
+			return position_from_index(axis_index_from_id(0,number),axis_index_from_id(1,number));
+		}	
+		inline bool is_central(char axis, char id) {
+			return (((num[axis]%2)==1)&&(id==(num[axis]/2+1))); //if odd and in the center
+		}
+		inline tf::Vector3 position_from_index(char x,char y) {
+			return tf::Vector3(scale[0]*get_index_scaling(0,x),scale[1]*get_index_scaling(1,y),0);
+		}
+		inline double get_index_scaling(char axis,char index) {
+			return ((double)index)-((num[axis]+1)/2.0);
+		}
+		bool incorporate(tf::Pose & location, char id_number = 0) {
+			if (id_number != 0) { //if we know the id
+
+				//set unset values
+				//compare true value to false value, check if outside a range of radius from where should be
+				//scale always more than radius
+				tf::Vector3 true_location = location.getOrigin();
+				double temp_scale[2] = {0,0};
+				for (char axis=0;axis<=1;++axis) {
+					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
+						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
+							return false;
+						}
+					}
+					else {
+						double scaling_factor = get_index_scaling(axis,axis_index_from_id(axis,id_number));
+						//calculate the scaling for this input
+						temp_scale[axis] = true_location.m_floats[axis]/scaling_factor;
+
+						//do a bunch of checks
+						if (temp_scale[axis] < 2*radius){ //checks both the quadrant and the minimum spacing
+							return false;
+						}
+						if ((temp_scale[axis] * (num[axis]-1)) > (0.6-2*radius)) { //checks max spacing
+							return false;
+						}
+						if (elements[axis] != 0) { //EXISTING GRID
+							double expected_location = scaling_factor * scale[axis];
+							if (std::abs(expected_location-true_location.m_floats[axis]) > radius) { //does not align to grid
+								return false;
+							}
+							//update average
+							scale[axis] *= ((double)elements[axis])/((double)elements[axis]+1.0);
+							scale[axis] += (1.0/((double)elements[axis]+1)) * temp_scale[axis];
+						}
+						else {
+							scale[axis] = temp_scale[axis];
+						}
+						++elements[axis];
+					}
+				}
+			}
+			return true;
+		}
+	};
+	std::string bin_name;
+	part_bin_data * type_data;
+	tf::Vector3 bin_location; //TODO: maybe this should be a pose?
+	std::list<grid_structure> possible_grids;
+	std::list<tf::Vector3> mirrored_object_locations;
+	std::list<tf::Vector3> grasp_locations;
+	tf::Quaternion angle_pose_start;
+	double angle_offset_average = 0;
+	char observations = 0;
+	//TODO: have a boolean or something if the above is valid. maybe it'll just get it from grid info, actually?
+};
+
+class SearchManager {
+public:
+	SearchManager() {
+		part_bin_data["disk_part"] = {"disk_part",1,3,true,0.06};
+		part_bin_data["gasket_part"] = {"gasket_part",1,3,true,0.05};
+		part_bin_data["gear_part"] = {"gear_part",1,5,true,0.04};
+		part_bin_data["piston_part"] = {"piston_part",1,4,true,0.03};
+		part_bin_data["pulley_part"] = {"pulley_part",1,2,false,0.1};
+		
+	}
+	void create_bin_metadata() {
+		
+	}
+	void pop_search(std::string part_type) {
+		
+	}
+
+protected:
+	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
+	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
+};

@@ -5,8 +5,8 @@ add_definitions(-std=c++11)
 
 
 find_package(catkin REQUIRED COMPONENTS
-  osrf_gear
   roscpp
+  osrf_gear
   sensor_msgs
   std_srvs
   trajectory_msgs

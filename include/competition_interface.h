@@ -20,6 +20,7 @@
 #include <osrf_gear/VacuumGripperControl.h>
 #include <osrf_gear/ConveyorBeltControl.h>
 #include <osrf_gear/LogicalCameraImage.h>
+#include <osrf_gear/GetMaterialLocations.h>
 #include <osrf_gear/Order.h>
 #include <osrf_gear/Proximity.h>
 #include <osrf_gear/AGVControl.h>
@@ -65,6 +66,24 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		AGV_status_lookup["ready_to_deliver"] = AGV_READY_TO_DELIVER;
 		AGV_status_lookup["preparing_to_deliver"] = AGV_PREPARING_TO_DELIVER;
 		add_subscriptions();
+		std::vector<std::string> parts {"gear_part","piston_rod_part","pulley_part","disk_part","gasket_part"};
+		for (std::string & part : parts) {
+			std::vector<std::string> locations = get_material_locations(part);
+			part_locations[part] = locations;
+			for (std::string & location : locations) {
+				bin_part_types[location] = part;
+			}
+		}
+
+	    bin_locations["bin1"] = tf::Vector3(-1.0,-1.33,0);
+	    bin_locations["bin2"] = tf::Vector3(-1.0,-0.535,0);
+	    bin_locations["bin3"] = tf::Vector3(-1.0,0.23,0);
+	    bin_locations["bin4"] = tf::Vector3(-1.0,0.995,0);
+	    bin_locations["bin5"] = tf::Vector3(-0.3,-1.33,0);
+	    bin_locations["bin6"] = tf::Vector3(-0.3,-0.535,0);
+	    bin_locations["bin7"] = tf::Vector3(-0.3,0.23,0);
+	    bin_locations["bin8"] = tf::Vector3(-0.3,0.995,0);
+	    
 	}
 
 	static void add_subscriptions() {
@@ -134,6 +153,18 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		}
 	}
 
+	static std::vector<std::string> get_material_locations(std::string material_name) {//returns bin names
+		ros::ServiceClient material_client = nodeptr->serviceClient<osrf_gear::GetMaterialLocations>("/ariac/material_locations");
+		osrf_gear::GetMaterialLocations srv;
+		srv.request.material_type = material_name;
+		conveyor_client.call(srv);
+		std::vector<std::string> bin_names;
+		for (osrf_gear::StorageUnit & unit : srv.response.storage_units) {
+			if (unit.unit_id != "belt") { //sry
+				bin_names.push_back(unit.unit_id);
+			}
+		}
+	}
 	static void set_conveyor(float percent) {
 		ros::ServiceClient conveyor_client = nodeptr->serviceClient<osrf_gear::ConveyorBeltControl>("/ariac/conveyor/control");
 		osrf_gear::ConveyorBeltControl srv;
@@ -283,16 +314,18 @@ protected:
 
 
 	static std::vector<osrf_gear::Order> received_orders; //just an order list
-	static std::map<std::string, osrf_gear::Kit*> kit_reference; //a way to look up kits
-	static std::map<std::string, osrf_gear::Order*> kit_parent; //a way to look up orders from kits
+	static std::map<std::string,ros::Subscriber> subscriptions;
 	static osrf_gear::LogicalCameraImage last_faulty_part_scan[2];
 	static std::map<std::string,char> AGV_status_lookup;
-	static std::map<std::string,ros::Subscriber> subscriptions;
 	static double current_score;
 	static sensor_msgs::JointState current_joint_state;
 	static unsigned char state[NUM_STATES]; //holds state machine info
 	static AGV_data AGV_info[2]; //basic agv information
 	static char arm_region;
+	static std::map<std::string,std::vector<std::string> > part_locations; //ITERATE FROM FRONT
+	static std::map<std::string,std::string> bin_part_types;
+	static std::map<std::string,tf::Vector3> bin_locations; //indexed by bin name
+
 	// static unsigned char state_diff[NUM_STATES]; //holds diff info
 	// static unsigned char state_old[NUM_STATES]; //holds old state machine info
 	// static unsigned char state_if_diff[NUM_STATES]; //holds old state machine info
@@ -303,13 +336,16 @@ protected:
 // THIS OBJECT FILE OWNS THE DEFINITIONS FOR COMPETITIONINTERFACE
 std::vector<osrf_gear::Order> CompetitionInterface::received_orders; //just an order list
 std::map<std::string,ros::Subscriber> CompetitionInterface::subscriptions;
+osrf_gear::LogicalCameraImage CompetitionInterface::last_faulty_part_scan[2];
 std::map<std::string,char> CompetitionInterface::AGV_status_lookup;
 double CompetitionInterface::current_score;
 sensor_msgs::JointState CompetitionInterface::current_joint_state;
 unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine info
 AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
-osrf_gear::LogicalCameraImage CompetitionInterface::last_faulty_part_scan[2];
 char CompetitionInterface::arm_region;
+std::map<std::string,std::vector<std::string> > CompetitionInterface::part_locations; //ITERATE FROM FRONT
+std::map<std::string,std::string> CompetitionInterface::bin_part_types;
+std::map<std::string,tf::Vector3> CompetitionInterface::bin_locations; //indexed by bin name
 
 
 // unsigned char state_diff[NUM_STATES]; //holds diff info
@@ -317,6 +353,7 @@ char CompetitionInterface::arm_region;
 // unsigned char state_if_diff[NUM_STATES]; //holds old state machine info
 ros::NodeHandle * CompetitionInterface::nodeptr;
 
-
+//TODO: neat way to deal with multi bin indexing
+//TODO: for each part type, keep a list of bin_id_offsets
 
 #endif
