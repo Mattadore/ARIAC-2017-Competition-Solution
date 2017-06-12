@@ -66,24 +66,9 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		AGV_status_lookup["ready_to_deliver"] = AGV_READY_TO_DELIVER;
 		AGV_status_lookup["preparing_to_deliver"] = AGV_PREPARING_TO_DELIVER;
 		add_subscriptions();
-		std::vector<std::string> parts {"gear_part","piston_rod_part","pulley_part","disk_part","gasket_part"};
-		for (std::string & part : parts) {
-			std::vector<std::string> locations = get_material_locations(part);
-			part_locations[part] = locations;
-			for (std::string & location : locations) {
-				bin_part_types[location] = part;
-			}
-		}
 
-	    bin_locations["bin1"] = tf::Vector3(-1.0,-1.33,0);
-	    bin_locations["bin2"] = tf::Vector3(-1.0,-0.535,0);
-	    bin_locations["bin3"] = tf::Vector3(-1.0,0.23,0);
-	    bin_locations["bin4"] = tf::Vector3(-1.0,0.995,0);
-	    bin_locations["bin5"] = tf::Vector3(-0.3,-1.33,0);
-	    bin_locations["bin6"] = tf::Vector3(-0.3,-0.535,0);
-	    bin_locations["bin7"] = tf::Vector3(-0.3,0.23,0);
-	    bin_locations["bin8"] = tf::Vector3(-0.3,0.995,0);
-	    
+
+
 	}
 
 	static void add_subscriptions() {
@@ -164,6 +149,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 				bin_names.push_back(unit.unit_id);
 			}
 		}
+		return bin_names;
 	}
 	static void set_conveyor(float percent) {
 		ros::ServiceClient conveyor_client = nodeptr->serviceClient<osrf_gear::ConveyorBeltControl>("/ariac/conveyor/control");
@@ -322,9 +308,6 @@ protected:
 	static unsigned char state[NUM_STATES]; //holds state machine info
 	static AGV_data AGV_info[2]; //basic agv information
 	static char arm_region;
-	static std::map<std::string,std::vector<std::string> > part_locations; //ITERATE FROM FRONT
-	static std::map<std::string,std::string> bin_part_types;
-	static std::map<std::string,tf::Vector3> bin_locations; //indexed by bin name
 
 	// static unsigned char state_diff[NUM_STATES]; //holds diff info
 	// static unsigned char state_old[NUM_STATES]; //holds old state machine info
@@ -343,9 +326,6 @@ sensor_msgs::JointState CompetitionInterface::current_joint_state;
 unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine info
 AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
 char CompetitionInterface::arm_region;
-std::map<std::string,std::vector<std::string> > CompetitionInterface::part_locations; //ITERATE FROM FRONT
-std::map<std::string,std::string> CompetitionInterface::bin_part_types;
-std::map<std::string,tf::Vector3> CompetitionInterface::bin_locations; //indexed by bin name
 
 
 // unsigned char state_diff[NUM_STATES]; //holds diff info

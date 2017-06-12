@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
+#include <include/competition_interface.h>
 
 struct part_bin_data {
 	std::string part_name;
@@ -7,11 +8,12 @@ struct part_bin_data {
 	unsigned char bin_num_max;
 	bool unique_orientation;
 	double radius;
+	int index_offset;
 };
 
 struct bin_data {
 public:
-	bin_data(std::string name,part_bin_data*data,tf::Vector3 location) {
+	bin_data(std::string name,part_bin_data* data,tf::Vector3 location) {
 		bin_name = name;
 		bin_location = location;
 		type_data = data;
@@ -34,6 +36,26 @@ public:
 	bool grid_complete() {
 		return (possible_grids.size() == 1);
 	}
+	int get_num_parts() {
+		if (!grid_complete()) {
+			ROS_ERROR("GRID NOT COMPLETE, PART NUM NOT KNOWN");
+			return 0;
+		}
+		else {
+			return possible_grids.front().num[0]*possible_grids.front().num[1];
+		}
+	}
+	void populate_tracker() { //add part num to tracker
+		//dostuff
+		int ID = 1;
+		for (char x = 0; x < possible_grids.front().num[0]; ++x) {
+			for (char y = 0; y < possible_grids.front().num[1]; ++y) {
+				//do stuff
+				++ID;
+			}
+		}
+		type_data->index_offset += get_num_parts();
+	}
 	void add_observation(tf::Pose pose_in, char id_number = 0) {
 		if (grid_complete()) { //for safety tbh
 			return;
@@ -47,7 +69,6 @@ public:
 			pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
 		}
 
-		//
 		if (observations == 0) {
 			angle_pose_start = pose_corrected.getRotation();
 		}
@@ -209,21 +230,54 @@ protected:
 class SearchManager {
 public:
 	SearchManager() {
-		part_bin_data["disk_part"] = {"disk_part",1,3,true,0.06};
-		part_bin_data["gasket_part"] = {"gasket_part",1,3,true,0.05};
-		part_bin_data["gear_part"] = {"gear_part",1,5,true,0.04};
-		part_bin_data["piston_part"] = {"piston_part",1,4,true,0.03};
-		part_bin_data["pulley_part"] = {"pulley_part",1,2,false,0.1};
-		
+		part_bin_data["disk_part"] = {"disk_part",1,3,true,0.06,0};
+		part_bin_data["gasket_part"] = {"gasket_part",1,3,true,0.05,0};
+		part_bin_data["gear_part"] = {"gear_part",1,5,true,0.04,0};
+		part_bin_data["piston_part"] = {"piston_part",1,4,true,0.03,0};
+		part_bin_data["pulley_part"] = {"pulley_part",1,2,false,0.1,0};
+
+		bin_locations["bin1"] = tf::Vector3(-1.0,-1.33,0);
+		bin_locations["bin2"] = tf::Vector3(-1.0,-0.535,0);
+		bin_locations["bin3"] = tf::Vector3(-1.0,0.23,0);
+		bin_locations["bin4"] = tf::Vector3(-1.0,0.995,0);
+		bin_locations["bin5"] = tf::Vector3(-0.3,-1.33,0);
+		bin_locations["bin6"] = tf::Vector3(-0.3,-0.535,0);
+		bin_locations["bin7"] = tf::Vector3(-0.3,0.23,0);
+		bin_locations["bin8"] = tf::Vector3(-0.3,0.995,0);
+
+		std::vector<std::string> parts {"gear_part","piston_rod_part","pulley_part","disk_part","gasket_part"};
+		for (std::string & part : parts) {
+			std::vector<std::string> locations = CompetitionInterface::get_material_locations(part);
+			part_locations[part] = locations;
+			for (std::string & location : locations) {
+				bin_part_types[location] = part;
+			}
+		}
+		//create all relevant bins
+		for (auto & index : bin_part_types) {
+			bin_lookup[index.first] = bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]);
+		}
 	}
-	void create_bin_metadata() {
-		
+	tf::Vector3 search(std::string part_type) {
+
 	}
-	void pop_search(std::string part_type) {
-		
+
+	void complete_search(std::string part_type) { //pops the thing
+
 	}
 
 protected:
+	std::string get_bin_to_search(std::string part_type) {
+		for (std::string & bin_name : (part_locations[part_type])) { //from first to last
+
+		}
+	}
+
 	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
 	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
+
+	std::map<std::string,std::vector<std::string> > part_locations; //ITERATE FROM FRONT
+	std::map<std::string,std::string> bin_part_types; //indexed by bin name
+	std::map<std::string,tf::Vector3> bin_locations; //indexed by bin name
+
 };

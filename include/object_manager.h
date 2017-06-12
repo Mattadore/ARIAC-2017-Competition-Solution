@@ -110,6 +110,9 @@ public:
 	tf::Vector3 get_velocity() {
 		return relative_motion;
 	}
+	bool is_moving() {
+		return moving;
+	}
 	ObjectData(std::string name,std::string reference,ObjectTypeData * typedata,bool on_conveyor = false) {
 		reference_frame = reference;
 		part_name = name;
@@ -251,10 +254,9 @@ protected:
 
 class ObjectTracker {
 public:
-	//todo account for gripper size? ???
-	void add_bin_part(std::string part_type,char part_number,tf::Pose location) {
-		if lookup_map[part_type+]
-	}
+	// void add_bin_part(std::string part_type,char part_number,tf::Pose location) {
+	// 	if (lookup_map[part_type]
+	// }
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
 		nodeptr = nodeptr_; 
 		listener = listener_;
@@ -325,6 +327,16 @@ public:
 
 	static bool part_exists(std::string part_name) {
 		return lookup_map.count(part_name);
+	}
+
+	static std::vector<std::string> get_belt_parts() {
+		std::vector<std::string> to_return;
+		for (auto & part : lookup_map) {
+			if (part.second.is_moving()) {
+				to_return.push_back(part.first);
+			}
+		}
+		return to_return;
 	}
 
 	static double part_type_generic_grab_height(std::string part_type) {
