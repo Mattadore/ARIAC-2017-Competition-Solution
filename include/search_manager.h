@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <include/competition_interface.h>
+#include <include/object_manager.h>
 
 struct part_bin_data {
 	std::string part_name;
@@ -8,7 +9,7 @@ struct part_bin_data {
 	unsigned char bin_num_max;
 	bool unique_orientation;
 	double radius;
-	int index_offset;
+	int index_counter;
 };
 
 struct bin_data {
@@ -47,14 +48,14 @@ public:
 	}
 	void populate_tracker() { //add part num to tracker
 		//dostuff
-		int ID = 1;
-		for (char x = 0; x < possible_grids.front().num[0]; ++x) {
-			for (char y = 0; y < possible_grids.front().num[1]; ++y) {
-				//do stuff
-				++ID;
-			}
+		int size = get_num_parts();
+		for (int ID = 1;ID <= size;++ID) {
+			++(type_data->index_counter);
+			tf::Vector3 offset = possible_grids.front().position_from_id(ID);
+			tf::Vector3 true_position = offset+bin_location+tf::Vector3(0,0,ObjectTracker::part_type_generic_height(type_data->part_name));
+			tf::Pose new_object_pose(get_rotation(),true_position); //yess
+			ObjectTracker::add_bin_part(type_data->part_name, type_data->index_counter, new_object_pose);
 		}
-		type_data->index_offset += get_num_parts();
 	}
 	void add_observation(tf::Pose pose_in, char id_number = 0) {
 		if (grid_complete()) { //for safety tbh
@@ -82,11 +83,9 @@ public:
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,1,1));
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(1,-1,1));
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,-1,1));
-		++observations;
-
 		//filter the models
 		for (std::list<grid_structure>::iterator iter = possible_grids.begin();iter!=possible_grids.end();) {
-			if (!iter->incorporate(pose_corrected)) {
+			if (!iter->incorporate(pose_corrected,id_number,(observations == 1))) {
 				iter = possible_grids.erase(iter);
 			}
 			else {
@@ -94,14 +93,15 @@ public:
 			}
 		}
 
-		if (possible_grids.size() == 1) {
+		++observations;
 
+		if (grid_complete()) {
+			populate_tracker();
 			//publish all as tfs, i suppose
 		}
 		else if (possible_grids.size() == 0) {
 			ROS_ERROR("ALL MODELS FAILED ON BIN %s",bin_name.c_str());
 		}
-
 	}
 	tf::Quaternion get_rotation() {
 		if (observations == 0) {
@@ -170,7 +170,16 @@ protected:
 		inline double get_index_scaling(char axis,char index) {
 			return ((double)index)-((num[axis]+1)/2.0);
 		}
-		bool incorporate(tf::Pose & location, char id_number = 0) {
+		bool is_edge(char id) {
+			for (char axis=0;axis<=1;++axis) {
+				char index = axis_index_from_id(axis,id);
+				if ((index == 1) || (index == num[axis])) {
+					return true;
+				}
+			}
+			return false;
+		}
+		bool incorporate(tf::Pose & location, char id_number = 0,bool edge = false) {
 			if (id_number != 0) { //if we know the id
 
 				//set unset values
@@ -178,6 +187,9 @@ protected:
 				//scale always more than radius
 				tf::Vector3 true_location = location.getOrigin();
 				double temp_scale[2] = {0,0};
+				if (edge && (!is_edge(id_number))) { //edge mismatch
+					return false;
+				}
 				for (char axis=0;axis<=1;++axis) {
 					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
 						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
@@ -272,7 +284,7 @@ protected:
 
 		}
 	}
-
+	tf::Transform grasp_location;
 	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
 	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
 

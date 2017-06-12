@@ -161,9 +161,11 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		}
 	}
 	static void set_arm_region(char new_region) {
-
+		arm_region = new_region;
 	}
-
+	static char get_arm_region() {
+		return arm_region;
+	}
 	//access methods
 	static unsigned char get_state(unsigned char index) {
 		return state[index];
@@ -210,6 +212,10 @@ struct CompetitionInterface { //exists for this one node, everything is static
 	// 	return state_if_diff[index];
 	// }
 
+	static bool part_dropped() {
+		return dropped;
+	}
+
 protected:
 
 	//---------------callbacks (should not invoke any actions or action methods)
@@ -247,9 +253,31 @@ protected:
 		AGV_info[1].status = AGV_status_lookup[msg->data];
 	}
 
+
 	static void vacuum_gripper_callback(const osrf_gear::VacuumGripperState::ConstPtr msg) {
+		if ((msg->attached == false) && (state[GRIPPER_ATTACHED] == BOOL_TRUE)) {
+			//only triggers if part was being held a moment ago
+			if (msg->enabled == true) {
+				dropped = true; //part was dropped accidentally
+			}
+		}
 		state[GRIPPER_ATTACHED] = (msg->attached) ? BOOL_TRUE : BOOL_FALSE;
 		state[GRIPPER_ENABLED] = (msg->enabled) ? BOOL_TRUE : BOOL_FALSE;
+		if (state[GRIPPER_ATTACHED] == BOOL_TRUE) {
+			if (ObjectTracker::get_object_held() != ObjectTracker::get_object_interested()) {
+				if (ObjectTracker::get_object_held() == "") {
+					ObjectTracker::pick_up();
+				}
+			}
+		}
+		else {
+			if (ObjectTracker::get_object_held() != "") {
+				ObjectTracker::drop_off();
+			}
+		}
+		if (state[GRIPPER_ENABLED] == BOOL_FALSE) {
+			dropped = false;
+		}
 	}
 
 	static void key_down_callback(const keyboard::Key::ConstPtr msg) {
@@ -308,6 +336,7 @@ protected:
 	static unsigned char state[NUM_STATES]; //holds state machine info
 	static AGV_data AGV_info[2]; //basic agv information
 	static char arm_region;
+	static bool dropped = false;
 
 	// static unsigned char state_diff[NUM_STATES]; //holds diff info
 	// static unsigned char state_old[NUM_STATES]; //holds old state machine info
@@ -326,7 +355,9 @@ sensor_msgs::JointState CompetitionInterface::current_joint_state;
 unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine info
 AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
 char CompetitionInterface::arm_region;
-
+static std::string CompetitionInterface::object_held;
+static std::string CompetitionInterface::object_interested;
+int number_scanned_parts;
 
 // unsigned char state_diff[NUM_STATES]; //holds diff info
 // unsigned char state_old[NUM_STATES]; //holds old state machine info

@@ -62,6 +62,7 @@ enum simple_regions {
 	REGION_AGV1,
 	REGION_AGV2,
 	REGION_BINS, //treat bins and conveyor as same for now
+	REGION_CONVEYOR,
 	REGION_BIN_GRAB //technically unsafe to have just "bin" region
 };
 
@@ -169,6 +170,12 @@ struct arm_action {
 	arm_action::Ptr parent = nullptr;
 	moveit_msgs::Constraints * constraints = nullptr;
 	//maybe add what the state is here
+	ros::Duration get_execution_time() {
+		if (plan != nullptr) {
+			return plan->trajectory_.joint_trajectory.points.back().time_from_start + transition_delay;
+		}
+		return ros::Duration(0);
+	}
 	arm_action(arm_action::Ptr previous) : parent(previous) { //assumed this has state ownership
 		if (previous == nullptr) {
 			vacuum_enabled = false;

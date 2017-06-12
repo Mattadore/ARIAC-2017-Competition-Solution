@@ -96,10 +96,21 @@ class ObjectTracker;
 class ObjectData {
 public:
 	void reference_swap(std::string new_reference_name) {
+		boost::unique_lock<boost::recursive_mutex> location_lock(object_pose_mutex);
+		if (reference_frame == new_reference_name) {
+			return;
+		}
+		tf::StampedPose new_frame_pose = get_location(); //this has a mutex in it, so..
+		tf::StampedTransform to_new_frame = ObjectTracker::get_recent_transform(reference_frame,new_reference_name);
 		relative_motion = tf::Vector3(0,0,0);
+		new_frame_pose.setData(new_frame_pose*to_new_frame);
+		reset_filtering();
+		add_new_pose(new_frame_pose);
+		reference_frame = new_reference_frame;
 	}
 	void reset_filtering() {
-		
+		average_list_index = 0;
+		average_list_valid = 0;
 	}
 	std::string & get_name() {
 		return part_name;
@@ -136,6 +147,7 @@ public:
 	}
 	//this code below is not user friendly
 	void add_new_pose(tf::StampedTransform pose_in) {
+		boost::unique_lock<boost::recursive_mutex> location_lock(object_pose_mutex);
 		average_list[average_list_index] = pose_in;
 		average_list_valid += (average_list_valid < average_list_size); //increment iff smaller than max
 		tf::Quaternion result_q = average_list[average_list_index].getRotation();
@@ -186,7 +198,6 @@ public:
 		relative_motion = result_v;
 		//relative_motion.setX(0);
 		//relative_motion.setZ(0);
-
 		average_list_index = (average_list_index+1) % average_list_size; //increment with possible loop back to start
 	}
 
@@ -212,22 +223,18 @@ public:
 	// 	current_location = pose_in;
 	// 	average_list_index = (average_list_index+1) % max_average_num; //increment with possible loop back to start
 	// }
-	tf::StampedTransform get_current_location() {
-		tf::StampedTransform out = current_location;
+	tf::StampedTransform get_location(ros::Time at_time = ros::Time::now()) {
+		boost::unique_lock<boost::recursive_mutex> location_lock(object_pose_mutex);
+		tf::Transform out,start = tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0,0,0)); //world coords
 		out.stamp_ = ros::Time::now();
-		double duration = ros::Duration(ros::Time::now() - current_location.stamp_).toSec();
-		//because we're in relative frame, using velocity in relative frame, we transform before we combine part space
-		out.setData(tf::Pose(tf::Quaternion(0,0,0,1),relative_motion*duration)*current_location);
-		//ROS_INFO("%s: %f %f %f",part_name.c_str(),relative_motion.getX(),relative_motion.getY(),relative_motion.getZ());
-		return out;
-	}
-	tf::StampedTransform get_location_at_time(ros::Time at_time) {
-		tf::StampedTransform out = current_location;
-		out.stamp_ = at_time;
-		double duration = ros::Duration(at_time - current_location.stamp_).toSec();
-		//because we're in relative frame, using velocity in relative frame, we transform before we combine part space
-		out.setData(tf::Pose(tf::Quaternion(0,0,0,1),relative_motion*duration)*current_location);
-		//ROS_INFO("%s: %f %f %f",part_name.c_str(),relative_motion.getX(),relative_motion.getY(),relative_motion.getZ());
+		if (reference_frame != "world") { //speed things up
+			start = ObjectTracker::get_recent_transform("world",reference_frame);
+		} //more speed
+		if (relative_motion != tf::Vector3(0,0,0)) {
+			double duration = ros::Duration(at_time - current_location.stamp_).toSec();
+			start *= tf::Pose(tf::Quaternion(0,0,0,1),relative_motion*duration);
+		}
+		out.setData(start*current_location);
 		return out;
 	}
 	/*tf::StampedTransform get_global_location() {
@@ -242,7 +249,7 @@ protected:
 	ObjectTypeData * type_information;
 	tf::StampedTransform current_location;
 	std::string part_name;
-	tf::Vector3 relative_motion;
+	tf::Vector3 relative_motion = tf::Vector3(0,0,0);
 	bool moving;
 	//handles dynamic moving average
 	tf::StampedTransform average_list[max_average_num];
@@ -250,13 +257,34 @@ protected:
 	unsigned char average_list_size;
 	unsigned char average_list_position_size;
 	unsigned char average_list_valid;
+	boost::recursive_mutex object_pose_mutex;
 };
 
 class ObjectTracker {
 public:
-	// void add_bin_part(std::string part_type,char part_number,tf::Pose location) {
-	// 	if (lookup_map[part_type]
-	// }
+	static void add_bin_part(std::string part_type,char part_number,tf::Pose location) {
+		std::string full_name = part_type;
+		full_name += '_';
+		std::string full_name += itoa(part_number);
+		ROS_INFO("Adding %s",full_name.c_str());
+		if (!part_exists(full_name)) {
+			object_data[part_type].push_back(ObjectData(full_name,"world",&(type_data[part_type]),false));
+			lookup_map[full_name] = &(object_data[part_type].back());
+			lookup_map[full_name]->add_new_pose(location);
+		}
+	}
+
+	static void pick_up() {
+		object_held = object_interested;
+		lookup_map[object_held]->reference_swap("vacuum_gripper_link");
+	}
+
+	//TODO: expand upon this, such that parts fall to where you'd expect them to be
+	static void drop_off() {
+		lookup_map[object_held]->reference_swap("world");
+		object_held = "";
+	}
+
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
 		nodeptr = nodeptr_; 
 		listener = listener_;
@@ -276,7 +304,7 @@ public:
 
 	static void publish_tfs() {
 		for (std::map<std::string,ObjectData *>::iterator it = lookup_map.begin(); it != lookup_map.end(); ++it) {
-			tf::StampedTransform current_transform = it->second->get_current_location();
+			tf::StampedTransform current_transform = it->second->get_location();
 			tf2_msgs::TFMessage message_out;
 			geometry_msgs::TransformStamped transformation_out;
 			tf::transformStampedTFToMsg(current_transform,transformation_out);
@@ -285,7 +313,7 @@ public:
 		}
 	}
 
-	static tf::StampedTransform get_gripper_pose(ros::Time time_in = ros::Time::now()) {
+	static tf::StampedTransform get_gripper_pose() {
 		tf::StampedTransform transform_out;
 		listener->lookupTransform("world","vacuum_gripper_link",ros::Time(0),transform_out);
 		return transform_out;
@@ -297,7 +325,7 @@ public:
 		const tf::Quaternion identity(0,0,0,1);
 		ObjectData & part_to_grab = *(lookup_map[part_name]);
 		ObjectTypeData * part_typedata = part_to_grab.get_type_info();
-		tf::Pose out_pose, object_true_location = part_to_grab.get_location_at_time(at_time);
+		tf::Pose out_pose, object_true_location = part_to_grab.get_location(at_time);
 		bool is_inverted = is_upside_down(object_true_location);
 		double true_face_from_tf = true_bin_height_offset - part_typedata->tf_base_offset;
 		if (is_inverted) {
@@ -329,10 +357,11 @@ public:
 		return lookup_map.count(part_name);
 	}
 
+
 	static std::vector<std::string> get_belt_parts() {
 		std::vector<std::string> to_return;
 		for (auto & part : lookup_map) {
-			if (part.second.is_moving()) {
+			if (part.second.get_velocity() != tf::Vector3(0,0,0)) { //currently still on belt?
 				to_return.push_back(part.first);
 			}
 		}
@@ -346,6 +375,32 @@ public:
 		true_face_from_tf += part_typedata->size; //grab from top, which is "size" away from the tf
 		true_face_from_tf -= grab_offset;
 		return object_true_height + true_face_from_tf;
+	}
+	static double part_type_generic_height(std::string part_type) {
+		return bin_height + type_data[part_type].tf_base_offset;
+	}
+
+	static std::vector<std::string> & get_scanned_parts() {
+		return scanned_parts;
+	}
+
+	static tf::StampedTransform get_internal_transform(std::string part_name) {
+		if (!part_exists(part_name)) {
+			ROS_ERROR("Part does not exist");
+		}
+		return lookup_map[part_name]->get_location();
+	}
+
+	static std::string get_object_held() {
+		return object_held;
+	}
+
+	static std::string get_object_interested() {
+		return object_interested;
+	}
+
+	static void set_object_interested(std::string object_name) {
+		object_interested = object_name;
 	}
 
 protected:
@@ -391,22 +446,28 @@ protected:
 			std::string parent = transformation.header.frame_id;
 			std::string name = transformation.child_frame_id;
 			//parses name
-			boost::regex pattern("logical_camera_[0-9]+_((.*?part.*?)_(clone_)?[0-9]+)_frame", boost::regex::perl); 
+			boost::regex pattern("logical_camera_[0-9]+_((.*?part.*?)_(clone_)?([0-9]+|belt))_frame", boost::regex::perl); 
 			boost::smatch matches;
 			std::string part_type, part_id, full_name;
-			bool is_conveyor_part;
+			bool is_conveyor_part,used_belt_cam;
 			if (boost::regex_match(name, matches, pattern)) {
 				full_name = matches[1];
 				part_type = matches[2];
-				//part_id = matches[3];
-				is_conveyor_part = (matches.size() == 4);
+				is_conveyor_part = matches[3].matched;
+				belt_camera = (((std::string)matches[4]) == "belt");
 			}
 			else {
 				continue;
 			}
 			if (!lookup_map.count(full_name)) {
-				ObjectData new_object(full_name,"world",&(type_data[part_type]),is_conveyor_part);
-				object_data[part_type].push_back(new_object);
+				//ObjectData new_object(full_name,"world",&(type_data[part_type]),is_conveyor_part);
+				if (belt_camera && !(is_conveyor_part)) { //a little... forward.. I think
+					object_data[part_type].push_back(ObjectData(full_name,"vacuum_gripper_link",&(type_data[part_type]),is_conveyor_part));
+					set_object_interested(full_name); //interested in this part
+				}
+				else {
+					object_data[part_type].push_back(ObjectData(full_name,"world",&(type_data[part_type]),is_conveyor_part));
+				}
 				lookup_map[full_name] = &(object_data[part_type].back());
 			}
 			tf::StampedTransform true_pose,reference_transformation;
@@ -423,9 +484,12 @@ protected:
 	static std::map<std::string,std::list<ObjectData> > object_data;
 	static std::map<std::string,ObjectTypeData> type_data;
 	static std::map<std::string,ros::Subscriber> subscriptions;
+	static std::string object_held;
+	static std::string object_interested;
 	static tf::TransformListener * listener;
 	static ros::NodeHandle * nodeptr;
 	static ros::Publisher tf_publisher;
+	//static std::vector<std::string> scanned_parts; 
 };
 
 std::map<std::string,ObjectData *> ObjectTracker::lookup_map;
@@ -435,6 +499,7 @@ std::map<std::string,ros::Subscriber> ObjectTracker::subscriptions;
 tf::TransformListener * ObjectTracker::listener;
 ros::NodeHandle * ObjectTracker::nodeptr;
 ros::Publisher ObjectTracker::tf_publisher;
+//std::vector<std::string> ObjectTracker::scanned_parts; 
 
 /*
 int main(int argc, char ** argv) {

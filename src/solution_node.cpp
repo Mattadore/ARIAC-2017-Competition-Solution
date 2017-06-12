@@ -165,6 +165,8 @@
 
 //Competition manager class
 
+//TODO: have arm_actions give return information, and pass that along to subsequent actions?
+
 class CompetitionManager {
 public:
 
@@ -250,6 +252,11 @@ public:
 		if (CompetitionInterface::get_state(COMPETITION_STATE) == COMPETITION_DONE) {
 			terminated = true;
 		}
+		if (CompetitionInterface::part_dropped()) {
+			//TODO: part drop logic, includes turning off vacuum gripper.
+			//controller.stop_controller(); //terminate movement
+		}
+
 		//check all toggled states
 		//look for any funny business
 	}
@@ -257,7 +264,7 @@ public:
 
 	//integrate b into a, maybe have switches happen at given times
 	void integrate(arm_action::Ptr a, arm_action::Ptr b) {
-		ros::Duration a_end_time = a->plan->trajectory_.joint_trajectory.points.back().time_from_start;
+		ros::Duration a_end_time = a->get_execution_time()-transition_delay;
 		for (int i=1;i<b->plan->trajectory_.joint_trajectory.points.size();++i) {
 			b->plan->trajectory_.joint_trajectory.points[i].time_from_start += a_end_time;
 			a->plan->trajectory_.joint_trajectory.points.push_back(b->plan->trajectory_.joint_trajectory.points[i]);
@@ -303,11 +310,13 @@ public:
 		ROS_INFO_STREAM(a);
 	}
 	
-	//testingd
-	
+	//testing
+	//TODO: give this an intermediate?
 	pipeline_data simple_grab(std::string part_name,pipeline_data data_in = pipeline_data()) {
+	 	CompetitionInterface::set_interested_object(part_name);
 		tf::Pose grab_pose = ObjectTracker::get_grab_pose(part_name);
 		arm_action::Ptr align_action(new arm_action(data_in.action,grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
+	 	align_action->vacuum_enabled = false; //just to be safe
 	 	arm_action::Ptr grab_action(new arm_action(align_action,grab_pose,REGION_BIN_GRAB));
 	 	grab_action->vacuum_enabled = true;
 	 	grab_action->pick_part = true;
@@ -320,14 +329,27 @@ public:
 	 	controller.add_action(grab_action);
 	 	controller.add_action(lift_action);
 	 	controller.wait_until_executed(grab_action);
-	 	pipeline_data return_data(ros::Time::now()+lift_action->plan->trajectory_.joint_trajectory.points.back().time_from_start,lift_action);
+	 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
 	 	return return_data;
 	}
 
 	//if no pipeline data passed, will just act as if called on current time
+	//TODO: enforce limits on where you can grab a moving part from
 	pipeline_data simple_grab_moving(std::string part_name,pipeline_data data_in = pipeline_data()) {
-		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time+ros::Duration(0.05));
-		arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_BINS));
+		char current_region = (data_in.action == nullptr) ? CompetitionInterface::get_arm_region() : data_in.action->region;
+		if (current_region != REGION_CONVEYOR) { //TODO: we can plan this iteratively as well
+			tf::Pose current_grab_temp = ObjectTracker::get_grab_pose(part_name,data_in.time);
+			arm_action::Ptr conveyor_move(new arm_action(data_in.action,current_grab_temp,current_region));
+			conveyor_move->vacuum_enabled = false;
+			conveyor_move->use_conveyor = true;
+			planner.add_action(conveyor_move);
+			planner.wait_until_planned(conveyor_move);
+			data_in.action = conveyor_move;
+			data_in.time += conveyor_move->get_execution_time();
+			controller.add_action(conveyor_move);
+		}
+		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
+		arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_CONVEYOR));
 		dummy_action->vacuum_enabled = true;
 		dummy_action->pick_part = true;
 		for (char i=0;i<8;++i) {
@@ -340,32 +362,33 @@ public:
 			planner.add_action(dummy_action);
 			planner.wait_until_planned(dummy_action);
 			ROS_INFO("ITER COMPLETE");
-			ros::Time end_time = data_in.time + dummy_action->plan->trajectory_.joint_trajectory.points.back().time_from_start;
-			ROS_INFO("duration is %f",dummy_action->plan->trajectory_.joint_trajectory.points.back().time_from_start.toSec());
-			current_grab = ObjectTracker::get_grab_pose(part_name,end_time + ros::Duration(0.05));
+			ros::Time end_time = data_in.time + dummy_action->get_execution_time()+ros::Duration(0.05);
+			ROS_INFO("duration is %f",dummy_action->get_execution_time().toSec());
+			current_grab = ObjectTracker::get_grab_pose(part_name,end_time);
 
 		}
 		double dist = 1.0;
 		tf::Pose transform_pose = tf::Pose(identity,tf::Vector3(0,-dist,0)) * current_grab;
-		arm_action::Ptr slide_action(new arm_action(dummy_action,transform_pose,REGION_BINS));
+		arm_action::Ptr slide_action(new arm_action(dummy_action,transform_pose,REGION_CONVEYOR));
 		planner.add_action(slide_action);
 		planner.wait_until_planned(slide_action);
 		homogenize_for_belt(slide_action->plan->trajectory_.joint_trajectory,dist);
 		integrate(dummy_action,slide_action);
 
-
+		CompetitionInterface::set_interested_object(part_name);
 		controller.add_action(dummy_action);
 		//controller.add_action(slide_action);
 		controller.wait_until_executed(dummy_action);
+		//TODO: perhaps calculate the grasp location in a cleaner way?
 		tf::StampedTransform arm_location = ObjectTracker::get_gripper_pose();
 		tf::Pose next_location = tf::Pose(identity,tf::Vector3(0,0,0.2)+arm_location.getOrigin());
-		arm_action::Ptr retract_action(new arm_action(nullptr,next_location,REGION_BINS));
+		arm_action::Ptr retract_action(new arm_action(nullptr,next_location,REGION_CONVEYOR));
 		retract_action->vacuum_enabled = true;
 
 		planner.add_action(retract_action);
 		planner.wait_until_planned(retract_action);
 		//Movement pipeline is recreated here
-		ros::Time pipeline_time = ros::Time::now()+transition_delay+retract_action->plan->trajectory_.joint_trajectory.points.back().time_from_start;
+		ros::Time pipeline_time = ros::Time::now()+retract_action->get_execution_time();
 		controller.add_action(retract_action);
 		//controller.wait_until_executed(retract_action);
 		//delete dummy_action;
@@ -375,15 +398,21 @@ public:
 
 	//NOTE: this drop does not correct for issues with incorrect pose grip, assumes pose correctly handled
 	pipeline_data simple_drop(char agv_number,tf::Pose drop_offset = tf::Pose(identity,tf::Vector3(0,0,0)),pipeline_data data_in = pipeline_data()) {
+		char agv_region = (agv_number == 1) ? REGION_AGV1 : REGION_AGV2;		
+		char current_region = (data_in.action == nullptr) ? CompetitionInterface::get_arm_region() : data_in.action->region;
 		tf::Pose agv_pose = ObjectTracker::get_tray_pose(agv_number);
-		arm_action::Ptr move_to_intermediate(new arm_action(data_in.action,agv_pose,REGION_BINS));
-		move_to_intermediate->use_intermediate = true;
-		move_to_intermediate->vacuum_enabled = true;
-		char agv_region = (agv_number == 1) ? REGION_AGV1 : REGION_AGV2;
-		arm_action::Ptr move_to_tray(new arm_action(move_to_intermediate,tf::Pose(identity,tf::Vector3(0,0,0.3))*agv_pose*drop_offset,agv_region));
-	 	planner.add_action(move_to_intermediate);
+		if (current_region != agv_region) { //TODO: we can plan this iteratively as well
+			arm_action::Ptr intermediate_move(new arm_action(data_in.action,agv_pose,current_region));
+			intermediate_move->use_intermediate = true;
+			intermediate_move->vacuum_enabled = true;
+			planner.add_action(intermediate_move);
+			planner.wait_until_planned(intermediate_move);
+			data_in.action = intermediate_move;
+			data_in.time += intermediate_move->get_execution_time();
+			controller.add_action(intermediate_move);
+		}
+		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.3))*agv_pose*drop_offset,agv_region));
 	 	planner.add_action(move_to_tray);
-	 	controller.add_action(move_to_intermediate);
 	 	controller.add_action(move_to_tray);
 	 	std::vector<arm_action::Ptr> standard_actions; //TODO: do something similar for waving under camera
 	 	std::vector<arm_action::Ptr> trash_actions; //TODO: do something similar for waving under camera
@@ -412,7 +441,8 @@ public:
 
  		planner.wait_until_planned(standard_actions.back());
  		controller.wait_until_executed(move_to_tray);
- 
+ 		//TODO: this is disgusting
+
 		ros::Duration pipeline_time;
 		std::vector<arm_action::Ptr>* action_list;
 	 	if (!quality_sensor_reading.models.empty()) { //Oh boy
@@ -430,7 +460,7 @@ public:
 	 	}
  		controller.add_actions(action_list);
  		for (arm_action::Ptr action : (*action_list)) {
-	 		pipeline_time += action->plan->trajectory_.joint_trajectory.points.back().time_from_start;
+	 		pipeline_time += action->get_execution_time();
  		}
 	 	return pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
 	}
@@ -511,9 +541,6 @@ public:
 		// traj.joint_names = jointmsg.joint_names;
 		// joint_pub.publish(traj);
 
-
-
-
 		// CompetitionInterface::toggle_vacuum(true);
 		// tf::Pose grab_pose = ObjectTracker::get_grab_pose("pulley_part_2");
 		// arm_action grab_action(grab_pose,nullptr);
@@ -534,9 +561,6 @@ public:
 		// controller.wait_until_executed(pull_action);
 
 		// CompetitionInterface::toggle_vacuum(false);
-
-
-
 
 		// CompetitionInterface::toggle_vacuum(true);
 		// tf::Pose grab_pose = ObjectTracker::get_grab_pose("pulley_part_3");
@@ -658,6 +682,7 @@ public:
 
 		terminated = false;
 		number_orders = 0;
+		number_scanned_parts = 0;
 	  	//ensure buffer is completely initialized?
 
 		//std::vector<std::string> frame_names_ = tf; //add all frame names to set
@@ -710,23 +735,23 @@ protected:
 		agv.current_kit = to_assign;
 	}
 
-	void complete_kit(osrf_gear::Kit * to_assign) {
-		if (kit_tally.count(to_assign) == 0) {
-			ROS_ERROR("Kit does not exist");
-			return;
-		}
-		kit_metadata & data = kit_tally[to_assign];
-		if ((data.agv_number!=1)&&(data.agv_number!=2)) {
-			ROS_ERROR("AGV does not exist");
-			return;
-		}
-		AGV_metadata & agv = AGV_info[data.agv_number-1];
+	// void complete_kit(osrf_gear::Kit * to_assign) {
+	// 	if (kit_tally.count(to_assign) == 0) {
+	// 		ROS_ERROR("Kit does not exist");
+	// 		return;
+	// 	}
+	// 	kit_metadata & data = kit_tally[to_assign];
+	// 	if ((data.agv_number!=1)&&(data.agv_number!=2)) {
+	// 		ROS_ERROR("AGV does not exist");
+	// 		return;
+	// 	}
+	// 	AGV_metadata & agv = AGV_info[data.agv_number-1];
 		
 		
 
-		data.agv_number = agv_number;
-		agv.current_kit = to_assign;
-	}
+	// 	data.agv_number = agv_number;
+	// 	agv.current_kit = to_assign;
+	// }
 
 	struct AGV_metadata {
 		//bool unassigned;
@@ -766,7 +791,6 @@ protected:
 
 	boost::thread logic_thread;
 	ros::NodeHandle * nodeptr; //not particularly clean but the node needs to die if this goes out of scope anyway
-
 	bool part_waiting;
 	std::string waiting_for;
 	ros::Publisher joint_pub;

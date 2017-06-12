@@ -21,16 +21,18 @@ public:
 			trashcan_points[1].positions.push_back(trashcan_configuration_data[1][i]);
 			trashcan_points[0].velocities.push_back(0);
 			trashcan_points[1].velocities.push_back(0);
+			conveyor_point.positions.push_back(conveyor_configuration_data[i]);
+			conveyor_point.velocities.push_back(0);
 			// std_msgs::Float64 f;
 			// f.data = intermediate_configuration_data[0][i];
 			// intermediate_configuration_vectors[0].push_back(f);
 			// f.data = intermediate_configuration_data[1][i];
 			// intermediate_configuration_vectors[1].push_back(f);
 		}
-		intermediate_points[0].time_from_start = ros::Duration(2.0);
-		intermediate_points[1].time_from_start = ros::Duration(2.0);
-		trashcan_points[0].time_from_start = ros::Duration(2.0);
-		trashcan_points[1].time_from_start = ros::Duration(2.0);
+		// intermediate_points[0].time_from_start = ros::Duration(2.0);
+		// intermediate_points[1].time_from_start = ros::Duration(2.0);
+		// trashcan_points[0].time_from_start = ros::Duration(2.0);
+		// trashcan_points[1].time_from_start = ros::Duration(2.0);
 	}
 
 	void wait_for_plan_complete() {
@@ -139,7 +141,23 @@ protected:
 			}
 		}
 		else if (to_plan->use_conveyor) {
-			//TODO: do something else
+			//limit is 2.1
+			trajectory_msgs::JointTrajectoryPoint custom_conveyor(conveyor_point);
+			double y_position = to_plan->trajectory_end.getOrigin().getY();
+			y_position += 0.4; //why not
+			const double limit = 2.0;
+			if (y_position > limit) {
+				y_position = limit;
+			}
+			else if (y_position < -limit) {
+				y_position = -limit;
+			}
+			if (to_plan->trajectory_end.getOrigin().getY() < 0) {
+				to_plan->plan->trajectory_.joint_trajectory.points.push_back(trashcan_points[NEGATIVE_CONFIGURATION]);
+			}
+			else {
+				to_plan->plan->trajectory_.joint_trajectory.points.push_back(trashcan_points[POSITIVE_CONFIGURATION]);
+			}
 		}
 		else {
 			ROS_ERROR("No valid configuration set");
@@ -265,6 +283,7 @@ protected:
 	}
 	trajectory_msgs::JointTrajectoryPoint intermediate_points[2];
 	trajectory_msgs::JointTrajectoryPoint trashcan_points[2];
+	trajectory_msgs::JointTrajectoryPoint conveyor_point;
 	moveit::core::RobotState * generic_state;
 	moveit::planning_interface::MoveGroup arm_control_group;
 	boost::condition_variable plan_condition;
