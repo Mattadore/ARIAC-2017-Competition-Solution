@@ -142,7 +142,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		ros::ServiceClient material_client = nodeptr->serviceClient<osrf_gear::GetMaterialLocations>("/ariac/material_locations");
 		osrf_gear::GetMaterialLocations srv;
 		srv.request.material_type = material_name;
-		conveyor_client.call(srv);
+		material_client.call(srv);
 		std::vector<std::string> bin_names;
 		for (osrf_gear::StorageUnit & unit : srv.response.storage_units) {
 			if (unit.unit_id != "belt") { //sry

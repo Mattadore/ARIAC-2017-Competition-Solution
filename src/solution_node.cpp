@@ -473,6 +473,8 @@ public:
 			assign_kits();
 
 
+
+
 		}
 
 
@@ -724,7 +726,7 @@ protected:
 		
 		
 
-		data.agv_number = agv_number;
+		// data.agv_number = agv_number; // Check if this true
 		agv.current_kit = to_assign;
 	}
 
@@ -743,7 +745,8 @@ protected:
 		bool assigned() {
 			return (agv_number != 0);
 		}
-		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(&kit_in) {}
+		kit_metadata(){}
+		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(& kit_in) {}
 	};
 
 	//ros::Publisher joint_trajectory_publisher;

@@ -90,6 +90,19 @@ struct ObjectTypeData {
 	double tf_base_offset;
 };
 
+// struct ObjectTypeData {
+// 	std::string part_type_name;
+// 	double size;
+// 	double tf_base_offset;
+// 	tf::Vector3 bin_start_point;
+// 	tf::Vector3 bin_end_point;
+// 	tf::Vector3 bin_start_rpy;
+// 	tf::Vector3 conveyor_start_rpy;
+// 	unsigned char bin_num_min;
+// 	unsigned char bin_num_max;
+// 	bool unique_orientation;
+// 	double radius;
+// };
 
 class ObjectTracker;
 
@@ -332,7 +345,7 @@ public:
 	static std::vector<std::string> get_belt_parts() {
 		std::vector<std::string> to_return;
 		for (auto & part : lookup_map) {
-			if (part.second.is_moving()) {
+			if (part.second->is_moving()) {
 				to_return.push_back(part.first);
 			}
 		}
@@ -340,10 +353,12 @@ public:
 	}
 
 	static double part_type_generic_grab_height(std::string part_type) {
+		
+		/////// Check edits in this function are rite or wrong //////
 		double grab_offset = -0.014;
 		double object_true_height = bin_height + type_data[part_type].tf_base_offset;
-		double true_face_from_tf = true_bin_height_offset - part_typedata->tf_base_offset;
-		true_face_from_tf += part_typedata->size; //grab from top, which is "size" away from the tf
+		double true_face_from_tf = true_bin_height_offset - type_data[part_type].tf_base_offset;
+		true_face_from_tf += type_data[part_type].size; //grab from top, which is "size" away from the tf
 		true_face_from_tf -= grab_offset;
 		return object_true_height + true_face_from_tf;
 	}
@@ -364,16 +379,22 @@ protected:
 		return (correlation < -0.2); //arbitrary down correlation value
 	}
 	static void initialize_object_types() {
-		type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
-		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
-		type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
-		tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0)}; //correct
-		type_data["piston_rod_part"] = {"piston_rod_part",0.07024,0.004951,tf::Vector3(0.2,0.2,0),
-		tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
-		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
-		tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)};
+		// type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
+		// tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
+		// type_data["gasket_part"] = {"gasket_part",0.020020,0.004951,tf::Vector3(0.2,0.2,0),
+		// tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
+		// type_data["gear_part"] = {"gear_part",0.008717,0.004951,tf::Vector3(0.1,0.1,0),
+		// tf::Vector3(0.5,0.5,0),tf::Vector3(0,0,0),tf::Vector3(0,0,0)}; //correct
+		// type_data["piston_rod_part"] = {"piston_rod_part",0.07024,0.004951,tf::Vector3(0.2,0.2,0),
+		// tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct
+		// type_data["pulley_part"] = {"pulley_part",0.072900,0.005500,tf::Vector3(0.15,0.15,0),
+		// tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)};
+
+		type_data["disk_part"] = {"disk_part",0.021835,0.004951};
+		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951};
+		type_data["gear_part"] = {"gear_part",0.008717,0.004951};
+		type_data["piston_rod_part"] = {"piston_rod_part",0.07024,0.004951};
+		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
 			object_data[i->first] = std::list<ObjectData>();
