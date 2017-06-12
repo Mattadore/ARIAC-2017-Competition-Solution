@@ -1,25 +1,31 @@
+#ifndef SEARCH_MANAGER_H_
+#define SEARCH_MANAGER_H_
+
+
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <include/competition_interface.h>
+#include <include/object_manager.h>
 
-struct part_bin_data {
+struct part_bin_info {
 	std::string part_name;
 	unsigned char bin_num_min;
 	unsigned char bin_num_max;
 	bool unique_orientation;
 	double radius;
-	int index_offset;
+	int index_counter;
 };
 
 struct bin_data {
 public:
-	bin_data(std::string name,part_bin_data* data,tf::Vector3 location) {
+	bin_data(){}
+	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) {
 		bin_name = name;
 		bin_location = location;
 		type_data = data;
 		for (char x = data->bin_num_min;x<data->bin_num_max;++x) {
 			for (char y = data->bin_num_min;y<data->bin_num_max;++y) {
-				possible_grids.push_back(grid_structure(data->radius,x,y));
+				possible_grids.emplace_back(data->radius,x,y);
 			}
 		}
 		//TODO: import grasp locations
@@ -47,19 +53,23 @@ public:
 	}
 	void populate_tracker() { //add part num to tracker
 		//dostuff
-		int ID = 1;
-		for (char x = 0; x < possible_grids.front().num[0]; ++x) {
-			for (char y = 0; y < possible_grids.front().num[1]; ++y) {
-				//do stuff
-				++ID;
-			}
+		int size = get_num_parts();
+		for (int ID = 1;ID <= size;++ID) {
+			++(type_data->index_counter);
+			tf::Vector3 offset = possible_grids.front().position_from_id(ID);
+			tf::Vector3 true_position = offset+bin_location+tf::Vector3(0,0,ObjectTracker::part_type_generic_height(type_data->part_name));
+			tf::StampedTransform new_object_pose;
+			new_object_pose.setData(tf::Pose(get_rotation(),true_position)); //yess
+			new_object_pose.stamp_ = ros::Time::now();
+
+			ObjectTracker::add_bin_part(type_data->part_name, type_data->index_counter, new_object_pose);
 		}
-		type_data->index_offset += get_num_parts();
 	}
 	void add_observation(tf::Pose pose_in, char id_number = 0) {
-		if (grid_complete()) { //for safety tbh
-			return;
-		}
+		// if (grid_complete()) { //for safety tbh
+		// 	return;
+		// }
+		//TODO: make this safer
 		//do pose correction to point the same way
 		tf::Pose pose_corrected = pose_in;
 		tf::Vector3 z_axis(0,0,1);
@@ -68,6 +78,12 @@ public:
 			tf::Vector3 cross_axis = pose_in_z.cross(z_axis).normalize(); //hope I get this right
 			pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
 		}
+
+
+		//now in local coords
+		pose_corrected.setOrigin(pose_corrected.getOrigin()-bin_location);
+		//TODO: more pose correction, if necessary
+
 
 		if (observations == 0) {
 			angle_pose_start = pose_corrected.getRotation();
@@ -82,11 +98,9 @@ public:
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,1,1));
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(1,-1,1));
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,-1,1));
-		++observations;
-
 		//filter the models
 		for (std::list<grid_structure>::iterator iter = possible_grids.begin();iter!=possible_grids.end();) {
-			if (!iter->incorporate(pose_corrected)) {
+			if (!iter->incorporate(pose_corrected,id_number,(observations == 1))) {
 				iter = possible_grids.erase(iter);
 			}
 			else {
@@ -94,14 +108,15 @@ public:
 			}
 		}
 
-		if (possible_grids.size() == 1) {
+		++observations;
 
+		if (grid_complete()) {
+			populate_tracker();
 			//publish all as tfs, i suppose
 		}
 		else if (possible_grids.size() == 0) {
 			ROS_ERROR("ALL MODELS FAILED ON BIN %s",bin_name.c_str());
 		}
-
 	}
 	tf::Quaternion get_rotation() {
 		if (observations == 0) {
@@ -121,7 +136,7 @@ public:
 			ROS_ERROR("NO MORE GRASP LOCATIONS TO POP");
 		}
 	}
-	tf::Vector3 get_grasp_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+	tf::Vector3 get_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
 		tf::Vector3 return_v;
 		if (!mirrored_object_locations.empty()) {
 			return_v = mirrored_object_locations.front();
@@ -133,7 +148,11 @@ public:
 			ROS_ERROR("NO MORE GRASP LOCATIONS");
 		}
 		return_v += bin_location;
+		return_v.setZ(ObjectTracker::part_type_generic_grab_height(type_data->part_name));
 		return return_v;
+	}
+	bool has_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+		return ((mirrored_object_locations.empty())&&(grasp_locations.empty()));
 	}
 protected:
 	//bin size is 0.6
@@ -170,7 +189,16 @@ protected:
 		inline double get_index_scaling(char axis,char index) {
 			return ((double)index)-((num[axis]+1)/2.0);
 		}
-		bool incorporate(tf::Pose & location, char id_number = 0) {
+		bool is_edge(char id) {
+			for (char axis=0;axis<=1;++axis) {
+				char index = axis_index_from_id(axis,id);
+				if ((index == 1) || (index == num[axis])) {
+					return true;
+				}
+			}
+			return false;
+		}
+		bool incorporate(tf::Pose & location, char id_number = 0,bool edge = false) {
 			if (id_number != 0) { //if we know the id
 
 				//set unset values
@@ -178,6 +206,9 @@ protected:
 				//scale always more than radius
 				tf::Vector3 true_location = location.getOrigin();
 				double temp_scale[2] = {0,0};
+				if (edge && (!is_edge(id_number))) { //edge mismatch
+					return false;
+				}
 				for (char axis=0;axis<=1;++axis) {
 					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
 						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
@@ -216,7 +247,7 @@ protected:
 		}
 	};
 	std::string bin_name;
-	part_bin_data * type_data;
+	part_bin_info * type_data;
 	tf::Vector3 bin_location; //TODO: maybe this should be a pose?
 	std::list<grid_structure> possible_grids;
 	std::list<tf::Vector3> mirrored_object_locations;
@@ -227,6 +258,7 @@ protected:
 	//TODO: have a boolean or something if the above is valid. maybe it'll just get it from grid info, actually?
 };
 
+//assumes we always make grasp attempts at identity? orientation
 class SearchManager {
 public:
 	SearchManager() {
@@ -255,15 +287,51 @@ public:
 		}
 		//create all relevant bins
 		for (auto & index : bin_part_types) {
-			bin_lookup[index.first] = bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]);
+			bin_lookup.emplace(index.first,bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]));
 		}
 	}
+
+	bool unfound_parts(std::string part_type) {
+		std::vector<std::string> & bin_list = part_locations[part_type];
+		for (std::string & bin_name : bin_list) {
+			if (!bin_lookup[bin_name].grid_complete()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	tf::Vector3 search(std::string part_type) {
+		std::string bin_name = get_current_search_bin(part_type);
+		return bin_lookup[bin_name].get_search_location();
+	}
+
+	void search_success(std::string part_type) { //invoke after finishing part scan
+		std::string object_name = ObjectTracker::get_held_object();
+		if (object_name == "") {
+			ROS_ERROR("no held object");
+		}
+		std::string bin_name = get_current_search_bin(part_type);
+		tf::Pose grasp_pose = tf::Pose(tf::Quaternion(0,0,0,1),bin_lookup[bin_name].get_search_location());
+		tf::Pose offset = ObjectTracker::get_internal_transform(object_name);
 
 	}
 
-	void complete_search(std::string part_type) { //pops the thing
+	std::string get_current_search_bin(std::string part_type) {
+		std::vector<std::string> & bin_list = part_locations[part_type];
+		for (std::string & bin_name : bin_list) {
+			if (!bin_lookup[bin_name].grid_complete()) {
+				return bin_name;
+			}
+		}
+		ROS_ERROR("NO MORE SEARCH LOCATIONS FOR %s AT ALL :(",part_type.c_str());
+		return "";
+	}
 
+	void search_fail(std::string part_type) { //pops the search spot location
+		//TODO: negative confirmation
+		std::string bin_name = get_current_search_bin(part_type);
+		bin_lookup[bin_name].pop_search_location();
 	}
 
 protected:
@@ -272,8 +340,7 @@ protected:
 
 		}
 	}
-
-	std::map<std::string,part_bin_data> part_bin_data; //indexed by part type
+	std::map<std::string,part_bin_info> part_bin_data; //indexed by part type
 	std::map<std::string,bin_data> bin_lookup; //indexed by bin name
 
 	std::map<std::string,std::vector<std::string> > part_locations; //ITERATE FROM FRONT
@@ -281,3 +348,5 @@ protected:
 	std::map<std::string,tf::Vector3> bin_locations; //indexed by bin name
 
 };
+
+#endif
