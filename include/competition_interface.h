@@ -114,7 +114,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 
 	//command methods
 	static void send_AGV(char AGV_num,std::string kit_type) {
-		ros::ServiceClient agv_client = nodeptr->serviceClient<osrf_gear::AGVControl>(AGV_info[AGV_num].topic.c_str());
+		ros::ServiceClient agv_client = nodeptr->serviceClient<osrf_gear::AGVControl>(AGV_info[AGV_num-1].topic.c_str());
 		osrf_gear::AGVControl srv;
 		srv.request.kit_type = kit_type;
 		agv_client.call(srv);

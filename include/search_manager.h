@@ -75,11 +75,9 @@ public:
 			pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
 		}
 
-
 		//now in local coords
 		pose_corrected.setOrigin(pose_corrected.getOrigin()-bin_location);
 		//TODO: more pose correction, if necessary
-
 
 		if (observations == 0) {
 			angle_pose_start = pose_corrected.getRotation();

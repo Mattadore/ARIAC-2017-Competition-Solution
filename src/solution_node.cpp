@@ -258,6 +258,19 @@ public:
 			//controller.stop_controller(); //terminate movement
 		}
 
+		//update agv
+		for (char agv_num = 1; agv_num <= 2; ++agv_num) {
+			if (CompetitionInterface::get_agv_state(agv_num) == AGV_DELIVERING) {
+				assign_kit(nullptr,agv_num);
+			}
+			if (AGV_info[agv_num-1].assigned() && (CompetitionInterface::get_agv_state(agv_num) == AGV_READY_TO_DELIVER)) {
+				if (kit_tally[AGV_info[agv_num-1].current_kit].completed()) {
+					CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+				}
+			}
+		}
+
+
 		//check all toggled states
 		//look for any funny business
 	}
@@ -316,25 +329,33 @@ public:
 			ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
 			return data_in;
 		}
+		// arm_action::Ptr last_action = data_in.action;
+	 // 	while (true) {
+		// 	tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
+		// 	arm_action::Ptr align_action(new arm_action(last_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
+	 // 		align_action->vacuum_enabled = false; //just to be safe
+	 // 		planner.add_action(align_action);
+	 // 		controller.add_action(align_action);
+		//  	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
+		//  	test_action->vacuum_enabled = true;
+		//  	test_action->pick_part = true;
+		//  	test_action->end_delay = 1.0;
+		//  	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.1)),REGION_BIN_GRAB));
+		//  	planner.add_action(test_action);
+		//  	planner.add_action(lift_action);
+		//  	controller.add_action(test_action);
+		//  	controller.add_action(lift_action);
+	 // 		controller.wait_until_executed(test_action);
+	 // 		if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
+	 // 			tf::Pose agv_pose = ObjectTracker::get_tray_pose(1); //used to make an intermediate
+	 // 			arm_action::Ptr intermediate_movement(new arm_action(lift_action,))
 
-		tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
-		arm_action::Ptr align_action(new arm_action(data_in.action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
-	 	align_action->vacuum_enabled = false; //just to be safe
-	 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
-	 	test_action->vacuum_enabled = true;
-	 	test_action->pick_part = true;
-	 	test_action->end_delay = 2.0;
-	 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
-	 	planner.add_action(align_action);
-	 	planner.add_action(test_action);
-	 	planner.add_action(lift_action);
-	 	controller.add_action(align_action);
-	 	controller.add_action(test_action);
-	 	controller.add_action(lift_action);
-	 	controller.wait_until_executed(test_action);
-	 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
-	 	return return_data;
-
+	 // 		}
+	 // 		last_action = lift_action;
+	 // 	}
+	 // 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+	 // 	return return_data;
+		return data_in;
 	}
 	
 	//testing
@@ -495,16 +516,22 @@ public:
 
 	//greedy kit assignment
 	void assign_kits() {
-		if (AGV_info[0].assigned() && AGV_info[1].assigned()) {
+		bool AGV_valid[2];
+		AGV_valid[0] = (!AGV_info[0].assigned()) && (CompetitionInterface::get_agv_state(1) == AGV_READY_TO_DELIVER);
+		AGV_valid[1] = (!AGV_info[1].assigned()) && (CompetitionInterface::get_agv_state(2) == AGV_READY_TO_DELIVER);
+
+		if (!(AGV_valid[0] || AGV_valid[1])) {
 			return;
 		}
 		for (std::map<osrf_gear::Kit *,kit_metadata>::iterator tally_i = kit_tally.begin();tally_i!=kit_tally.end();++tally_i) {
 			if (tally_i->second.agv_number == 0) {
-				if (!(AGV_info[0].assigned())) {
-					assign_kit(tally_i->first, 1);
-				}
-				else if (!(AGV_info[1].assigned())) {
-					assign_kit(tally_i->first, 2);
+				if (!tally_i->second.completed()) {
+					if (AGV_valid[0]) {
+						assign_kit(tally_i->first, 1);
+					}
+					else if (AGV_valid[1]) {
+						assign_kit(tally_i->first, 2);
+					}
 				}
 			}
 		}
@@ -528,6 +555,7 @@ public:
 
 			assign_kits();
 
+			
 
 		}
 
@@ -794,6 +822,9 @@ protected:
 		osrf_gear::Kit * kit_pointer;
 		bool assigned() {
 			return (agv_number != 0);
+		}
+		bool completed() {
+			return kit_clone.objects.empty();
 		}
 		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(&kit_in) {}
 	};
