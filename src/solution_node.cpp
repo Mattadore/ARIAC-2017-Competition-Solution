@@ -529,6 +529,8 @@ public:
 			assign_kits();
 
 
+
+
 		}
 
 
@@ -708,7 +710,6 @@ public:
 
 		terminated = false;
 		number_orders = 0;
-		number_scanned_parts = 0;
 	  	//ensure buffer is completely initialized?
 
 		//std::vector<std::string> frame_names_ = tf; //add all frame names to set
@@ -774,8 +775,6 @@ protected:
 	// 	}
 	// 	AGV_metadata & agv = AGV_info[data.agv_number-1];
 		
-		
-
 	// 	data.agv_number = agv_number;
 	// 	agv.current_kit = to_assign;
 	// }
@@ -795,8 +794,9 @@ protected:
 		bool assigned() {
 			return (agv_number != 0);
 		}
-		kit_metadata() {}
-		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(&kit_in) {}
+
+		kit_metadata(){}
+		kit_metadata(osrf_gear::Kit & kit_in) : kit_clone(kit_in), kit_pointer(& kit_in) {}
 	};
 
 	//ros::Publisher joint_trajectory_publisher;
