@@ -144,7 +144,7 @@ protected:
 			//limit is 2.1
 			trajectory_msgs::JointTrajectoryPoint custom_conveyor(conveyor_point);
 			double y_position = to_plan->trajectory_end.getOrigin().getY();
-			y_position += 0.4; //why not
+			y_position -= 0.1; //why not
 			const double limit = 2.0;
 			if (y_position > limit) {
 				y_position = limit;
@@ -195,7 +195,6 @@ protected:
 			const trajectory_msgs::JointTrajectory plan_trajectory = to_plan->parent->plan->trajectory_.joint_trajectory;
 			size_t pose_number = plan_trajectory.points.size() - 1;
 			ROS_INFO("PLAN_B1");
-			moveit::core::RobotState * generic_state;
 			moveit::core::jointTrajPointToRobotState(plan_trajectory, pose_number, *generic_state);
 			arm_control_group.setStartState(*generic_state);
 		}

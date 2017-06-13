@@ -148,7 +148,7 @@ public:
 		current_location = tf::StampedTransform(tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0,0,0)),ros::Time::now(),reference,name);
 		relative_motion = tf::Vector3(0,0,0);
 		if (on_conveyor) {
-			relative_motion = tf::Vector3(0.2,0,0);
+			relative_motion = tf::Vector3(0,-0.2,0);
 		}
 		else {
 			relative_motion = tf::Vector3(0,0,0);
@@ -492,7 +492,7 @@ protected:
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951};
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951};
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951};
-		type_data["piston_rod_part"] = {"piston_rod_part",0.07024,0.004951};
+		type_data["piston_rod_part"] = {"piston_rod_part",0.007024,0.004951};
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {

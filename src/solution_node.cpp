@@ -421,7 +421,8 @@ public:
 			planner.wait_until_planned(dummy_action);
 			ROS_INFO("ITER COMPLETE");
 			// ros::Time end_time = data_in.time + dummy_action->get_execution_time()+ros::Duration(0.05);
-			ros::Time end_time = ros::Time::now() + dummy_action->get_execution_time()+ros::Duration(0.05);
+			//ros::Time end_time = ros::Time::now() + dummy_action->get_execution_time()+ros::Duration(0.05);
+			ros::Time end_time = ros::Time::now() + dummy_action->get_execution_time();
 			ROS_INFO("duration is %f",dummy_action->get_execution_time().toSec());
 			current_grab = ObjectTracker::get_grab_pose(part_name,end_time);
 
