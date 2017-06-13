@@ -291,6 +291,19 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		lookup_map[object_held]->reference_swap("vacuum_gripper_link",ObjectTracker::get_recent_transform(lookup_map[object_held]->get_reference_frame(),"vacuum_gripper_link"));
 	}
 
+	static std::string get_part_type(std::string part_name) {
+		boost::regex pattern("(.*?part.*?)_(clone_)?([0-9]+)", boost::regex::perl); 
+		boost::smatch matches;
+		std::string part_type_out;
+		if (boost::regex_match(part_name, matches, pattern)) {
+			part_type_out = matches[1];
+		}
+		else {
+			ROS_ERROR("INVALID PART, NO TYPE AVAILABLE");
+		}
+		return part_type_out;	
+	}
+
 	static tf::StampedTransform get_location(std::string part_name,ros::Time at_time = ros::Time::now()) {
 		ObjectData * data = lookup_map[part_name];
 		tf::Transform start = tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0,0,0)); //world coords
@@ -384,10 +397,23 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	static std::vector<std::string> get_belt_parts() {
 		std::vector<std::string> to_return;
 		for (auto & part : lookup_map) {
-
 			// if (part.second->is_moving()) {
 			if (part.second->get_velocity() != tf::Vector3(0,0,0)) { //currently still on belt?
 				to_return.push_back(part.first);
+			}
+		}
+		std::sort(to_return.begin(),to_return.end(),sort_conveyor_by_distance);
+		return to_return;
+	}
+
+	static std::vector<std::string> get_bin_parts() {
+		std::vector<std::string> to_return;
+		for (auto & part : lookup_map) {
+			// if (part.second->is_moving()) {
+			if (part.second->get_velocity() == tf::Vector3(0,0,0)) { //not moving?
+				if (std::abs(get_location(part.first).getOrigin().getY()) < 2.0) { //extremely rough filtering
+					to_return.push_back(part.first);
+				} 
 			}
 		}
 		return to_return;
@@ -438,6 +464,10 @@ protected:
 		subscriptions[name] = nodeptr->subscribe(name,size,fp);
 	}
 
+	static bool sort_conveyor_by_distance (std::string part_a,std::string part_b) {
+		return (lookup_map[part_a]->get_transform().getOrigin().getY() < lookup_map[part_b]->get_transform().getOrigin().getY());
+	}
+
 	static bool is_upside_down(tf::Pose check) {
 		const tf::Vector3 z_vec(0,0,1);
 		const tf::Quaternion identity(0,0,0,1);
@@ -481,15 +511,15 @@ protected:
 			std::string parent = transformation.header.frame_id;
 			std::string name = transformation.child_frame_id;
 			//parses name
-			boost::regex pattern("logical_camera_[0-9]+_((.*?part.*?)_(clone_)?([0-9]+|belt))_frame", boost::regex::perl); 
+			boost::regex pattern("logical_camera_(belt|[0-9]+)_((.*?part.*?)_(clone_)?[0-9]+)_frame", boost::regex::perl); 
 			boost::smatch matches;
 			std::string part_type, part_id, full_name;
 			bool is_conveyor_part,used_belt_cam;
 			if (boost::regex_match(name, matches, pattern)) {
-				full_name = matches[1];
-				part_type = matches[2];
-				is_conveyor_part = matches[3].matched;
-				used_belt_cam = (((std::string)matches[4]) == "belt"); //// Check this edit /////
+				used_belt_cam = (((std::string)matches[1]) == "belt"); //// Check this edit /////
+				full_name = matches[2];
+				part_type = matches[3];
+				is_conveyor_part = matches[4].matched;
 			}
 			else {
 				continue;

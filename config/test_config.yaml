@@ -79,13 +79,13 @@ faulty_parts:
   - piston_rod_part_3
 
 belt_parts:
-  piston_rod_part:
+  gear_part:
     4.9:
       pose:
         xyz: [0.0, 0.0, 0.1]
         rpy: [0, 0, 0]
 
-  gear_part:
+  piston_rod_part:
     9.9:
       pose:
         xyz: [0.0, 0.0, 0.1]

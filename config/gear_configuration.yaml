@@ -34,6 +34,6 @@ sensors:
   logical_camera_belt:
     type: logical_camera
     pose:
-      xyz: [1.2, 2.5, 1.65]
+      xyz: [1.2, 1.0, 1.65]
       rpy: [0, 'pi/2', 0]
   

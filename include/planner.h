@@ -152,12 +152,8 @@ protected:
 			else if (y_position < -limit) {
 				y_position = -limit;
 			}
-			if (to_plan->trajectory_end.getOrigin().getY() < 0) {
-				to_plan->plan->trajectory_.joint_trajectory.points.push_back(trashcan_points[NEGATIVE_CONFIGURATION]);
-			}
-			else {
-				to_plan->plan->trajectory_.joint_trajectory.points.push_back(trashcan_points[POSITIVE_CONFIGURATION]);
-			}
+			custom_conveyor.positions[0] = y_position;
+			to_plan->plan->trajectory_.joint_trajectory.points.push_back(custom_conveyor);
 		}
 		else {
 			ROS_ERROR("No valid configuration set");
@@ -199,6 +195,7 @@ protected:
 			const trajectory_msgs::JointTrajectory plan_trajectory = to_plan->parent->plan->trajectory_.joint_trajectory;
 			size_t pose_number = plan_trajectory.points.size() - 1;
 			ROS_INFO("PLAN_B1");
+			moveit::core::RobotState * generic_state;
 			moveit::core::jointTrajPointToRobotState(plan_trajectory, pose_number, *generic_state);
 			arm_control_group.setStartState(*generic_state);
 		}

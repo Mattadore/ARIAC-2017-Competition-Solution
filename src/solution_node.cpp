@@ -243,7 +243,8 @@ public:
 	void update() { //happens once per spin cycle
 		std::vector<osrf_gear::Order> & orders = CompetitionInterface::get_orders();
 		if (orders.size() > number_orders) {
-			for (int order_i = (number_orders-1); order_i<orders.size(); ++order_i) {
+			ROS_INFO("ORDERS DETECTED");
+			for (int order_i = number_orders; order_i<orders.size(); ++order_i) {
 				for (int kit_i = 0; kit_i<orders[order_i].kits.size(); ++kit_i) {
 					kit_tally[&(orders[order_i].kits[kit_i])] = kit_metadata(orders[order_i].kits[kit_i]); //makes new second copy of all kits
 				}
@@ -379,6 +380,7 @@ public:
 	 	controller.add_action(lift_action);
 	 	controller.wait_until_executed(grab_action);
 	 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+		return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
 	 	return return_data;
 	}
 
@@ -397,8 +399,15 @@ public:
 			data_in.time += conveyor_move->get_execution_time();
 			controller.add_action(conveyor_move);
 		}
-		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
-		arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_CONVEYOR));
+
+		if (data_in.action != nullptr) {
+			controller.wait_until_executed(data_in.action);
+		}
+
+		// tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
+		// arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_CONVEYOR));
+		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,ros::Time::now());
+		arm_action::Ptr dummy_action(new arm_action(nullptr,current_grab,REGION_CONVEYOR));
 		dummy_action->vacuum_enabled = true;
 		dummy_action->pick_part = true;
 		for (char i=0;i<8;++i) {
@@ -411,7 +420,8 @@ public:
 			planner.add_action(dummy_action);
 			planner.wait_until_planned(dummy_action);
 			ROS_INFO("ITER COMPLETE");
-			ros::Time end_time = data_in.time + dummy_action->get_execution_time()+ros::Duration(0.05);
+			// ros::Time end_time = data_in.time + dummy_action->get_execution_time()+ros::Duration(0.05);
+			ros::Time end_time = ros::Time::now() + dummy_action->get_execution_time()+ros::Duration(0.05);
 			ROS_INFO("duration is %f",dummy_action->get_execution_time().toSec());
 			current_grab = ObjectTracker::get_grab_pose(part_name,end_time);
 
@@ -438,10 +448,12 @@ public:
 		//Movement pipeline is recreated here
 		ros::Time pipeline_time = ros::Time::now()+retract_action->get_execution_time();
 		controller.add_action(retract_action);
+		pipeline_data pipe_out(pipeline_time,retract_action);
+		pipe_out.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
 		//controller.wait_until_executed(retract_action);
 		//delete dummy_action;
 		//delete slide_action;
-		return pipeline_data(pipeline_time,retract_action);
+		return pipe_out;
 	}
 
 	//NOTE: this drop does not correct for issues with incorrect pose grip, assumes pose correctly handled
@@ -493,7 +505,9 @@ public:
 
 		ros::Duration pipeline_time;
 		std::vector<arm_action::Ptr>* action_list;
+		bool faulty = false;
 	 	if (!quality_sensor_reading.models.empty()) { //Oh boy
+	 		faulty = true;
 	 		//NOTE: this is where I will possibly work backwards to bin alignment
 	 		//NOTE: only assumes one possible model; under assumption that we will always throw away our faulty models
 	 		//NOTE: a lot of this stuff could be better done state-based, but that doesn't mesh well with forward planning.
@@ -501,16 +515,20 @@ public:
 	 		//!!!!!!!TODO: plan multiple possible outcomes?
 	 		//basically just scoots the arm over a bit before dropping so it falls
 	 		//off the side, instead of in the intended drop
-	 		action_list = &standard_actions;
+	 		action_list = &trash_actions;
 	 	}
 	 	else {
+	 		faulty = false;
 	 		action_list = &standard_actions;
 	 	}
  		controller.add_actions(action_list);
  		for (arm_action::Ptr action : (*action_list)) {
 	 		pipeline_time += action->get_execution_time();
  		}
-	 	return pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
+ 		pipeline_data pipe_out = pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
+ 		pipe_out.success = !faulty;
+
+	 	return pipe_out;
 	}
 
 	//---------------object space management logic
@@ -520,7 +538,6 @@ public:
 		bool AGV_valid[2];
 		AGV_valid[0] = (!AGV_info[0].assigned()) && (CompetitionInterface::get_agv_state(1) == AGV_READY_TO_DELIVER);
 		AGV_valid[1] = (!AGV_info[1].assigned()) && (CompetitionInterface::get_agv_state(2) == AGV_READY_TO_DELIVER);
-
 		if (!(AGV_valid[0] || AGV_valid[1])) {
 			return;
 		}
@@ -540,30 +557,157 @@ public:
 
 
 	//---------------control logic
+	//TODO: place on agv first or place by belt order? hm
 	void arm_process() {
 		ROS_INFO("Logic process started");
-		ros::Duration(1).sleep();
+		ros::Duration(0.5).sleep();
+		if (CompetitionInterface::get_state(COMPETITION_STATE) == COMPETITION_INIT) {
+			CompetitionInterface::start_competition();
+		}
+		ros::Duration(0.5).sleep();
 
-		ros::Duration wait_rate(0.03);
+		ros::Duration wait_rate(0.01);
 		CompetitionInterface::toggle_vacuum(false);
 
-		simple_grab("pulley_part_2");
-		simple_drop(1);
 
-		CompetitionInterface::start_competition();
-
+		pipeline_data pipe;
 		while (CompetitionInterface::get_state(COMPETITION_STATE) == COMPETITION_GO) {
-			wait_rate.sleep();
+			ROS_INFO("SPINNING MAIN CONTROL LOOP");
+			ros::Duration(0.1).sleep();
+			ROS_INFO("SPINNING MAIN CONTROL LOOP?");
+			ROS_INFO("SPINNING MAIN CONTROL LOOP???");
+
+			//ROS_INFO_THROTTLE(1,"SPINNING MAIN CONTROL LOOP");
 			if (kit_tally.empty()) {
+				ROS_INFO("WAITING FOR ORDER REGISTRATION");
 				continue;
 			}
 
 			assign_kits();
 
-			
+			std::vector<std::string> belt_parts = ObjectTracker::get_belt_parts(); //sorted by distance from end
+			std::vector<std::string> bin_parts = ObjectTracker::get_bin_parts(); //sorted by distance from end
+			ROS_INFO("num bin parts: %d",(int)bin_parts.size());
+			ROS_INFO("num belt parts: %d",(int)belt_parts.size());
+
+			bool model_found = false;
+			char model_index;
+			char current_agv = 0;
+			bool is_belt_part = false;
+			std::string pick_part_name = "";
+			std::map<std::string,char> AGV_part_types[2]; //second element is index of order needing part_type
+
+			//fill out agv part tables
+			for (current_agv = 1; current_agv <= 2; ++current_agv) {
+				if (!AGV_info[current_agv-1].assigned()) {
+					continue;
+				}
+				for (int request_i=0;request_i<kit_tally[AGV_info[current_agv-1].current_kit].kit_clone.objects.size(); ++request_i) {
+					std::string agv_part_type = kit_tally[AGV_info[current_agv-1].current_kit].kit_clone.objects[request_i].type;
+					if (!AGV_part_types[current_agv-1].count(agv_part_type)) {
+						AGV_part_types[current_agv-1][agv_part_type] = request_i;
+					}
+				}
+			}
+			ROS_INFO("agv_1_part_types: %d",(int)AGV_part_types[0].size());
+			ROS_INFO("agv_2_part_types: %d",(int)AGV_part_types[1].size());
 
 
+			//!!!!!!!!!!!!!!TODO: find all eligible parts for each section (per agv, as well), put them in a list, pick the best one based on whatever criteria
 
+			//finds if any belt part satisfies need
+			for (current_agv = 1; current_agv <= 2; ++current_agv) {
+				for (std::string & part_name : belt_parts) {
+					std::string type = ObjectTracker::get_part_type(part_name);
+					if (AGV_part_types[current_agv-1].count(type)) {
+						model_found = true;
+						is_belt_part = true;
+						model_index = AGV_part_types[current_agv-1][type];
+						pick_part_name = part_name;
+						break;
+					}
+				}
+				if (model_found) {
+					break;
+				}
+			}
+
+			if (!model_found) {
+				//TODO: pick "best" part available?
+				for (current_agv = 1; current_agv <= 2; ++current_agv) {
+					for (std::string & part_name : bin_parts) {
+						std::string type = ObjectTracker::get_part_type(part_name);
+						if (AGV_part_types[current_agv-1].count(type)) {
+							model_found = true;
+							is_belt_part = false;
+							model_index = AGV_part_types[current_agv-1][type];
+							pick_part_name = part_name;
+							break;
+						}
+					}
+					if (model_found) {
+						break;
+					}
+				}
+			}
+
+			if (!model_found) {
+				ROS_WARN_THROTTLE(1,"No part found, waiting");
+				continue;
+			}
+			osrf_gear::Kit * fake_kit = &(kit_tally[AGV_info[current_agv-1].current_kit].kit_clone);
+
+			tf::Pose drop_offset;
+			tf::poseMsgToTF(fake_kit->objects[model_index].pose, drop_offset);
+
+			if (is_belt_part) {
+				pipe = simple_grab_moving(pick_part_name,pipe);
+				if (!pipe.success) {
+					continue;
+				}
+				pipe = simple_drop(current_agv,drop_offset,pipe);
+				if (pipe.success) {
+					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+				}	
+			}
+			else {
+				pipe = simple_grab(pick_part_name,pipe);
+				if (!pipe.success) {
+					continue;
+				}
+				pipe = simple_drop(current_agv,drop_offset,pipe);
+				ROS_INFO("Success: %d",(int)pipe.success);
+				if (pipe.success) {
+					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+				}
+			}
+
+			// //TODO: find a clean way to implement this, this is gross as-is
+			// int model_index;
+			// bool model_found = false;
+			// char current_agv = 0;
+			// for (current_agv = 1; current_agv <= 2; ++current_agv) {
+			// 	if (AGV_info[current_agv-1].assigned()) { //try for agv_0
+			// 		for (std::string & part_name : belt_parts) {
+			// 			std::string type = ObjectTracker::get_part_type(part_name);
+			// 			for (model_index = 0; model_index < AGV_info[current_agv-1].current_kit->objects.size(); ++ model_index) {
+			// 				if (AGV_info[current_agv-1].current_kit->objects[model_index].type == type) {
+			// 					model_found = true;
+			// 					break;
+			// 				}
+			// 			}
+			// 			if (model_found) {
+			// 				break;
+			// 			}
+			// 		}
+			// 	}
+			// 	if (model_found) {
+			// 		break;
+			// 	}
+			// }
+			// if (!model_found) {
+
+			// }	
 		}
 
 
@@ -774,6 +918,7 @@ public:
 
 protected:
 	void assign_kit(osrf_gear::Kit * to_assign,char agv_number) {
+		ROS_INFO("ASSIGN_KIT_INVOKED");
 		if (kit_tally.count(to_assign) == 0) {
 			ROS_ERROR("Kit does not exist");
 			return;
@@ -816,7 +961,7 @@ protected:
 		//bool unassigned;
 		osrf_gear::Kit * current_kit = nullptr;
 		bool assigned() {
-			return current_kit == nullptr;
+			return current_kit != nullptr;
 		}
 	};
 

@@ -41,7 +41,7 @@ const double trashcan_configuration_data[2][7] {
 
 //TODO: conveyor region and bin pullup grab region
 const double conveyor_configuration_data[7]
-{-0.8, M_PI, -1.3423701458943502, 1.685736119751326, 4.3690230176147775, -1.5707963257517727, 0.004736669665898268};
+{0, 0, -1.3423701458943502, 1.685736119751326, 4.3690230176147775, -1.5707963257517727, 0.004736669665898268};
 
 const double pickup_configuration_data[7]
 {-0.8, 0, -1.3423701458943502, 1.685736119751326, 4.3690230176147775, -1.5707963257517727, 0.004736669665898268};
@@ -193,7 +193,7 @@ struct arm_action {
 struct pipeline_data {
 	ros::Time time; //this is the true time at the end of the last action currently in the execution pipeline
 	arm_action::Ptr action;
-
+	bool success;
 	pipeline_data(ros::Time time_in, arm_action::Ptr action_in) : time(time_in), action(action_in) {}
 	pipeline_data() {
 		time = ros::Time::now();
