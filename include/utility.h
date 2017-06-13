@@ -150,7 +150,6 @@ struct arm_action {
 	//unsigned char action_type;
 	moveit::planning_interface::MoveGroup::Plan * plan = nullptr;
 	tf::Pose trajectory_end;
-	moveit::core::RobotState * start_state = nullptr;
 	double end_delay = 0.0;
 	bool true_pose = false;
 	bool vacuum_enabled = false;
@@ -187,9 +186,6 @@ struct arm_action {
 	~arm_action() {
 		if (plan != nullptr) {
 			delete plan;
-		}
-		if (start_state != nullptr) {
-			delete start_state;
 		}
 	}
 };

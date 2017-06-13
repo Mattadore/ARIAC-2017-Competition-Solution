@@ -153,7 +153,7 @@ protected:
 					control_queue.pop_front();
 					currently_executing->execution_status = PIPELINE_PROCESSING;
 				} //unlock
-				if (currently_executing->plan == nullptr) { //ensure there is a plan to execute
+				if (currently_executing->planning_status != PIPELINE_COMPLETE) { //ensure there is a plan to execute
 					planner->wait_until_planned(currently_executing);
 				}
 				move(currently_executing); //execute (blocking) move call

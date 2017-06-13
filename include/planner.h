@@ -195,21 +195,17 @@ protected:
 
 		//set plan state to parent traj last state
 		//moveit::core::RobotState start_state;
-		if ((to_plan->parent != nullptr) && (to_plan->start_state == nullptr)) {
+		if (to_plan->parent != nullptr) {
 			const trajectory_msgs::JointTrajectory plan_trajectory = to_plan->parent->plan->trajectory_.joint_trajectory;
 			size_t pose_number = plan_trajectory.points.size() - 1;
-			to_plan->start_state = generic_state;
-			ROS_INFO("PLAN_B2");
-			moveit::core::jointTrajPointToRobotState(plan_trajectory, pose_number, *(to_plan->start_state));
-		}
-		ROS_INFO("PLAN_A");
-		if (to_plan->parent == nullptr) {
-			arm_control_group.setStartStateToCurrentState();
+			ROS_INFO("PLAN_B1");
+			moveit::core::jointTrajPointToRobotState(plan_trajectory, pose_number, *generic_state);
+			arm_control_group.setStartState(*generic_state);
 		}
 		else {
-			arm_control_group.setStartState(*(to_plan->start_state));
+			ROS_INFO("PLAN_B2");
+			arm_control_group.setStartStateToCurrentState();
 		}
-		//arm_control_group.setStartStateToCurrentState();
 
 		//compute trajectory
 		double fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, true);

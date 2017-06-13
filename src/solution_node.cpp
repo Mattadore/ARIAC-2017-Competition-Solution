@@ -264,8 +264,10 @@ public:
 				assign_kit(nullptr,agv_num);
 			}
 			if (AGV_info[agv_num-1].assigned() && (CompetitionInterface::get_agv_state(agv_num) == AGV_READY_TO_DELIVER)) {
-				if (kit_tally[AGV_info[agv_num-1].current_kit].completed()) {
-					CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+				if (kit_tally.count(AGV_info[agv_num-1].current_kit)) {
+					if (kit_tally[AGV_info[agv_num-1].current_kit].completed()) {
+						CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+					}
 				}
 			}
 		}
@@ -325,10 +327,10 @@ public:
 	}
 	//"Thorough" means it won't quit till it finds a part
 	pipeline_data simple_search_thorough(std::string part_type,pipeline_data data_in = pipeline_data()) {
-		if (!searcher.unfound_parts(part_type)) {
-			ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
-			return data_in;
-		}
+		// if (!searcher.unfound_parts(part_type)) {
+		// 	ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
+		// 	return data_in;
+		// }
 		// arm_action::Ptr last_action = data_in.action;
 	 // 	while (true) {
 		// 	tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
@@ -544,6 +546,10 @@ public:
 
 		ros::Duration wait_rate(0.03);
 		CompetitionInterface::toggle_vacuum(false);
+
+		simple_grab("pulley_part_2");
+		simple_drop(1);
+
 		CompetitionInterface::start_competition();
 
 		while (CompetitionInterface::get_state(COMPETITION_STATE) == COMPETITION_GO) {
@@ -764,7 +770,7 @@ public:
 
 	Planner planner;
 	Controller controller;
-	SearchManager searcher;
+	// SearchManager searcher;
 
 protected:
 	void assign_kit(osrf_gear::Kit * to_assign,char agv_number) {
