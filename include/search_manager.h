@@ -322,9 +322,10 @@ public:
 			ROS_ERROR("no held object");
 		}
 		std::string bin_name = get_current_search_bin(part_type);
-		tf::Pose grasp_pose = tf::Pose(tf::Quaternion(0,0,0,1),bin_lookup[bin_name].get_search_location());
+		tf::Pose grasp_pose = CompetitionInterface::get_last_grasp_pose();
 		tf::Pose offset = ObjectTracker::get_internal_transform(object_name);
-
+		tf::Pose part_location = grasp_pose * offset;
+		//add_observation(tf::Pose pose_in, char id_number = 0)
 	}
 
 	std::string get_current_search_bin(std::string part_type) {

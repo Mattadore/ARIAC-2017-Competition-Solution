@@ -161,6 +161,11 @@ struct CompetitionInterface { //exists for this one node, everything is static
 			ROS_ERROR("Unable to command conveyor");
 		}
 	}
+
+	static tf::Transform get_last_grasp_pose() {
+		return last_grasp_location;
+	}
+	
 	static void set_arm_region(char new_region) {
 		arm_region = new_region;
 	}
@@ -254,13 +259,16 @@ protected:
 		AGV_info[1].status = AGV_status_lookup[msg->data];
 	}
 
-
 	static void vacuum_gripper_callback(const osrf_gear::VacuumGripperState::ConstPtr msg) {
 		if ((msg->attached == false) && (state[GRIPPER_ATTACHED] == BOOL_TRUE)) {
 			//only triggers if part was being held a moment ago
 			if (msg->enabled == true) {
 				dropped = true; //part was dropped accidentally
 			}
+		}
+		if ((msg->attached == true) && (state[GRIPPER_ATTACHED] == BOOL_FALSE)) {
+			//only triggers if part was NOT being held a moment ago
+			last_grasp_location = ObjectTracker::get_gripper_pose();
 		}
 		state[GRIPPER_ATTACHED] = (msg->attached) ? BOOL_TRUE : BOOL_FALSE;
 		state[GRIPPER_ENABLED] = (msg->enabled) ? BOOL_TRUE : BOOL_FALSE;
@@ -340,6 +348,7 @@ protected:
 	static bool dropped;
 	static std::string object_held;
 	static std::string object_interested;
+	static tf::Transform last_grasp_location;
 
 	// static unsigned char state_diff[NUM_STATES]; //holds diff info
 	// static unsigned char state_old[NUM_STATES]; //holds old state machine info
@@ -361,6 +370,8 @@ char CompetitionInterface::arm_region;
 bool CompetitionInterface::dropped;
 std::string CompetitionInterface::object_held;
 std::string CompetitionInterface::object_interested;
+tf::Transform CompetitionInterface::last_grasp_location;
+
 
 // unsigned char state_diff[NUM_STATES]; //holds diff info
 // unsigned char state_old[NUM_STATES]; //holds old state machine info
