@@ -6,6 +6,7 @@
 #include <tf/transform_datatypes.h>
 #include <include/competition_interface.h>
 #include <include/object_manager.h>
+#include <include/parts_grasp_loc.h>
 
 struct part_bin_info {
 	std::string part_name;
@@ -19,7 +20,8 @@ struct part_bin_info {
 struct bin_data {
 public:
 	bin_data(){}
-	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) {
+	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) : 
+	grasp_locations(default_search_locations[data->part_name]) {
 		ROS_INFO("Bin Data Constructor...\n");
 		bin_name = name;
 		bin_location = location;
@@ -101,7 +103,7 @@ public:
 		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,-1,1));
 		//filter the models
 		for (std::list<grid_structure>::iterator iter = possible_grids.begin();iter!=possible_grids.end();) {
-			if (!iter->incorporate(pose_corrected,id_number,(observations == 1))) {
+			if (!iter->incorporate(pose_corrected,id_number,(observations == 0))) {
 				iter = possible_grids.erase(iter);
 			}
 			else {
