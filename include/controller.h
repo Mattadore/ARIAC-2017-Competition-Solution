@@ -145,7 +145,7 @@ protected:
 		while (true) {
 			{
 				wait.sleep();
-				ROS_INFO_THROTTLE(1,"Parallel control running");
+				ROS_INFO_THROTTLE(1,"CONTROLLER -> Parallel control running");
 				boost::unique_lock<boost::mutex> current_control_lock(current_control_mutex);
 				currently_executing = nullptr;
 				{ //mutex lock scope

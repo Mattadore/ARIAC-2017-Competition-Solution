@@ -12,9 +12,9 @@ options:
   gazebo_state_logging: false
   belt_population_cycles: 20
   model_type_aliases:
-    order_part1: piston_rod_part
-    order_part2: gear_part
-    order_part3: pulley_part
+    order_part1: gear_part
+    order_part2: gasket_part
+    order_part3: piston_rod_part
     belt_model_type1: piston_rod_part
     belt_model_type2: gear_part
 

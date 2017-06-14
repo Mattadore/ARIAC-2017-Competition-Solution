@@ -370,6 +370,7 @@ public:
 	//testing
 	//TODO: give this an intermediate?
 	pipeline_data simple_grab(std::string part_name,pipeline_data data_in = pipeline_data()) {
+	 	ROS_INFO("Simple Grab for Part -> %s", part_name.c_str());
 	 	ObjectTracker::set_interested_object(part_name);
 		tf::Pose grab_pose = ObjectTracker::get_grab_pose(part_name);
 		arm_action::Ptr align_action(new arm_action(data_in.action,grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
@@ -394,6 +395,7 @@ public:
 	//if no pipeline data passed, will just act as if called on current time
 	//TODO: enforce limits on where you can grab a moving part from
 	pipeline_data simple_grab_moving(std::string part_name,pipeline_data data_in = pipeline_data()) {
+		ROS_INFO("Simple Grab Moving for Part -> %s", part_name.c_str());
 		char current_region = (data_in.action == nullptr) ? CompetitionInterface::get_arm_region() : data_in.action->region;
 		// if (current_region != REGION_CONVEYOR) { //TODO: we can plan this iteratively as well
 			tf::Pose current_grab_temp = ObjectTracker::get_grab_pose(part_name,data_in.time);
@@ -468,6 +470,7 @@ public:
 
 	//NOTE: this drop does not correct for issues with incorrect pose grip, assumes pose correctly handled
 	pipeline_data simple_drop(char agv_number,tf::Pose drop_offset = tf::Pose(identity,tf::Vector3(0,0,0)),pipeline_data data_in = pipeline_data()) {
+		ROS_INFO("Simple Drop on AGV %c", agv_number);
 		char agv_region = (agv_number == 1) ? REGION_AGV1 : REGION_AGV2;		
 		char current_region = (data_in.action == nullptr) ? CompetitionInterface::get_arm_region() : data_in.action->region;
 		tf::Pose agv_pose = ObjectTracker::get_tray_pose(agv_number);
@@ -509,6 +512,7 @@ public:
 	 	//controller.wait_until_executed(move_to_tray);
 
 	 	//me trying out a forked plan
+	 	ROS_INFO("Simple Grab: Planning Trash Actions...");
 		trash_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region)));
  		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(move_to_tray->trajectory_end.getRotation(),trash_position[agv_number-1]),agv_region)));
  		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
@@ -517,6 +521,7 @@ public:
  		planner.add_actions(&trash_actions);
 
  		//if nothing bad happens
+ 		ROS_INFO("Simple Grab: Planning Standard Actions...");
 	 	standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,move_to_tray->trajectory_end,agv_region)));
 	 	standard_actions.back()->end_delay = 0.15;
 	 	standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region)));
@@ -533,6 +538,7 @@ public:
 		std::vector<arm_action::Ptr>* action_list;
 		bool faulty = false;
 	 	if (!quality_sensor_reading.models.empty()) { //Oh boy
+	 		ROS_INFO("Part Faulty!!! -> Performing Trash Actions");
 	 		faulty = true;
 	 		//NOTE: this is where I will possibly work backwards to bin alignment
 	 		//NOTE: only assumes one possible model; under assumption that we will always throw away our faulty models
@@ -544,6 +550,7 @@ public:
 	 		action_list = &trash_actions;
 	 	}
 	 	else {
+	 		ROS_INFO("Part Good!!! -> Performing Standard Actions");
 	 		faulty = false;
 	 		action_list = &standard_actions;
 	 	}

@@ -235,6 +235,10 @@ protected:
 				tf::poseTFToMsg(to_add_2,geometry_pose);
 				pose_list_2.push_back(geometry_pose);
 
+				// to_plan->trajectory_end.getBasis().getRPY(r,p,y);
+				tf::Vector3 pos = to_add_2.getOrigin();
+				ROS_ERROR("Perturb xyz: %f %f %f", pos.x(),pos.y(),pos.z());
+
 				fraction = arm_control_group.computeCartesianPath(pose_list_2, 0.05, 0.0, traj_msg, true);
 			}
 		}
@@ -245,21 +249,26 @@ protected:
 			tf::Vector3 pos = to_plan->trajectory_end.getOrigin();
 			ROS_ERROR("xyz: %f %f %f, rpy: %f %f %f", pos.x(),pos.y(),pos.z(),r,p,y);
 			ROS_ERROR("Interested part: %s",ObjectTracker::get_interested_object().c_str());
+			to_plan->planning_failure = true; //be generous?
+			return;
 		}
-		to_plan->planning_failure = (fraction < .97); //be generous?
 
 		if (to_plan->end_delay > 0) {
+			ROS_INFO("Check after planning...");
 			auto last_point = traj_msg.joint_trajectory.points.back();
 			for (int i=0;i<last_point.velocities.size();++i) {
+				ROS_INFO("Check 2 after planning...");
 				last_point.velocities[i] = 0;
 				last_point.accelerations[i] = 0;
 			}
+			ROS_INFO("Check after 3 planning...");
 			traj_msg.joint_trajectory.points.push_back(last_point);
 			traj_msg.joint_trajectory.points.back().time_from_start += ros::Duration(std::min(to_plan->end_delay/10.0,0.1));
 			traj_msg.joint_trajectory.points.push_back(last_point);
 			traj_msg.joint_trajectory.points.back().time_from_start += ros::Duration(to_plan->end_delay);
 		}
 
+		ROS_INFO("Check 4 after planning...");
 		// do time parameterization
 		// robot_trajectory::RobotTrajectory traj(to_plan->start_state->getRobotModel(), "manipulator");
 		// traj.setRobotTrajectoryMsg(*(to_plan->start_state), traj_msg);
@@ -280,7 +289,7 @@ protected:
 		while (true) {
 			{
 				wait.sleep();
-				ROS_INFO_THROTTLE(1,"Parallel control running");
+				ROS_INFO_THROTTLE(1,"PLANNER -> Parallel control running");
 				currently_planning = nullptr;
 				boost::unique_lock<boost::mutex> current_plan_lock(current_plan_mutex);
 				{ //mutex lock scope
