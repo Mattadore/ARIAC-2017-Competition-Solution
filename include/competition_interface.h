@@ -15,6 +15,7 @@
 
 #include <include/object_manager.h>
 #include <include/utility.h>
+#include <include/parts_grasp_loc.h>
 
 #include <osrf_gear/VacuumGripperState.h>
 #include <osrf_gear/VacuumGripperControl.h>
@@ -48,6 +49,7 @@
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
+
 struct CompetitionInterface { //exists for this one node, everything is static
 
 	//initialization
@@ -67,6 +69,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		AGV_status_lookup["preparing_to_deliver"] = AGV_PREPARING_TO_DELIVER;
 		dropped = false;
 		add_subscriptions();
+		init_default_search_locations();
 
 
 	}
