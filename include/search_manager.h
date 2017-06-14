@@ -325,7 +325,8 @@ public:
 		tf::Pose grasp_pose = CompetitionInterface::get_last_grasp_pose();
 		tf::Pose offset = ObjectTracker::get_internal_transform(object_name);
 		tf::Pose part_location = grasp_pose * offset;
-		//add_observation(tf::Pose pose_in, char id_number = 0)
+		
+		bin_lookup[bin_name].add_observation(part_location, ObjectTracker::get_part_number(object_name));
 	}
 
 	std::string get_current_search_bin(std::string part_type) {

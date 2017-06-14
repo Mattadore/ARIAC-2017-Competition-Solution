@@ -257,7 +257,7 @@ public:
 		if (CompetitionInterface::part_dropped()) {
 			ROS_WARN("PART DROP OCCURRED");
 			//TODO: part drop logic, includes turning off vacuum gripper.
-			controller.stop_controller(); //terminate movement
+			kill_all();
 		}
 
 		//update agv
@@ -265,11 +265,18 @@ public:
 			if (AGV_info[agv_num-1].assigned()) {			
 				if (CompetitionInterface::get_agv_state(agv_num) == AGV_DELIVERING)  {
 					assign_kit(nullptr,agv_num);
+					AGV_info[agv_num-1].send_time = ros::Time(0);
 				}
 				if (CompetitionInterface::get_agv_state(agv_num) == AGV_READY_TO_DELIVER) {
 					if (kit_tally.count(AGV_info[agv_num-1].current_kit)) {
 						if (kit_tally[AGV_info[agv_num-1].current_kit].completed()) {
-							CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+							if (AGV_info[agv_num-1].send_time == ros::Time(0)) {
+								AGV_info[agv_num-1].send_time = ros::Time::now()+ros::Duration(2.0);
+							}
+							else if (AGV_info[agv_num-1].send_time < ros::Time::now()) {
+								AGV_info[agv_num-1].send_time = ros::Time(0);
+								CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+							}
 						}
 					}
 				}
@@ -294,6 +301,12 @@ public:
 			a->plan->trajectory_.joint_trajectory.points.push_back(b->plan->trajectory_.joint_trajectory.points[i]);
 		}
 		a->trajectory_end = b->trajectory_end;
+	}
+
+	void kill_all() {
+		planner.clear();
+		controller.clear();
+		controller.stop_controller();
 	}
 
 	void combine_actions(std::vector<arm_action::Ptr> * action_list) {
@@ -407,6 +420,7 @@ public:
 	 	controller.add_action(grab_action);
 	 	controller.add_action(lift_action);
 	 	controller.wait_until_executed(lift_action);
+
 	 	pipeline_data return_data;
 	 	return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
 	 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
@@ -510,7 +524,6 @@ public:
 		grasp_correction = grasp_correction.inverse();
 		tf::Vector3 offset = grasp_correction.getOrigin();
 		ROS_INFO("Pose is: %f %f %f",offset.getX(),offset.getY(),offset.getZ());
-
 		//TODO: I realize how problematic this might seem
 		//double drop_height_correction_value = ObjectTracker::part_type_grab_hold_offset(part_type,0.0,is_upside_down(drop_offset));
 		tf::Transform drop_offset_corrected = drop_offset;
@@ -549,9 +562,11 @@ public:
 	 	standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),agv_pose,agv_region)));
 	 	standard_actions.back()->use_intermediate = true;
  		planner.add_actions(&standard_actions);
-
+ 		planner.wait_until_planned(standard_actions.back());
  		controller.wait_until_executed(move_to_tray);
+
  		//TODO: this is disgusting
+ 		ros::Duration(0.15).sleep();
 	 	osrf_gear::LogicalCameraImage quality_sensor_reading = CompetitionInterface::get_quality_control_msg(agv_number);
 
 
@@ -561,6 +576,33 @@ public:
 	 	if (!quality_sensor_reading.models.empty()) { //Oh boy
 	 		ROS_INFO("Part Faulty!!! -> Performing Trash Actions");
 	 		faulty = true;
+			if (CompetitionInterface::part_dropped()) {
+				tf::Pose part_pose,grasp_pose;
+				tf::poseMsgToTF(quality_sensor_reading.models[0].pose,part_pose);
+				grasp_pose = ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading.models[0].type,ros::Time::now(),-0.017);
+				arm_action::Ptr align_action(new arm_action(nullptr,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region));
+				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
+				// delete (trash_actions.front()->plan);
+				// trash_actions.front()->plan = nullptr;
+				// trash_actions.front()->planning_status = PIPELINE_NONE;
+				// trash_actions.front()->parent = grab_action;
+				trash_actions.clear();
+				trash_actions.push_back(arm_action::Ptr(new arm_action(grab_action,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region)));
+				trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(grasp_pose.getRotation(),trash_position[agv_number-1]),agv_region)));
+				trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
+				trash_actions.back()->vacuum_enabled = false;
+				trash_actions.back()->use_intermediate = true;
+				planner.add_action(align_action);
+				planner.add_action(grab_action);
+				planner.add_actions(&trash_actions);
+
+				controller.add_action(align_action);
+				controller.add_action(grab_action);
+				planner.wait_until_planned(trash_actions.back());
+				controller.wait_until_executed(grab_action);
+			}
+ 			action_list = &trash_actions;
+
 	 		//NOTE: this is where I will possibly work backwards to bin alignment
 	 		//NOTE: only assumes one possible model; under assumption that we will always throw away our faulty models
 	 		//NOTE: a lot of this stuff could be better done state-based, but that doesn't mesh well with forward planning.
@@ -568,21 +610,27 @@ public:
 	 		//!!!!!!!TODO: plan multiple possible outcomes?
 	 		//basically just scoots the arm over a bit before dropping so it falls
 	 		//off the side, instead of in the intended drop
-	 		action_list = &trash_actions;
 	 	}
 	 	else {
+			if (CompetitionInterface::part_dropped()) {
+				pipeline_data pipe_out;
+				pipe_out.success = true;
+				return pipe_out;
+			}
 	 		ROS_INFO("Part Good!!! -> Performing Standard Actions");
 	 		faulty = false;
 	 		action_list = &standard_actions;
 	 	}
  		controller.add_actions(action_list);
- 		for (arm_action::Ptr action : (*action_list)) {
-	 		pipeline_time += action->get_execution_time();
- 		}
- 		pipeline_data pipe_out = pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
+ 		controller.wait_until_executed(action_list->back());
+ 		pipeline_data pipe_out;
+
+ 		// for (arm_action::Ptr action : (*action_list)) {
+	 	// 	pipeline_time += action->get_execution_time();
+ 		// }
+ 		// pipeline_data pipe_out = pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
+
  		pipe_out.success = !faulty;
-
-
 	 	return pipe_out;
 	}
 
@@ -1030,6 +1078,7 @@ protected:
 	struct AGV_metadata {
 		//bool unassigned;
 		osrf_gear::Kit * current_kit = nullptr;
+		ros::Time send_time = ros::Time(0);
 		bool assigned() {
 			return current_kit != nullptr;
 		}
