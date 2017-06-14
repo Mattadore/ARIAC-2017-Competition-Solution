@@ -165,7 +165,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 	static tf::Transform get_last_grasp_pose() {
 		return last_grasp_location;
 	}
-	
+
 	static void set_arm_region(char new_region) {
 		arm_region = new_region;
 	}

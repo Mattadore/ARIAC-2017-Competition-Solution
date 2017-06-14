@@ -314,6 +314,21 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		return part_type_out;	
 	}
 
+	static char get_part_number(std::string part_name) {
+		boost::regex pattern("(.*?part.*?)_(clone_)?([0-9]+)", boost::regex::perl); 
+		boost::smatch matches;
+		std::string part_num_out;
+		int num_out = -1;
+		if (boost::regex_match(part_name, matches, pattern)) {
+			part_num_out = matches[3];
+			num_out = std::stoi(part_num_out);
+		}
+		else {
+			ROS_ERROR("INVALID PART, NO NUMBER AVAILABLE");
+		}
+		return num_out;
+	}
+
 	static tf::StampedTransform get_location(std::string part_name,ros::Time at_time = ros::Time::now()) {
 		ObjectData * data = lookup_map[part_name];
 		tf::Transform start = tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0,0,0)); //world coords
@@ -400,6 +415,25 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 			ROS_ERROR("NO SUCH AGV %d",(int)agv_number);
 			return tf::Pose();
 		}
+	}
+
+	static tf::Pose get_grab_pose_custom(tf::Pose part_location,std::string part_type,ros::Time at_time = ros::Time::now(),double grab_offset = -0.014) {
+		const tf::Quaternion identity(0,0,0,1);
+		ObjectTypeData * part_typedata = &(type_data[part_type]);
+		tf::Pose out_pose, object_true_location = part_location;
+		bool is_inverted = is_upside_down(object_true_location);
+		double true_face_from_tf = true_bin_height_offset - part_typedata->tf_base_offset;
+		if (is_inverted) {
+			tf::Pose flip_transform(tf::Quaternion(tf::Vector3(1,0,0),M_PI),tf::Vector3(0,0,0)); //flips the object pose
+			tf::Pose handle_transform(identity,tf::Vector3(0,0,true_face_from_tf+grab_offset)); //specifies where the handle is
+			out_pose = object_true_location * handle_transform * flip_transform;
+		}
+		else {
+			true_face_from_tf += part_typedata->size; //grab from top, which is "size" away from the tf
+			tf::Pose handle_transform(identity,tf::Vector3(0,0,true_face_from_tf-grab_offset)); //specifies where the handle is
+			out_pose = object_true_location * handle_transform;
+		}
+		return out_pose;
 	}
 
 	static bool part_exists(std::string part_name) {
@@ -532,7 +566,7 @@ protected:
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951};
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951};
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951};
-		type_data["piston_rod_part"] = {"piston_rod_part",0.007024,0.004951};
+		type_data["piston_rod_part"] = {"piston_rod_part",0.006824,0.004951};
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
