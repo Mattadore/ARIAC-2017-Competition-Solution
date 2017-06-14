@@ -20,6 +20,7 @@ struct bin_data {
 public:
 	bin_data(){}
 	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) {
+		ROS_INFO("Bin Data Constructor...\n");
 		bin_name = name;
 		bin_location = location;
 		type_data = data;
@@ -53,6 +54,7 @@ public:
 	}
 	void populate_tracker() { //add part num to tracker
 		//dostuff
+		ROS_INFO("Populating Tracker for Bin -> %s \n", bin_name.c_str());
 		int size = get_num_parts();
 		for (int ID = 1;ID <= size;++ID) {
 			++(type_data->index_counter);
@@ -71,6 +73,7 @@ public:
 		// }
 		//TODO: make this safer
 		//do pose correction to point the same way
+		ROS_INFO("Addign new observations for Bin -> %s \n", bin_name.c_str());
 		tf::Pose pose_corrected = pose_in;
 		tf::Vector3 z_axis(0,0,1);
 		tf::Vector3 pose_in_z = (pose_in(z_axis)-pose_in.getOrigin()).normalize(); //probably don't need to normalize
@@ -124,6 +127,7 @@ public:
 		return angle;
 	}
 	void pop_search_location() {
+		ROS_INFO("Popping Search Location for Bin -> %s \n", bin_name.c_str());
 		if (!mirrored_object_locations.empty()) {
 			mirrored_object_locations.pop_front();
 		}
@@ -135,6 +139,7 @@ public:
 		}
 	}
 	tf::Vector3 get_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
+		ROS_INFO("Get Search Location for Bin -> %s \n", bin_name.c_str());
 		tf::Vector3 return_v;
 		if (!mirrored_object_locations.empty()) {
 			return_v = mirrored_object_locations.front();
@@ -162,6 +167,7 @@ protected:
 		double radius;
 		char elements[2] = {0,0};
 		grid_structure(double rad,char x, char y) {
+			ROS_INFO("Grid Structure Init\n");
 			radius = rad;
 			num[0] = x;
 			num[1] = y;
@@ -198,7 +204,7 @@ protected:
 		}
 		bool incorporate(tf::Pose & location, char id_number = 0,bool edge = false) {
 			if (id_number != 0) { //if we know the id
-
+				ROS_INFO("Inside Grid Structure Incorporate Function...\n");
 				//set unset values
 				//compare true value to false value, check if outside a range of radius from where should be
 				//scale always more than radius
@@ -260,6 +266,7 @@ protected:
 class SearchManager {
 public:
 	SearchManager() {
+		ROS_INFO("Initialing SearchManager...\n");
 		part_bin_data["disk_part"] = {"disk_part",1,3,true,0.06,0};
 		part_bin_data["gasket_part"] = {"gasket_part",1,3,true,0.05,0};
 		part_bin_data["gear_part"] = {"gear_part",1,5,true,0.04,0};
@@ -280,16 +287,19 @@ public:
 			std::vector<std::string> locations = CompetitionInterface::get_material_locations(part);
 			part_locations[part] = locations;
 			for (std::string & location : locations) {
+				// ROS_INFO("All possible locations %s \n", location.c_str());
 				bin_part_types[location] = part;
 			}
 		}
 		//create all relevant bins
 		for (auto & index : bin_part_types) {
+			// ROS_INFO("Indide FOR loop for creating Bins\n");
 			bin_lookup.emplace(index.first,bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]));
 		}
 	}
 
 	bool unfound_parts(std::string part_type) {
+		ROS_INFO("Inside unfound_parts...\n");
 		std::vector<std::string> & bin_list = part_locations[part_type];
 		for (std::string & bin_name : bin_list) {
 			if (!bin_lookup[bin_name].grid_complete()) {
@@ -300,11 +310,13 @@ public:
 	}
 
 	tf::Vector3 search(std::string part_type) {
+		ROS_INFO("Searching Parts...\n");
 		std::string bin_name = get_current_search_bin(part_type);
 		return bin_lookup[bin_name].get_search_location();
 	}
 
 	void search_success(std::string part_type) { //invoke after finishing part scan
+		ROS_INFO("Sucessful Search: Found Part -> %s", part_type.c_str());
 		std::string object_name = ObjectTracker::get_held_object();
 		if (object_name == "") {
 			ROS_ERROR("no held object");
@@ -316,6 +328,7 @@ public:
 	}
 
 	std::string get_current_search_bin(std::string part_type) {
+		ROS_INFO("Get current search bin for Part -> %s", part_type.c_str());
 		std::vector<std::string> & bin_list = part_locations[part_type];
 		for (std::string & bin_name : bin_list) {
 			if (!bin_lookup[bin_name].grid_complete()) {
@@ -328,6 +341,7 @@ public:
 
 	void search_fail(std::string part_type) { //pops the search spot location
 		//TODO: negative confirmation
+		ROS_INFO("Failed Search for Part -> %s", part_type.c_str());
 		std::string bin_name = get_current_search_bin(part_type);
 		bin_lookup[bin_name].pop_search_location();
 	}

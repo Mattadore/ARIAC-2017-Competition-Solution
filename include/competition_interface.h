@@ -139,6 +139,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 	}
 
 	static std::vector<std::string> get_material_locations(std::string material_name) {//returns bin names
+		// ROS_INFO("Inside CompetitionInterface get_material_locations \n");
 		ros::ServiceClient material_client = nodeptr->serviceClient<osrf_gear::GetMaterialLocations>("/ariac/material_locations");
 		osrf_gear::GetMaterialLocations srv;
 		srv.request.material_type = material_name;
