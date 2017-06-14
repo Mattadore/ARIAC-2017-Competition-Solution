@@ -3,6 +3,7 @@
 
 #include <include/utility.h>
 #include <include/competition_interface.h>
+#include <cmath>
 
 //Planner class
 class Planner {
@@ -124,6 +125,15 @@ protected:
 		ROS_INFO("INTERMEDIATE PLAN STARTING!");
 
 		to_plan->plan = new moveit::planning_interface::MoveGroup::Plan();
+
+		if (to_plan->parent != nullptr) {
+			if (to_plan->parent->planning_failure) {
+				ROS_WARN("Parent had a planning failure, terminating planning");
+				to_plan->planning_failure = true;
+				return;
+			}
+		}
+
 		if (to_plan->use_intermediate) {
 			if (to_plan->trajectory_end.getOrigin().getY() < 0) {
 				to_plan->plan->trajectory_.joint_trajectory.points.push_back(intermediate_points[NEGATIVE_CONFIGURATION]);
@@ -176,22 +186,29 @@ protected:
 	void plan(arm_action::Ptr to_plan) {
 		ROS_INFO("PLAN STARTING!");
 		to_plan->plan = new moveit::planning_interface::MoveGroup::Plan();
+
 		moveit_msgs::RobotTrajectory traj_msg;
-		std::vector<geometry_msgs::Pose> pose_list;
 
 		tf::Pose to_add = to_plan->trajectory_end;
 		if (!to_plan->true_pose) {
 			to_add.setRotation(to_add.getRotation() * rotation_offset);
 		}
-		geometry_msgs::Pose geometry_pose;
-		tf::poseTFToMsg(to_add,geometry_pose);
 		ROS_INFO("PLAN_B");
 
+		std::vector<geometry_msgs::Pose> pose_list;
+		geometry_msgs::Pose geometry_pose;
+		tf::poseTFToMsg(to_add,geometry_pose);
 		pose_list.push_back(geometry_pose);
+
 
 		//set plan state to parent traj last state
 		//moveit::core::RobotState start_state;
 		if (to_plan->parent != nullptr) {
+			if (to_plan->parent->planning_failure) {
+				ROS_WARN("Parent had a planning failure, terminating planning");
+				to_plan->planning_failure = true;
+				return;
+			}
 			const trajectory_msgs::JointTrajectory plan_trajectory = to_plan->parent->plan->trajectory_.joint_trajectory;
 			size_t pose_number = plan_trajectory.points.size() - 1;
 			ROS_INFO("PLAN_B1");
@@ -205,6 +222,32 @@ protected:
 
 		//compute trajectory
 		double fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, true);
+		if (to_plan->perturb) {
+			int attempt_max = 4;
+			for (int test_i=0;(test_i<attempt_max)&&(fraction < 0.97);++test_i) {
+				ROS_WARN("PLANNING RETRY: ATTEMPT #%d",test_i+2);
+
+				double angle = M_PI*2.0*((double)test_i)/((double)attempt_max);
+				tf::Vector3 plan_offset = tf::Vector3(sin(angle)*0.02,cos(angle)*0.02,0);
+
+				std::vector<geometry_msgs::Pose> pose_list_2;
+				tf::Pose to_add_2 = to_add * tf::Transform(identity,plan_offset);
+				tf::poseTFToMsg(to_add_2,geometry_pose);
+				pose_list_2.push_back(geometry_pose);
+
+				fraction = arm_control_group.computeCartesianPath(pose_list_2, 0.05, 0.0, traj_msg, true);
+			}
+		}
+		if (fraction < 0.97) {
+			ROS_ERROR("PLANNING FAILURE!");
+			double r,p,y;
+			to_plan->trajectory_end.getBasis().getRPY(r,p,y);
+			tf::Vector3 pos = to_plan->trajectory_end.getOrigin();
+			ROS_ERROR("xyz: %f %f %f, rpy: %f %f %f", pos.x(),pos.y(),pos.z(),r,p,y);
+			ROS_ERROR("Interested part: %s",ObjectTracker::get_interested_object().c_str());
+		}
+		to_plan->planning_failure = (fraction < .97); //be generous?
+
 		if (to_plan->end_delay > 0) {
 			auto last_point = traj_msg.joint_trajectory.points.back();
 			for (int i=0;i<last_point.velocities.size();++i) {

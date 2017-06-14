@@ -156,6 +156,8 @@ struct arm_action {
 	bool true_pose = false;
 	bool vacuum_enabled = false;
 	bool pick_part = false;
+	bool perturb = true;
+	bool planning_failure = false;
 	bool use_intermediate = false;	//prepares to go to an intermediate pose
 	bool use_trash = false; //prepares to drop a faulty item
 	bool use_conveyor = false; //prepares to grab off conveyor
@@ -219,6 +221,17 @@ bool within(tf::Vector3 test,tf::Vector3 a,tf::Vector3 b) {
 	ret = ret && ((test.getZ() < std::max(a.getZ(),b.getZ())) && (test.getZ() > std::max(a.getZ(),b.getZ())));
 	return ret;
 }
+
+bool is_upside_down(tf::Pose check) {
+	const tf::Vector3 z_vec(0,0,1);
+	const tf::Quaternion identity(0,0,0,1);
+	//gets what the "up" vector is for the pose
+	tf::Vector3 z_local = (check * tf::Pose(identity,z_vec)).getOrigin()-check.getOrigin();
+	double correlation = z_local.dot(z_vec); //compares with real "up"
+	ROS_INFO("correlation: %f",correlation);
+	return (correlation < -0.2); //arbitrary down correlation value
+}
+
 
 // void print_pose_msg(tf::Pose in_pose, std::string in_data){
 // 	ROS_INFO_STREAM("")

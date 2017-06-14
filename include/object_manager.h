@@ -11,6 +11,7 @@
 #include <cmath>
 
 #include <ros/ros.h>
+#include <include/utility.h>
 
 #include <osrf_gear/VacuumGripperState.h>
 #include <osrf_gear/VacuumGripperControl.h>
@@ -380,10 +381,10 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	}
 	static tf::Pose get_tray_pose(char agv_number) {
 		if (agv_number == 1) {
-			return tf::Pose(tf::Quaternion(0,0,1,0),tf::Vector3(0.3,3.15,0.75));
+			return tf::Pose(tf::Quaternion(0,0,1,0),tf::Vector3(0.3,3.15,0.755));
 		}
 		else if (agv_number == 2) {
-			return tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0.3,-3.15,0.75));
+			return tf::Pose(tf::Quaternion(0,0,0,1),tf::Vector3(0.3,-3.15,0.755));
 		}
 		else {
 			ROS_ERROR("NO SUCH AGV %d",(int)agv_number);
@@ -401,7 +402,9 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		for (auto & part : lookup_map) {
 			// if (part.second->is_moving()) {
 			if (part.second->get_velocity() != tf::Vector3(0,0,0)) { //currently still on belt?
-				to_return.push_back(part.first);
+				if (std::abs(get_location(part.first).getOrigin().getY()) < 2.0) { //extremely rough filtering
+					to_return.push_back(part.first);
+				}
 			}
 		}
 		std::sort(to_return.begin(),to_return.end(),sort_conveyor_by_distance);
@@ -432,13 +435,23 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		// return object_true_height + true_face_from_tf;
 		return (part_type_grab_hold_offset(part_type,part_type_generic_height(part_type)));
 	}
-	static double part_type_grab_hold_offset(std::string part_type,double height_in) {
+	static double part_type_grab_hold_offset(std::string part_type,double height_in,bool upside_down = false) {
 		/////// Check edits in this function are rite or wrong //////
 		double grab_offset = -0.014;
 		double true_face_from_tf = true_bin_height_offset - type_data[part_type].tf_base_offset;
-		true_face_from_tf += type_data[part_type].size; //grab from top, which is "size" away from the tf
+		true_face_from_tf += height_in;
 		true_face_from_tf -= grab_offset;
-		return height_in + true_face_from_tf;
+		if (!upside_down) {
+			true_face_from_tf += type_data[part_type].size; //grab from top, which is "size" away from the tf
+		}
+		return true_face_from_tf;
+	}
+
+	static double get_part_bottom_margin(std::string part_type,bool is_flipped) {
+		if (is_flipped) {
+			return type_data[part_type].size - (type_data[part_type].tf_base_offset-true_bin_height_offset);
+		}
+		return type_data[part_type].tf_base_offset-true_bin_height_offset;
 	}
 	static double part_type_generic_height(std::string part_type) {
 		return bin_height + type_data[part_type].tf_base_offset;
@@ -469,6 +482,16 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		object_interested = object_name;
 	}
 
+	// static bool is_upside_down(tf::Pose check) {
+	// 	const tf::Vector3 z_vec(0,0,1);
+	// 	const tf::Quaternion identity(0,0,0,1);
+	// 	//gets what the "up" vector is for the pose
+	// 	tf::Vector3 z_local = (check * tf::Pose(identity,z_vec)).getOrigin()-check.getOrigin();
+	// 	double correlation = z_local.dot(z_vec); //compares with real "up"
+	// 	ROS_INFO("correlation: %f",correlation);
+	// 	return (correlation < -0.2); //arbitrary down correlation value
+	// }
+
 protected:
 	template<class M>
 	static void subscribe(std::string name,uint32_t size,void(*fp)(M)) {
@@ -479,15 +502,6 @@ protected:
 		return (lookup_map[part_a]->get_transform().getOrigin().getY() < lookup_map[part_b]->get_transform().getOrigin().getY());
 	}
 
-	static bool is_upside_down(tf::Pose check) {
-		const tf::Vector3 z_vec(0,0,1);
-		const tf::Quaternion identity(0,0,0,1);
-		//gets what the "up" vector is for the pose
-		tf::Vector3 z_local = (check * tf::Pose(identity,z_vec)).getOrigin()-check.getOrigin();
-		double correlation = z_local.dot(z_vec); //compares with real "up"
-		ROS_INFO("correlation: %f",correlation);
-		return (correlation < -0.2); //arbitrary down correlation value
-	}
 	static void initialize_object_types() {
 		// type_data["disk_part"] = {"disk_part",0.021835,0.004951,tf::Vector3(0.2,0.2,0),
 		// tf::Vector3(0.4,0.4,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)}; //correct

@@ -110,6 +110,10 @@ protected:
 		//arm_control_group.setStartStateToCurrentState();
 
 		//arm_control_group.setStartStateToCurrentState();
+		if (to_move->planning_failure) {
+			return;
+		}
+
 		boost::thread * break_thread = nullptr;
 		if (to_move->pick_part) {
 			break_thread = new boost::thread(boost::bind(&Controller::grab_break,this));
