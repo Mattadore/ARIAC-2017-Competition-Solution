@@ -36,6 +36,7 @@
 #include <boost/regex.hpp> 
 #include <geometry_msgs/Pose.h>
 #include <moveit/robot_state/conversions.h>
+#include <tf/transform_broadcaster.h>
 
 //tf_publisher_data data;
 //bool gripper_attached = false;
@@ -352,13 +353,13 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	// }
 
 	static void publish_tfs() {
+		static tf::TransformBroadcaster br;
 		for (std::map<std::string,ObjectData *>::iterator it = lookup_map.begin(); it != lookup_map.end(); ++it) {
-			tf::StampedTransform current_transform = get_location(it->first);
-			tf2_msgs::TFMessage message_out;
-			geometry_msgs::TransformStamped transformation_out;
-			tf::transformStampedTFToMsg(current_transform,transformation_out);
-			message_out.transforms.push_back(transformation_out);
-			tf_publisher.publish(message_out);
+			//tf2_msgs::TFMessage message_out;
+			//geometry_msgs::TransformStamped transformation_out;
+			//tf::transformStampedTFToMsg(current_transform,transformation_out);
+			//message_out.transforms.push_back(transformation_out);
+			br.sendTransform(tf::StampedTransform(get_location(it->first), ros::Time::now(), "world", it->first));
 		}
 	}
 

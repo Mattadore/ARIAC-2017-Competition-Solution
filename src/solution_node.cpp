@@ -1093,10 +1093,10 @@ int main(int argc, char ** argv) {
 		spinRate.sleep();
 		ros::spinOnce();
 		manager.update();
-		// if ((tf_publish+tf_frequency)>ros::Time::now()) {
-		// 	ObjectTracker::publish_tfs();
-		// 	tf_publish = ros::Time::now();
-		// }
+		if ((tf_publish+tf_frequency)>ros::Time::now()) {
+			ObjectTracker::publish_tfs();
+			tf_publish = ros::Time::now();
+		}
 	}
 	return 0;
 }
