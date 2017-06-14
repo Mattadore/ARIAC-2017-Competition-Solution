@@ -335,36 +335,35 @@ public:
 	}
 	//"Thorough" means it won't quit till it finds a part
 	pipeline_data simple_search_thorough(std::string part_type,pipeline_data data_in = pipeline_data()) {
-		// if (!searcher.unfound_parts(part_type)) {
-		// 	ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
-		// 	return data_in;
-		// }
-		// arm_action::Ptr last_action = data_in.action;
-		// while (true) {
-		// 	tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
-		// 	arm_action::Ptr align_action(new arm_action(last_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
-		// 	align_action->vacuum_enabled = false; //just to be safe
-		// 	planner.add_action(align_action);
-		// 	controller.add_action(align_action);
-		// 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
-		// 	test_action->vacuum_enabled = true;
-		// 	test_action->pick_part = true;
-		// 	test_action->end_delay = 1.0;
-		// 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.1)),REGION_BIN_GRAB));
-		// 	planner.add_action(test_action);
-		// 	planner.add_action(lift_action);
-		// 	controller.add_action(test_action);
-		// 	controller.add_action(lift_action);
-	 // 		controller.wait_until_executed(test_action);
-	 // 		if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
-	 // 			break;
-	 // 			// tf::Pose agv_pose = ObjectTracker::get_tray_pose(1); //used to make an intermediate
-	 // 			// arm_action::Ptr intermediate_movement(new arm_action(lift_action,))
+		if (!searcher.unfound_parts(part_type)) {
+			ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
+			return data_in;
+		}
+		arm_action::Ptr last_action = data_in.action;
+	 	// while (true) {
+			// tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
+			// arm_action::Ptr align_action(new arm_action(last_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
+	 	// 	align_action->vacuum_enabled = false; //just to be safe
+	 	// 	planner.add_action(align_action);
+	 	// 	controller.add_action(align_action);
+		 // 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
+		 // 	test_action->vacuum_enabled = true;
+		 // 	test_action->pick_part = true;
+		 // 	test_action->end_delay = 1.0;
+		 // 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.1)),REGION_BIN_GRAB));
+		 // 	planner.add_action(test_action);
+		 // 	planner.add_action(lift_action);
+		 // 	controller.add_action(test_action);
+		 // 	controller.add_action(lift_action);
+	 	// 	controller.wait_until_executed(test_action);
+	 	// 	if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
+	 	// 		tf::Pose agv_pose = ObjectTracker::get_tray_pose(1); //used to make an intermediate
+	 	// 		arm_action::Ptr intermediate_movement(new arm_action(lift_action,))
 
-	 // 		}
-	 // 		last_action = lift_action;
-	 // 	}
-	 // 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+	 	// 	}
+	 	// 	last_action = lift_action;
+	 	// }
+	 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
 		return data_in;
 	}
 	
@@ -956,7 +955,7 @@ public:
 
 	Planner planner;
 	Controller controller;
-	// SearchManager searcher;
+	SearchManager searcher;
 
 protected:
 	void assign_kit(osrf_gear::Kit * to_assign,char agv_number) {
@@ -1051,12 +1050,12 @@ protected:
 int main(int argc, char ** argv) {
 	ros::init(argc, argv, "solution_node");
 	ros::NodeHandle node;
+	CompetitionInterface::initialize_interface(&node);
 	CompetitionManager manager(&node);
 	tf::TransformListener listener;
 
 	ROS_INFO("STARTING\n");
 
-	CompetitionInterface::initialize_interface(&node);
 	ObjectTracker::initialize_tracker(&node,&listener);
 	ros::Time tf_publish = ros::Time::now();
 	ros::Duration tf_frequency(0.1);
