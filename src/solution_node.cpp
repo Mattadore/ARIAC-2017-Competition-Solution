@@ -265,11 +265,18 @@ public:
 			if (AGV_info[agv_num-1].assigned()) {			
 				if (CompetitionInterface::get_agv_state(agv_num) == AGV_DELIVERING)  {
 					assign_kit(nullptr,agv_num);
+					AGV_info[agv_num-1].send_time = ros::Time(0);
 				}
 				if (CompetitionInterface::get_agv_state(agv_num) == AGV_READY_TO_DELIVER) {
 					if (kit_tally.count(AGV_info[agv_num-1].current_kit)) {
 						if (kit_tally[AGV_info[agv_num-1].current_kit].completed()) {
-							CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+							if (AGV_info[agv_num-1].send_time == ros::Time(0)) {
+								AGV_info[agv_num-1].send_time = ros::Time::now()+ros::Duration(2.0);
+							}
+							else if (AGV_info[agv_num-1].send_time < ros::Time::now()) {
+								AGV_info[agv_num-1].send_time = ros::Time(0);
+								CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+							}
 						}
 					}
 				}
@@ -1071,6 +1078,7 @@ protected:
 	struct AGV_metadata {
 		//bool unassigned;
 		osrf_gear::Kit * current_kit = nullptr;
+		ros::Time send_time = ros::Time(0);
 		bool assigned() {
 			return current_kit != nullptr;
 		}
