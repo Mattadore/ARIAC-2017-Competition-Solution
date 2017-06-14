@@ -247,11 +247,11 @@ public:
 		out.setData(start*current_location);
 		return out;
 	}
-	/*tf::StampedTransform get_global_location() {
-		tf::StampedTransform to_reference = ObjectTracker::get_recent_transform("world",reference_frame);
-		to_reference.setData(to_reference * get_current_location());
-		return to_reference; 
-	}*/
+	// tf::StampedTransform get_global_location() {
+	// 	tf::StampedTransform to_reference = ObjectTracker::get_recent_transform("world",reference_frame);
+	// 	to_reference.setData(to_reference * get_current_location());
+	// 	return to_reference; 
+	// }
 protected:
 	//TODO: optimize this if it takes too long by just de-interpolating the last value from last calculation??
 
@@ -324,6 +324,8 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
 		nodeptr = nodeptr_; 
 		listener = listener_;
+		object_held = "";
+		object_interested = "";
 		initialize_object_types();
 		subscribe("/tf", 100, &ObjectTracker::tf_callback);
 		tf_publisher = nodeptr->advertise<tf2_msgs::TFMessage>("tf", 100);
@@ -334,9 +336,9 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		listener->lookupTransform(start,end,ros::Time(0),transform_out);
 		return transform_out;
 	}
-	/*static tf::Pose get_current_end_location() {
-		listener->lookupTransform("world","vacuum_gr",ros::Time(0),reference_transformation);
-	}*/
+	// static tf::Pose get_current_end_location() {
+	// 	listener->lookupTransform("world","vacuum_gr",ros::Time(0),reference_transformation);
+	// }
 
 	static void publish_tfs() {
 		for (std::map<std::string,ObjectData *>::iterator it = lookup_map.begin(); it != lookup_map.end(); ++it) {
@@ -568,19 +570,19 @@ ros::NodeHandle * ObjectTracker::nodeptr;
 ros::Publisher ObjectTracker::tf_publisher;
 //std::vector<std::string> ObjectTracker::scanned_parts; 
 
-/*
-int main(int argc, char ** argv) {
-	ros::init(argc, argv, "advanced_tf_publisher");
+
+// int main(int argc, char ** argv) {
+// 	ros::init(argc, argv, "advanced_tf_publisher");
 
 
-	ros::rate(50) spin_rate;
-	while (ros::ok()) {
-		spin_rate.sleep();
-		ros::spinOnce();
-	}
-	return 0;
-}
-*/
+// 	ros::rate(50) spin_rate;
+// 	while (ros::ok()) {
+// 		spin_rate.sleep();
+// 		ros::spinOnce();
+// 	}
+// 	return 0;
+// }
+
 
 //Grid structure:
 //list of possible grid alignments

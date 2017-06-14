@@ -485,7 +485,7 @@ public:
 
  		trash_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,agv_pose,agv_region)));
  		trash_actions.back()->use_trash = true;
- 		trash_actions.back()->end_delay = 0.5;
+ 		trash_actions.back()->end_delay = 0.15;
  		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),move_to_tray->trajectory_end,agv_region)));
  		trash_actions.back()->vacuum_enabled = false;
  		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
@@ -494,7 +494,7 @@ public:
 
  		//if nothing bad happens
 	 	standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,move_to_tray->trajectory_end,agv_region)));
-	 	standard_actions.back()->end_delay = 0.5;
+	 	standard_actions.back()->end_delay = 0.15;
 	 	standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,agv_pose,agv_region)));
 	 	standard_actions.back()->vacuum_enabled = false;
 	 	standard_actions.back()->use_intermediate = true;
@@ -663,25 +663,38 @@ public:
 
 			if (is_belt_part) {
 				pipe = simple_grab_moving(pick_part_name,pipe);
-				if (!pipe.success) {
-					continue;
-				}
-				pipe = simple_drop(current_agv,drop_offset,pipe);
-				if (pipe.success) {
-					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
-				}	
 			}
 			else {
 				pipe = simple_grab(pick_part_name,pipe);
-				if (!pipe.success) {
-					continue;
-				}
-				pipe = simple_drop(current_agv,drop_offset,pipe);
-				ROS_INFO("Success: %d",(int)pipe.success);
-				if (pipe.success) {
-					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
-				}
 			}
+
+			if (!pipe.success) {
+				continue;
+			}
+
+			if (ObjectTracker::get_held_object()=="") {
+				ROS_ERROR("NO HELD OBJECT DETECT");
+				continue;
+				// ros::Rate check_rate(10);
+				// ros::Time start_time = ros::Time::now();
+				// while (ObjectTracker::get_held_object()=="") {
+				// 	check_rate.sleep();
+				// 	if (start_time > (start_time + ros::Duration(1.0))) {
+				// 		break;
+				// 	}
+				// }
+				// if (ObjectTracker::get_held_object()=="") {
+				// 	continue;
+				// }
+			}
+
+			tf::Transform grasp_correction = ObjectTracker::get_internal_transform(ObjectTracker::get_held_object());
+			grasp_correction = grasp_correction.inverse();
+			pipe = simple_drop(current_agv,drop_offset*grasp_correction,pipe);
+			if (pipe.success) {
+				fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+			}
+
 
 			// //TODO: find a clean way to implement this, this is gross as-is
 			// int model_index;
@@ -825,9 +838,9 @@ public:
 
 		//}
 
-		//***
+		//
 		//have option for interrupts
-		//***
+		//
 
 
 		//wait on order queue
