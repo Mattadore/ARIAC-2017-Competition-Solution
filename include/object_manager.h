@@ -115,7 +115,7 @@ public:
 		}
 		tf::StampedTransform new_frame_pose = get_transform(); //this has a mutex in it, so..
 		relative_motion = tf::Vector3(0,0,0);
-		new_frame_pose.setData(new_frame_pose*to_new_frame);
+		new_frame_pose.setData(to_new_frame*new_frame_pose);
 		reset_filtering();
 		add_new_pose(new_frame_pose);
 		reference_frame = new_reference_name;
@@ -288,7 +288,7 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 
 	static void pick_up() {
 		object_held = object_interested;
-		lookup_map[object_held]->reference_swap("vacuum_gripper_link",ObjectTracker::get_recent_transform(lookup_map[object_held]->get_reference_frame(),"vacuum_gripper_link"));
+		lookup_map[object_held]->reference_swap("vacuum_gripper_link",ObjectTracker::get_recent_transform("vacuum_gripper_link",lookup_map[object_held]->get_reference_frame()));
 	}
 
 	static std::string get_part_type(std::string part_name) {
@@ -424,12 +424,21 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	static double part_type_generic_grab_height(std::string part_type) {
 		
 		/////// Check edits in this function are rite or wrong //////
+		// double grab_offset = -0.014;
+		// double object_true_height = bin_height + type_data[part_type].tf_base_offset;
+		// double true_face_from_tf = true_bin_height_offset - type_data[part_type].tf_base_offset;
+		// true_face_from_tf += type_data[part_type].size; //grab from top, which is "size" away from the tf
+		// true_face_from_tf -= grab_offset;
+		// return object_true_height + true_face_from_tf;
+		return (part_type_grab_hold_offset(part_type,part_type_generic_height(part_type)));
+	}
+	static double part_type_grab_hold_offset(std::string part_type,double height_in) {
+		/////// Check edits in this function are rite or wrong //////
 		double grab_offset = -0.014;
-		double object_true_height = bin_height + type_data[part_type].tf_base_offset;
 		double true_face_from_tf = true_bin_height_offset - type_data[part_type].tf_base_offset;
 		true_face_from_tf += type_data[part_type].size; //grab from top, which is "size" away from the tf
 		true_face_from_tf -= grab_offset;
-		return object_true_height + true_face_from_tf;
+		return height_in + true_face_from_tf;
 	}
 	static double part_type_generic_height(std::string part_type) {
 		return bin_height + type_data[part_type].tf_base_offset;

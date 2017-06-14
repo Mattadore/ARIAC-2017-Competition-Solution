@@ -48,6 +48,8 @@ const double pickup_configuration_data[7]
 
 const double true_center = -0.15;
 
+const tf::Vector3 trash_position[2] {tf::Vector3(0.721362,2.859251,0.915775),tf::Vector3(0.721362,-2.859251,0.915775)};
+
 enum AGV_states {
 	AGV_NONE,
 	AGV_DELIVERING,
@@ -218,7 +220,7 @@ bool within(tf::Vector3 test,tf::Vector3 a,tf::Vector3 b) {
 	return ret;
 }
 
-void print_pose_msg(tf::Pose in_pose, std::string in_data){
-	ROS_INFO_STREAM("")
-}
+// void print_pose_msg(tf::Pose in_pose, std::string in_data){
+// 	ROS_INFO_STREAM("")
+// }
 #endif
