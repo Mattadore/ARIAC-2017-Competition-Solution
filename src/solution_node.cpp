@@ -286,6 +286,7 @@ public:
 			b->plan->trajectory_.joint_trajectory.points[i].time_from_start += a_end_time;
 			a->plan->trajectory_.joint_trajectory.points.push_back(b->plan->trajectory_.joint_trajectory.points[i]);
 		}
+		a->trajectory_end = b->trajectory_end;
 	}
 
 	void combine_actions(std::vector<arm_action::Ptr> * action_list) {
@@ -472,20 +473,28 @@ public:
 			data_in.time += intermediate_move->get_execution_time();
 			controller.add_action(intermediate_move);
 		}
-		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.3))*agv_pose*drop_offset,agv_region));
+		tf::Transform grasp_correction = ObjectTracker::get_internal_transform(ObjectTracker::get_held_object());
+		std::string part_type = ObjectTracker::get_part_type(ObjectTracker::get_held_object());
+		grasp_correction = grasp_correction.inverse();
+		tf::Vector3 offset = grasp_correction.getOrigin();
+		ROS_INFO("Pose is: %f %f %f",offset.getX(),offset.getY(),offset.getZ());
+
+		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset*grasp_correction,agv_region));
+		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,ObjectTracker::part_type_grab_hold_offset(part_type,0.0)))*agv_pose*drop_offset*grasp_correction,agv_region));
 	 	planner.add_action(move_to_tray);
+	 	planner.add_action(move_to_tray_2);
+	 	planner.wait_until_planned(move_to_tray_2);
+		integrate(move_to_tray,move_to_tray_2);
 	 	controller.add_action(move_to_tray);
 	 	std::vector<arm_action::Ptr> standard_actions; //TODO: do something similar for waving under camera
 	 	std::vector<arm_action::Ptr> trash_actions; //TODO: do something similar for waving under camera
 	 	arm_action::Ptr retract_action;
 	 	//controller.wait_until_executed(move_to_tray);
-	 	osrf_gear::LogicalCameraImage quality_sensor_reading = CompetitionInterface::get_quality_control_msg(agv_number);
 
 	 	//me trying out a forked plan
-
- 		trash_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,agv_pose,agv_region)));
- 		trash_actions.back()->use_trash = true;
- 		trash_actions.back()->end_delay = 0.5;
+		trash_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset*grasp_correction,agv_region)));
+ 		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(move_to_tray->trajectory_end.getRotation(),trash_position[agv_number-1]),agv_region)));
+ 		trash_actions.back()->end_delay = 0.15;
  		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),move_to_tray->trajectory_end,agv_region)));
  		trash_actions.back()->vacuum_enabled = false;
  		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
@@ -494,15 +503,16 @@ public:
 
  		//if nothing bad happens
 	 	standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,move_to_tray->trajectory_end,agv_region)));
-	 	standard_actions.back()->end_delay = 0.5;
-	 	standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,agv_pose,agv_region)));
+	 	standard_actions.back()->end_delay = 0.15;
+	 	standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset*grasp_correction,agv_region)));
 	 	standard_actions.back()->vacuum_enabled = false;
+	 	standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),agv_pose,agv_region)));
 	 	standard_actions.back()->use_intermediate = true;
  		planner.add_actions(&standard_actions);
 
- 		planner.wait_until_planned(standard_actions.back());
  		controller.wait_until_executed(move_to_tray);
  		//TODO: this is disgusting
+	 	osrf_gear::LogicalCameraImage quality_sensor_reading = CompetitionInterface::get_quality_control_msg(agv_number);
 
 		ros::Duration pipeline_time;
 		std::vector<arm_action::Ptr>* action_list;
@@ -663,25 +673,38 @@ public:
 
 			if (is_belt_part) {
 				pipe = simple_grab_moving(pick_part_name,pipe);
-				if (!pipe.success) {
-					continue;
-				}
-				pipe = simple_drop(current_agv,drop_offset,pipe);
-				if (pipe.success) {
-					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
-				}	
 			}
 			else {
 				pipe = simple_grab(pick_part_name,pipe);
-				if (!pipe.success) {
-					continue;
-				}
-				pipe = simple_drop(current_agv,drop_offset,pipe);
-				ROS_INFO("Success: %d",(int)pipe.success);
-				if (pipe.success) {
-					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
-				}
 			}
+
+			if (!pipe.success) {
+				continue;
+			}
+
+
+			ROS_INFO("Held object: %s",ObjectTracker::get_held_object().c_str());
+			if (ObjectTracker::get_held_object()=="") {
+				ROS_ERROR("NO HELD OBJECT DETECT");
+				continue;
+				// ros::Rate check_rate(10);
+				// ros::Time start_time = ros::Time::now();
+				// while (ObjectTracker::get_held_object()=="") {
+				// 	check_rate.sleep();
+				// 	if (start_time > (start_time + ros::Duration(1.0))) {
+				// 		break;
+				// 	}
+				// }
+				// if (ObjectTracker::get_held_object()=="") {
+				// 	continue;
+				// }
+			}
+
+			pipe = simple_drop(current_agv,drop_offset,pipe);
+			if (pipe.success) {
+				fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+			}
+
 
 			// //TODO: find a clean way to implement this, this is gross as-is
 			// int model_index;
@@ -825,9 +848,9 @@ public:
 
 		//}
 
-		//***
+		//
 		//have option for interrupts
-		//***
+		//
 
 
 		//wait on order queue
