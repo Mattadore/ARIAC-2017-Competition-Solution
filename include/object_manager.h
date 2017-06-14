@@ -6,6 +6,7 @@
 #include <utility>
 #include <string>
 #include <map>
+#include <set>
 #include <list>
 #include <cstdio>
 #include <cmath>
@@ -292,6 +293,14 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		lookup_map[object_held]->reference_swap("vacuum_gripper_link",ObjectTracker::get_recent_transform("vacuum_gripper_link",lookup_map[object_held]->get_reference_frame()));
 	}
 
+	static void condemn(std::string part_name) {
+		condemned.insert(part_name);
+	}
+
+	static bool is_condemned(std::string part_name) {
+		return (condemned.count(part_name) != 0);
+	}
+
 	static std::string get_part_type(std::string part_name) {
 		boost::regex pattern("(.*?part.*?)_(clone_)?([0-9]+)", boost::regex::perl); 
 		boost::smatch matches;
@@ -318,7 +327,8 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 
 	//TODO: expand upon this, such that parts fall to where you'd expect them to be
 	static void drop_off() {
-		lookup_map[object_held]->reference_swap("world",ObjectTracker::get_recent_transform(lookup_map[object_held]->get_reference_frame(),"world"));
+		lookup_map[object_held]->reference_swap("world",ObjectTracker::get_recent_transform("world",lookup_map[object_held]->get_reference_frame()));
+		condemn(object_held);
 		object_held = "";
 	}
 
@@ -396,10 +406,12 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		return lookup_map.count(part_name);
 	}
 
-
 	static std::vector<std::string> get_belt_parts() {
 		std::vector<std::string> to_return;
 		for (auto & part : lookup_map) {
+			if (condemned.count(part.first)) {
+				continue;
+			}
 			// if (part.second->is_moving()) {
 			if (part.second->get_velocity() != tf::Vector3(0,0,0)) { //currently still on belt?
 				if (std::abs(get_location(part.first).getOrigin().getY()) < 2.0) { //extremely rough filtering
@@ -414,6 +426,9 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	static std::vector<std::string> get_bin_parts() {
 		std::vector<std::string> to_return;
 		for (auto & part : lookup_map) {
+			if (condemned.count(part.first)) {
+				continue;
+			}
 			// if (part.second->is_moving()) {
 			if (part.second->get_velocity() == tf::Vector3(0,0,0)) { //not moving?
 				if (std::abs(get_location(part.first).getOrigin().getY()) < 2.0) { //extremely rough filtering
@@ -574,6 +589,7 @@ protected:
 	static std::map<std::string,std::list<ObjectData> > object_data;
 	static std::map<std::string,ObjectTypeData> type_data;
 	static std::map<std::string,ros::Subscriber> subscriptions;
+	static std::set<std::string> condemned;
 	static std::string object_held;
 	static std::string object_interested;
 	static tf::TransformListener * listener;
@@ -586,6 +602,7 @@ std::map<std::string,ObjectData *> ObjectTracker::lookup_map;
 std::map<std::string,std::list<ObjectData> > ObjectTracker::object_data;
 std::map<std::string,ObjectTypeData> ObjectTracker::type_data;
 std::map<std::string,ros::Subscriber> ObjectTracker::subscriptions;
+std::set<std::string> ObjectTracker::condemned;
 std::string ObjectTracker::object_held;
 std::string ObjectTracker::object_interested;
 tf::TransformListener * ObjectTracker::listener;

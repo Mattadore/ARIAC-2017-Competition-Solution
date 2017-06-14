@@ -255,8 +255,9 @@ public:
 			terminated = true;
 		}
 		if (CompetitionInterface::part_dropped()) {
+			ROS_WARN("PART DROP OCCURRED");
 			//TODO: part drop logic, includes turning off vacuum gripper.
-			//controller.stop_controller(); //terminate movement
+			controller.stop_controller(); //terminate movement
 		}
 
 		//update agv
@@ -335,36 +336,55 @@ public:
 	}
 	//"Thorough" means it won't quit till it finds a part
 	pipeline_data simple_search_thorough(std::string part_type,pipeline_data data_in = pipeline_data()) {
-		if (!searcher.unfound_parts(part_type)) {
-			ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
-			return data_in;
-		}
 		arm_action::Ptr last_action = data_in.action;
-	 	// while (true) {
-			// tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
-			// arm_action::Ptr align_action(new arm_action(last_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
-	 	// 	align_action->vacuum_enabled = false; //just to be safe
-	 	// 	planner.add_action(align_action);
-	 	// 	controller.add_action(align_action);
-		 // 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
-		 // 	test_action->vacuum_enabled = true;
-		 // 	test_action->pick_part = true;
-		 // 	test_action->end_delay = 1.0;
-		 // 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.1)),REGION_BIN_GRAB));
-		 // 	planner.add_action(test_action);
-		 // 	planner.add_action(lift_action);
-		 // 	controller.add_action(test_action);
-		 // 	controller.add_action(lift_action);
-	 	// 	controller.wait_until_executed(test_action);
-	 	// 	if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
-	 	// 		tf::Pose agv_pose = ObjectTracker::get_tray_pose(1); //used to make an intermediate
-	 	// 		arm_action::Ptr intermediate_movement(new arm_action(lift_action,))
-
-	 	// 	}
-	 	// 	last_action = lift_action;
-	 	// }
-	 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
-		return data_in;
+	 	while (true) {
+	 		ROS_INFO("ATTEMPTING TO FIND A PART");
+			if (!searcher.unfound_parts(part_type)) {
+				ROS_ERROR("SEARCHING FOR A PART TYPE THAT HAS NO REMAINING UNFOUND PARTS");
+				pipeline_data data_generic;
+				data_generic.success = false;
+				return data_generic;
+			}
+			tf::Pose search_pose = tf::Pose(identity,searcher.search(part_type));
+			arm_action::Ptr align_action(new arm_action(last_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
+	 		align_action->vacuum_enabled = false; //just to be safe
+	 		planner.add_action(align_action);
+	 		controller.add_action(align_action);
+		 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
+		 	test_action->vacuum_enabled = true;
+		 	test_action->pick_part = true;
+		 	test_action->end_delay = 1.0;
+		 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
+		 	planner.add_action(test_action);
+		 	planner.add_action(lift_action);
+		 	controller.add_action(test_action);
+		 	controller.add_action(lift_action);
+	 		controller.wait_until_executed(lift_action);
+	 		if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
+	 			ROS_INFO("PART SUCCESSFULLY FOUND");
+	 			arm_action::Ptr intermediate_movement(new arm_action(lift_action,ObjectTracker::get_tray_pose(1),REGION_BINS));
+	 			intermediate_movement->use_intermediate = true;
+	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)) * ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame");
+	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_AGV1));
+	 			scan_movement->end_delay = 0.2;
+	 			planner.add_action(intermediate_movement);
+	 			planner.add_action(scan_movement);
+	 			controller.add_action(intermediate_movement);
+	 			controller.add_action(scan_movement);
+	 			controller.wait_until_executed(scan_movement);
+	 			searcher.search_success(part_type);
+	 			pipeline_data data_generic;
+	 			data_generic.success = true;
+	 			return data_generic;
+	 		}
+	 		else {
+	 			ROS_INFO("PART FIND FAILED");
+	 			searcher.search_fail("part_type");
+	 		}
+ 			last_action = lift_action;
+	 	}
+	 	// pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+		return pipeline_data();
 	}
 	
 	//testing
@@ -385,9 +405,10 @@ public:
 	 	controller.add_action(align_action);
 	 	controller.add_action(grab_action);
 	 	controller.add_action(lift_action);
-	 	controller.wait_until_executed(grab_action);
-	 	pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
-		return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
+	 	controller.wait_until_executed(lift_action);
+	 	pipeline_data return_data;
+	 	return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
+	 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
 	 	return return_data;
 	}
 
@@ -498,61 +519,61 @@ public:
 		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,0.022+ObjectTracker::get_part_bottom_margin(part_type,is_upside_down(grasp_correction))))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		move_to_tray_2->perturb = false;
-	 	planner.add_action(move_to_tray);
-	 	planner.add_action(move_to_tray_2);
-	 	planner.wait_until_planned(move_to_tray_2);
+		planner.add_action(move_to_tray);
+		planner.add_action(move_to_tray_2);
+		planner.wait_until_planned(move_to_tray_2);
 		integrate(move_to_tray,move_to_tray_2);
-	 	controller.add_action(move_to_tray);
-	 	std::vector<arm_action::Ptr> standard_actions; //TODO: do something similar for waving under camera
-	 	std::vector<arm_action::Ptr> trash_actions; //TODO: do something similar for waving under camera
-	 	arm_action::Ptr retract_action;
-	 	//controller.wait_until_executed(move_to_tray);
+		controller.add_action(move_to_tray);
+		std::vector<arm_action::Ptr> standard_actions; //TODO: do something similar for waving under camera
+		std::vector<arm_action::Ptr> trash_actions; //TODO: do something similar for waving under camera
+		arm_action::Ptr retract_action;
+		//controller.wait_until_executed(move_to_tray);
 
-	 	//me trying out a forked plan
+		//me trying out a forked plan
 		trash_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region)));
- 		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(move_to_tray->trajectory_end.getRotation(),trash_position[agv_number-1]),agv_region)));
- 		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
- 		trash_actions.back()->vacuum_enabled = false;
- 		trash_actions.back()->use_intermediate = true;
- 		planner.add_actions(&trash_actions);
+		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(move_to_tray->trajectory_end.getRotation(),trash_position[agv_number-1]),agv_region)));
+		trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
+		trash_actions.back()->vacuum_enabled = false;
+		trash_actions.back()->use_intermediate = true;
+		planner.add_actions(&trash_actions);
 
  		//if nothing bad happens
-	 	standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,move_to_tray->trajectory_end,agv_region)));
-	 	standard_actions.back()->end_delay = 0.15;
-	 	standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region)));
-	 	standard_actions.back()->vacuum_enabled = false;
-	 	standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),agv_pose,agv_region)));
-	 	standard_actions.back()->use_intermediate = true;
- 		planner.add_actions(&standard_actions);
+		standard_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,move_to_tray->trajectory_end,agv_region)));
+		standard_actions.back()->end_delay = 0.15;
+		standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region)));
+		standard_actions.back()->vacuum_enabled = false;
+		standard_actions.push_back(arm_action::Ptr(new arm_action(standard_actions.back(),agv_pose,agv_region)));
+		standard_actions.back()->use_intermediate = true;
+		planner.add_actions(&standard_actions);
 
- 		controller.wait_until_executed(move_to_tray);
- 		//TODO: this is disgusting
-	 	osrf_gear::LogicalCameraImage quality_sensor_reading = CompetitionInterface::get_quality_control_msg(agv_number);
+		controller.wait_until_executed(move_to_tray);
+		//TODO: this is disgusting
+		osrf_gear::LogicalCameraImage quality_sensor_reading = CompetitionInterface::get_quality_control_msg(agv_number);
 
 		ros::Duration pipeline_time;
 		std::vector<arm_action::Ptr>* action_list;
 		bool faulty = false;
-	 	if (!quality_sensor_reading.models.empty()) { //Oh boy
-	 		faulty = true;
-	 		//NOTE: this is where I will possibly work backwards to bin alignment
-	 		//NOTE: only assumes one possible model; under assumption that we will always throw away our faulty models
-	 		//NOTE: a lot of this stuff could be better done state-based, but that doesn't mesh well with forward planning.
-	 		//NOTE: find some way to integrate state stuff and forward planning together well?
-	 		//!!!!!!!TODO: plan multiple possible outcomes?
-	 		//basically just scoots the arm over a bit before dropping so it falls
-	 		//off the side, instead of in the intended drop
-	 		action_list = &trash_actions;
-	 	}
-	 	else {
-	 		faulty = false;
-	 		action_list = &standard_actions;
-	 	}
- 		controller.add_actions(action_list);
- 		for (arm_action::Ptr action : (*action_list)) {
-	 		pipeline_time += action->get_execution_time();
- 		}
- 		pipeline_data pipe_out = pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
- 		pipe_out.success = !faulty;
+		if (!quality_sensor_reading.models.empty()) { //Oh boy
+			faulty = true;
+			//NOTE: this is where I will possibly work backwards to bin alignment
+			//NOTE: only assumes one possible model; under assumption that we will always throw away our faulty models
+			//NOTE: a lot of this stuff could be better done state-based, but that doesn't mesh well with forward planning.
+			//NOTE: find some way to integrate state stuff and forward planning together well?
+			//!!!!!!!TODO: plan multiple possible outcomes?
+			//basically just scoots the arm over a bit before dropping so it falls
+			//off the side, instead of in the intended drop
+			action_list = &trash_actions;
+		}
+		else {
+			faulty = false;
+			action_list = &standard_actions;
+		}
+		controller.add_actions(action_list);
+		for (arm_action::Ptr action : (*action_list)) {
+			pipeline_time += action->get_execution_time();
+		}
+		pipeline_data pipe_out = pipeline_data(ros::Time::now()+pipeline_time,action_list->back());
+		pipe_out.success = !faulty;
 
 	 	return pipe_out;
 	}
