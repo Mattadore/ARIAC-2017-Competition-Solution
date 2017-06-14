@@ -21,7 +21,7 @@ struct bin_data {
 public:
 	bin_data(){}
 	bin_data(std::string name,part_bin_info* data,tf::Vector3 location) : 
-	grasp_locations(default_search_locations[data->part_name]) {
+	grasp_locations((default_search_locations[data->part_name]).begin(),(default_search_locations[data->part_name]).end()) {
 		ROS_INFO("Bin Data Constructor...\n");
 		bin_name = name;
 		bin_location = location;
