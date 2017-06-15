@@ -223,7 +223,7 @@ protected:
 		//compute trajectory
 		double fraction = arm_control_group.computeCartesianPath(pose_list, 0.05, 0.0, traj_msg, true);
 		if (to_plan->perturb) {
-			int attempt_max = 4;
+			int attempt_max = 8;
 			for (int test_i=0;(test_i<attempt_max)&&(fraction < 0.97);++test_i) {
 				ROS_WARN("PLANNING RETRY: ATTEMPT #%d",test_i+2);
 
