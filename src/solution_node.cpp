@@ -531,9 +531,10 @@ public:
 			ROS_INFO("CORRECTING FOR UPSIDE DOWN PART DROP LOCATION");
 			drop_offset_corrected.setRotation(identity);
 		}
-
+		double height_offset_value = 0.022;
+		// double height_offset_value = 0.06;
 		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
-		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,0.022+ObjectTracker::get_part_bottom_margin(part_type,is_upside_down(grasp_correction))))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
+		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,height_offset_value+ObjectTracker::get_part_bottom_margin(part_type,is_upside_down(grasp_correction))))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		move_to_tray_2->perturb = false;
 		planner.add_action(move_to_tray);
 		planner.add_action(move_to_tray_2);
@@ -573,15 +574,34 @@ public:
 		ros::Duration pipeline_time;
 		std::vector<arm_action::Ptr>* action_list;
 		bool faulty = false;
-	 	if (!quality_sensor_reading.models.empty()) { //Oh boy
+		if (!quality_sensor_reading.models.empty()) { //Oh boy
+			// tf::Pose part_pose;
+			// tf::poseMsgToTF(quality_sensor_reading.models[0].pose,part_pose);
+			// if (part_pose.getOrigin().distance(ObjectTracker::get_location(ObjectTracker::get_held_object()).getOrigin())<0.03) {
+			// 	faulty = true;
+			// }
+			faulty = true;
+		}
+
+		//This segment is quite sketchy and was added late in development
+
+	 	if (faulty) { //Oh boy
 	 		ROS_INFO("Part Faulty!!! -> Performing Trash Actions");
-	 		faulty = true;
 			if (CompetitionInterface::part_dropped()) {
 				tf::Pose part_pose,grasp_pose;
 				tf::poseMsgToTF(quality_sensor_reading.models[0].pose,part_pose);
-				grasp_pose = ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading.models[0].type,ros::Time::now(),-0.017);
+				if (agv_number == 1) {
+					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_1_frame") * part_pose;
+				}
+				else {
+					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_2_frame") * part_pose;
+				}
+				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.002))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading.models[0].type,ros::Time::now());
 				arm_action::Ptr align_action(new arm_action(nullptr,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region));
 				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
+				grab_action->vacuum_enabled = true;
+				grab_action->pick_part = true;
+				grab_action->end_delay = 1.0;
 				// delete (trash_actions.front()->plan);
 				// trash_actions.front()->plan = nullptr;
 				// trash_actions.front()->planning_status = PIPELINE_NONE;
@@ -601,7 +621,6 @@ public:
 				planner.wait_until_planned(trash_actions.back());
 				controller.wait_until_executed(grab_action);
 			}
- 			action_list = &trash_actions;
 
 	 		//NOTE: this is where I will possibly work backwards to bin alignment
 	 		//NOTE: only assumes one possible model; under assumption that we will always throw away our faulty models
@@ -610,6 +629,8 @@ public:
 	 		//!!!!!!!TODO: plan multiple possible outcomes?
 	 		//basically just scoots the arm over a bit before dropping so it falls
 	 		//off the side, instead of in the intended drop
+ 	 		controller.add_actions(&trash_actions);
+ 			controller.wait_until_executed(trash_actions.back());
 	 	}
 	 	else {
 			if (CompetitionInterface::part_dropped()) {
@@ -618,11 +639,45 @@ public:
 				return pipe_out;
 			}
 	 		ROS_INFO("Part Good!!! -> Performing Standard Actions");
-	 		faulty = false;
-	 		action_list = &standard_actions;
+	 		controller.add_action(standard_actions[0]);
+	 		controller.add_action(standard_actions[1]);
+			controller.wait_until_executed(standard_actions[1]);
+		 	osrf_gear::LogicalCameraImage quality_sensor_reading_2 = CompetitionInterface::get_quality_control_msg(agv_number);
+		 	if (!quality_sensor_reading_2.models.empty()) {
+				tf::Pose part_pose,grasp_pose;
+				tf::poseMsgToTF(quality_sensor_reading_2.models[0].pose,part_pose);
+				if (agv_number == 1) {
+					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_1_frame") * part_pose;
+				}
+				else {
+					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_2_frame") * part_pose;
+				}
+				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.002))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading_2.models[0].type,ros::Time::now());
+				arm_action::Ptr align_action(new arm_action(nullptr,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region));
+				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
+				grab_action->vacuum_enabled = true;
+				grab_action->pick_part = true;
+				grab_action->end_delay = 1.0;
+				trash_actions.clear();
+				trash_actions.push_back(arm_action::Ptr(new arm_action(grab_action,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region)));
+				trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(grasp_pose.getRotation(),trash_position[agv_number-1]),agv_region)));
+				trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),agv_pose,agv_region)));
+				trash_actions.back()->vacuum_enabled = false;
+				trash_actions.back()->use_intermediate = true;
+				planner.add_action(align_action);
+				planner.add_action(grab_action);
+				planner.add_actions(&trash_actions);
+				controller.add_action(align_action);
+				controller.add_action(grab_action);
+ 	 			controller.add_actions(&trash_actions);
+ 				controller.wait_until_executed(trash_actions.back());
+
+		 	}
+		 	else {
+		 		controller.add_action(standard_actions[2]);
+		 		controller.wait_until_executed(standard_actions[2]);
+		 	}
 	 	}
- 		controller.add_actions(action_list);
- 		controller.wait_until_executed(action_list->back());
  		pipeline_data pipe_out;
 
  		// for (arm_action::Ptr action : (*action_list)) {
