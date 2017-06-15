@@ -381,8 +381,8 @@ public:
 	 		if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
 	 			ROS_INFO("PART SUCCESSFULLY FOUND");
 	 			
-	 			go_to_scanner(true);
-
+	 			go_to_scanner();
+	 			ros::Duration(0.5).sleep();
 	 			searcher.search_success(part_type);
 	 			pipeline_data data_generic;
 	 			data_generic.success = true;
@@ -428,25 +428,25 @@ public:
 	 	return return_data;
 	}
 
-	pipeline_data go_to_scanner(bool careful = false,pipeline_data data_in = pipeline_data()) {
+	pipeline_data go_to_scanner(pipeline_data data_in = pipeline_data()) {
 
 		ROS_INFO("Scan a Part!");
 		arm_action::Ptr scan_movement(new arm_action(nullptr,tf::Pose(),REGION_SCAN));
 		scan_movement->scan = true;
 		scan_movement->vacuum_enabled = true;
-		arm_action::Ptr scan_delay(new arm_action(scan_movement,tf::Pose(),REGION_SCAN));
-		scan_delay->scan = true;
-		if (careful) {
-			scan_delay->end_delay = 0.5;
-		}
-		else {
-			scan_delay->end_delay = 0.2;
-		}
+		// arm_action::Ptr scan_delay(new arm_action(scan_movement,tf::Pose(),REGION_SCAN));
+		// scan_delay->scan = true;
+		// if (careful) {
+		// 	scan_delay->end_delay = 0.5;
+		// }
+		// else {
+		// 	scan_delay->end_delay = 0.2;
+		// }
 		planner.add_action(scan_movement);
-		planner.add_action(scan_delay);
+		// planner.add_action(scan_delay);
 
 		controller.add_action(scan_movement);
-		controller.add_action(scan_delay);
+		// controller.add_action(scan_delay);
 		controller.wait_until_executed(scan_movement);
 
 		pipeline_data return_data;
@@ -874,7 +874,8 @@ public:
 					pipe = simple_grab(pick_part_name);
 				}
 				if (pipe.success) {
-					go_to_scanner(false);
+					go_to_scanner();
+					ros::Duration(0.2).sleep();
 				}
 			}
 			else {

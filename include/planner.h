@@ -184,7 +184,19 @@ protected:
 			ros::Duration move_time = get_action_time(jointmsg.actual, to_plan->plan->trajectory_.joint_trajectory.points.back());
 			to_plan->plan->trajectory_.joint_trajectory.points.back().time_from_start = move_time;
 		}
-
+		if (to_plan->end_delay > 0) {
+			ROS_INFO("Check after planning...");
+			auto last_point = to_plan->plan->trajectory_.joint_trajectory.points.back();
+			for (int i=0;i<last_point.velocities.size();++i) {
+				ROS_INFO("Check 2 after planning...");
+				last_point.velocities[i] = 0;
+			}
+			ROS_INFO("Check after 3 planning...");
+			to_plan->plan->trajectory_.joint_trajectory.points.push_back(last_point);
+			to_plan->plan->trajectory_.joint_trajectory.points.back().time_from_start += ros::Duration(std::min(to_plan->end_delay/10.0,0.1));
+			to_plan->plan->trajectory_.joint_trajectory.points.push_back(last_point);
+			to_plan->plan->trajectory_.joint_trajectory.points.back().time_from_start += ros::Duration(to_plan->end_delay);
+		}
 		ROS_INFO("INTERMEDIATE PLAN COMPLETE!");
 	}
 
