@@ -377,7 +377,7 @@ public:
 	 			ROS_INFO("PART SUCCESSFULLY FOUND");
 	 			arm_action::Ptr intermediate_movement(new arm_action(lift_action,ObjectTracker::get_tray_pose(1),REGION_BINS));
 	 			intermediate_movement->use_intermediate = true;
-	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)) * ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame");
+	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)+ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame").getOrigin());
 	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_AGV1));
 	 			scan_movement->end_delay = 0.2;
 	 			planner.add_action(intermediate_movement);
@@ -500,6 +500,7 @@ public:
 		//controller.wait_until_executed(retract_action);
 		//delete dummy_action;
 		//delete slide_action;
+		controller.wait_until_executed(retract_action);
 		return pipe_out;
 	}
 
@@ -534,6 +535,7 @@ public:
 		double height_offset_value = 0.022;
 		// double height_offset_value = 0.06;
 		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
+		move_to_tray->vacuum_enabled = true;
 		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,height_offset_value+ObjectTracker::get_part_bottom_margin(part_type,is_upside_down(grasp_correction))))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		move_to_tray_2->perturb = false;
 		planner.add_action(move_to_tray);
@@ -814,7 +816,6 @@ public:
 						}
 					}
 				}
-
 				if (!model_found) {
 					ROS_WARN_THROTTLE(1,"No part found, waiting");
 					continue;
@@ -824,10 +825,10 @@ public:
 				tf::poseMsgToTF(fake_kit->objects[model_index].pose, drop_offset);
 
 				if (is_belt_part) {
-					pipe = simple_grab_moving(pick_part_name,pipe);
+					pipe = simple_grab_moving(pick_part_name);
 				}
 				else {
-					pipe = simple_grab(pick_part_name,pipe);
+					pipe = simple_grab(pick_part_name);
 				}
 
 				if (!pipe.success) {
@@ -851,7 +852,7 @@ public:
 					// 	continue;
 					// }
 				}
-				pipe = simple_drop(current_agv,drop_offset,pipe);
+				pipe = simple_drop(current_agv,drop_offset);
 				if (pipe.success) {
 					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
 				}
@@ -876,10 +877,14 @@ public:
 					ROS_WARN_THROTTLE(1,"No bin models to search");
 					continue;
 				}
+
+
+				simple_search_thorough(search_type);
+
 				osrf_gear::Kit * fake_kit = &(kit_tally[AGV_info[current_agv-1].current_kit].kit_clone);
 				tf::Transform drop_offset;
 				tf::poseMsgToTF(fake_kit->objects[model_index].pose, drop_offset);
-				pipe = simple_drop(current_agv,drop_offset,pipe);
+				pipe = simple_drop(current_agv,drop_offset);
 				if (pipe.success) {
 					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
 				}
