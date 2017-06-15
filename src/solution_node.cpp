@@ -377,7 +377,7 @@ public:
 	 			ROS_INFO("PART SUCCESSFULLY FOUND");
 	 			arm_action::Ptr intermediate_movement(new arm_action(lift_action,ObjectTracker::get_tray_pose(1),REGION_BINS));
 	 			intermediate_movement->use_intermediate = true;
-	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)) * ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame");
+	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)+ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame").getOrigin());
 	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_AGV1));
 	 			scan_movement->end_delay = 0.2;
 	 			planner.add_action(intermediate_movement);
@@ -505,6 +505,7 @@ public:
 		//controller.wait_until_executed(retract_action);
 		//delete dummy_action;
 		//delete slide_action;
+		controller.wait_until_executed(retract_action);
 		return pipe_out;
 	}
 
@@ -539,6 +540,7 @@ public:
 		double height_offset_value = 0.020;
 		// double height_offset_value = 0.06;
 		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
+		move_to_tray->vacuum_enabled = true;
 		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,height_offset_value+ObjectTracker::get_part_bottom_margin(part_type,is_upside_down(grasp_correction))))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		move_to_tray_2->perturb = false;
 		planner.add_action(move_to_tray);
@@ -718,7 +720,6 @@ public:
 		}
 	}
 
-
 	//---------------control logic
 	//TODO: place on agv first or place by belt order? hm
 	void arm_process() {
@@ -734,6 +735,8 @@ public:
 
 
 		pipeline_data pipe;
+
+		const bool test_search = true;
 
 		// pipe = simple_grab("pulley_part_1",pipe);
 		// pipe = simple_drop(2,tf::Transform(identity,tf::Vector3(0,0,0)),pipe);
@@ -781,30 +784,15 @@ public:
 			//!!!!!!!!!!!!!!TODO: find all eligible parts for each section (per agv, as well), put them in a list, pick the best one based on whatever criteria
 
 			//finds if any belt part satisfies need
-			for (current_agv = 1; current_agv <= 2; ++current_agv) {
-				for (std::string & part_name : belt_parts) {
-					std::string type = ObjectTracker::get_part_type(part_name);
-					if (AGV_part_types[current_agv-1].count(type)) {
-						model_found = true;
-						is_belt_part = true;
-						model_index = AGV_part_types[current_agv-1][type];
-						pick_part_name = part_name;
-						break;
-					}
-				}
-				if (model_found) {
-					break;
-				}
-			}
+			tf::Pose drop_offset;
 
-			if (!model_found) {
-				//TODO: pick "best" part available?
+			if (!test_search) {
 				for (current_agv = 1; current_agv <= 2; ++current_agv) {
-					for (std::string & part_name : bin_parts) {
+					for (std::string & part_name : belt_parts) {
 						std::string type = ObjectTracker::get_part_type(part_name);
 						if (AGV_part_types[current_agv-1].count(type)) {
 							model_found = true;
-							is_belt_part = false;
+							is_belt_part = true;
 							model_index = AGV_part_types[current_agv-1][type];
 							pick_part_name = part_name;
 							break;
@@ -814,49 +802,97 @@ public:
 						break;
 					}
 				}
-			}
 
-			if (!model_found) {
-				ROS_WARN_THROTTLE(1,"No part found, waiting");
-				continue;
-			}
-			osrf_gear::Kit * fake_kit = &(kit_tally[AGV_info[current_agv-1].current_kit].kit_clone);
+				if (!model_found) {
+					//TODO: pick "best" part available?
+					for (current_agv = 1; current_agv <= 2; ++current_agv) {
+						for (std::string & part_name : bin_parts) {
+							std::string type = ObjectTracker::get_part_type(part_name);
+							if (AGV_part_types[current_agv-1].count(type)) {
+								model_found = true;
+								is_belt_part = false;
+								model_index = AGV_part_types[current_agv-1][type];
+								pick_part_name = part_name;
+								break;
+							}
+						}
+						if (model_found) {
+							break;
+						}
+					}
+				}
+				if (!model_found) {
+					ROS_WARN_THROTTLE(1,"No part found, waiting");
+					continue;
+				}
+				osrf_gear::Kit * fake_kit = &(kit_tally[AGV_info[current_agv-1].current_kit].kit_clone);
+				tf::Pose drop_offset;
+				tf::poseMsgToTF(fake_kit->objects[model_index].pose, drop_offset);
 
-			tf::Pose drop_offset;
-			tf::poseMsgToTF(fake_kit->objects[model_index].pose, drop_offset);
+				if (is_belt_part) {
+					pipe = simple_grab_moving(pick_part_name);
+				}
+				else {
+					pipe = simple_grab(pick_part_name);
+				}
 
-			if (is_belt_part) {
-				pipe = simple_grab_moving(pick_part_name,pipe);
+				if (!pipe.success) {
+					continue;
+				}
+
+
+				ROS_INFO("Held object: %s",ObjectTracker::get_held_object().c_str());
+				if (ObjectTracker::get_held_object()=="") {
+					ROS_ERROR("NO HELD OBJECT DETECT");
+					continue;
+					// ros::Rate check_rate(10);
+					// ros::Time start_time = ros::Time::now();
+					// while (ObjectTracker::get_held_object()=="") {
+					// 	check_rate.sleep();
+					// 	if (start_time > (start_time + ros::Duration(1.0))) {
+					// 		break;
+					// 	}
+					// }
+					// if (ObjectTracker::get_held_object()=="") {
+					// 	continue;
+					// }
+				}
+				pipe = simple_drop(current_agv,drop_offset);
+				if (pipe.success) {
+					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+				}
 			}
 			else {
-				pipe = simple_grab(pick_part_name,pipe);
-			}
+				std::string search_type = "";
+				for (current_agv=1;current_agv<=2;++current_agv) {
+					for (auto && type : AGV_part_types[current_agv-1]) {
+						if (searcher.unfound_parts(type.first)) {
+							model_found = true;
+							model_index = type.second;
+							search_type = type.first;
+							break;
+						}
+					}
+					if (model_found) {
+						break;
+					}
+				}
 
-			if (!pipe.success) {
-				continue;
-			}
+				if (!model_found) {
+					ROS_WARN_THROTTLE(1,"No bin models to search");
+					continue;
+				}
 
 
-			ROS_INFO("Held object: %s",ObjectTracker::get_held_object().c_str());
-			if (ObjectTracker::get_held_object()=="") {
-				ROS_ERROR("NO HELD OBJECT DETECT");
-				continue;
-				// ros::Rate check_rate(10);
-				// ros::Time start_time = ros::Time::now();
-				// while (ObjectTracker::get_held_object()=="") {
-				// 	check_rate.sleep();
-				// 	if (start_time > (start_time + ros::Duration(1.0))) {
-				// 		break;
-				// 	}
-				// }
-				// if (ObjectTracker::get_held_object()=="") {
-				// 	continue;
-				// }
-			}
+				simple_search_thorough(search_type);
 
-			pipe = simple_drop(current_agv,drop_offset,pipe);
-			if (pipe.success) {
-				fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+				osrf_gear::Kit * fake_kit = &(kit_tally[AGV_info[current_agv-1].current_kit].kit_clone);
+				tf::Transform drop_offset;
+				tf::poseMsgToTF(fake_kit->objects[model_index].pose, drop_offset);
+				pipe = simple_drop(current_agv,drop_offset);
+				if (pipe.success) {
+					fake_kit->objects.erase(fake_kit->objects.begin()+model_index);
+				}
 			}
 
 

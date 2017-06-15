@@ -601,7 +601,8 @@ protected:
 			}
 			if (!lookup_map.count(full_name)) {
 				//ObjectData new_object(full_name,"world",&(type_data[part_type]),is_conveyor_part);
-				if (used_belt_cam && !(is_conveyor_part)) { //a little... forward.. I think
+				if (used_belt_cam && (!is_conveyor_part)) { //a little... forward.. I think
+					ROS_INFO("PART SCANNED!!!");
 					object_data[part_type].emplace_back(full_name,"vacuum_gripper_link",&(type_data[part_type]),is_conveyor_part);
 					set_interested_object(full_name); //interested in this part
 				}
@@ -610,9 +611,13 @@ protected:
 				}
 				lookup_map[full_name] = &(object_data[part_type].back());
 			}
-			tf::StampedTransform true_pose,reference_transformation;
+			tf::StampedTransform true_pose,reference_transformation,world_transformation;
 			tf::transformStampedMsgToTF(transformation,true_pose);
 			listener->lookupTransform(lookup_map[full_name]->get_reference_frame(),parent,ros::Time(0),reference_transformation);
+			listener->lookupTransform("world",parent,ros::Time(0),world_transformation);
+			if (world_transformation.getOrigin().z() < 0.6) { //good times
+				continue;
+			}
 			true_pose.setData(reference_transformation*true_pose);
 			//ROS_INFO("%s",lookup_map[full_name]->get_reference_frame().c_str());
 			true_pose.frame_id_ = lookup_map[full_name]->get_reference_frame();

@@ -98,18 +98,26 @@ public:
 		}
 		//puts all mirrors as grasps
 		tf::Vector3 object_location = pose_in.getOrigin();
-		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,1,1));
-		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(1,-1,1));
-		mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,-1,1));
+		if (((object_location-bin_location).x() > 0) && ((object_location-bin_location).y() > 0)) {
+			ROS_INFO("Adding mirror locations");
+			mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,1,1));
+			mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(1,-1,1));
+			mirrored_object_locations.push_back((object_location-bin_location)*tf::Vector3(-1,-1,1));
+		}
 		//filter the models
+		ROS_INFO("INCORPORATING OBSERVATION; PRIOR MODELS: %d",(int)possible_grids.size());
+
 		for (std::list<grid_structure>::iterator iter = possible_grids.begin();iter!=possible_grids.end();) {
 			if (!iter->incorporate(pose_corrected,id_number,(observations == 0))) {
 				iter = possible_grids.erase(iter);
 			}
 			else {
+				ROS_INFO("Model survived: x_n: %d, y_n: %d, x_scale: %f, y_scale: %f",iter->num[0],iter->num[1],iter->scale[0],iter->scale[1]);
 				++iter;
 			}
 		}
+
+		ROS_INFO("REMAINING MODELS: %d",(int)possible_grids.size());
 
 		++observations;
 
@@ -131,9 +139,11 @@ public:
 	void pop_search_location() {
 		ROS_INFO("Popping Search Location for Bin -> %s \n", bin_name.c_str());
 		if (!mirrored_object_locations.empty()) {
+			ROS_INFO("POPPING MIRROR LOCATION");
 			mirrored_object_locations.pop_front();
 		}
 		else if (!grasp_locations.empty()) {
+			ROS_INFO("POPPING GRASP LOCATION");
 			grasp_locations.pop_front();
 		}
 		else {
@@ -206,7 +216,7 @@ protected:
 		}
 		bool incorporate(tf::Pose & location, char id_number = 0,bool edge = false) {
 			if (id_number != 0) { //if we know the id
-				ROS_INFO("Inside Grid Structure Incorporate Function...\n");
+				// ROS_INFO("Inside Grid Structure Incorporate Function...\n");
 				//set unset values
 				//compare true value to false value, check if outside a range of radius from where should be
 				//scale always more than radius
@@ -215,6 +225,9 @@ protected:
 				if (edge && (!is_edge(id_number))) { //edge mismatch
 					return false;
 				}
+				// if (num[0]*num[1]<id_number) {
+				// 	return false;
+				// }
 				for (char axis=0;axis<=1;++axis) {
 					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
 						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
@@ -327,7 +340,6 @@ public:
 		tf::Pose grasp_pose = CompetitionInterface::get_last_grasp_pose();
 		tf::Pose offset = ObjectTracker::get_internal_transform(object_name);
 		tf::Pose part_location = grasp_pose * offset;
-		
 		bin_lookup[bin_name].add_observation(part_location, ObjectTracker::get_part_number(object_name));
 	}
 
@@ -345,6 +357,7 @@ public:
 
 	void search_fail(std::string part_type) { //pops the search spot location
 		//TODO: negative confirmation
+		ROS_WARN("Search failed! Trying new location.");
 		ROS_INFO("Failed Search for Part -> %s", part_type.c_str());
 		std::string bin_name = get_current_search_bin(part_type);
 		bin_lookup[bin_name].pop_search_location();
