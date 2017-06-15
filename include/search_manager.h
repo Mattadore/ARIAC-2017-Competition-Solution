@@ -80,8 +80,8 @@ public:
 		tf::Vector3 z_axis(0,0,1);
 		tf::Vector3 pose_in_z = (pose_in(z_axis)-pose_in.getOrigin()).normalize(); //probably don't need to normalize
 		if (std::abs(z_axis.dot(pose_in_z)) < 1) {
-			tf::Vector3 cross_axis = pose_in_z.cross(z_axis).normalize(); //hope I get this right
-			pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
+			// tf::Vector3 cross_axis = pose_in_z.cross(z_axis).normalize(); //hope I get this right
+			// pose_corrected.setRotation(pose_in.getRotation()*tf::Quaternion(cross_axis,z_axis.angle(pose_in_z)));
 		}
 
 		//now in local coords

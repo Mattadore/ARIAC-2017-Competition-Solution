@@ -24,6 +24,8 @@ public:
 			trashcan_points[1].velocities.push_back(0);
 			conveyor_point.positions.push_back(conveyor_configuration_data[i]);
 			conveyor_point.velocities.push_back(0);
+			scan_point.positions.push_back(scanning_configuration_data[i]);
+			scan_point.velocities.push_back(0);
 			// std_msgs::Float64 f;
 			// f.data = intermediate_configuration_data[0][i];
 			// intermediate_configuration_vectors[0].push_back(f);
@@ -164,6 +166,9 @@ protected:
 			}
 			custom_conveyor.positions[0] = y_position;
 			to_plan->plan->trajectory_.joint_trajectory.points.push_back(custom_conveyor);
+		}
+		else if (to_plan->scan) {
+			to_plan->plan->trajectory_.joint_trajectory.points.push_back(scan_point);
 		}
 		else {
 			ROS_ERROR("No valid configuration set");
@@ -309,7 +314,7 @@ protected:
 					currently_planning->plan = nullptr;
 				}
 				if (currently_planning->plan == nullptr) {
-					if ((currently_planning->use_intermediate) || (currently_planning->use_trash) || (currently_planning->use_conveyor)) {
+					if ((currently_planning->use_intermediate) || (currently_planning->use_trash) || (currently_planning->use_conveyor) || (currently_planning->scan)) {
 						plan_joints(currently_planning);
 					}
 					else {
@@ -328,6 +333,7 @@ protected:
 	trajectory_msgs::JointTrajectoryPoint intermediate_points[2];
 	trajectory_msgs::JointTrajectoryPoint trashcan_points[2];
 	trajectory_msgs::JointTrajectoryPoint conveyor_point;
+	trajectory_msgs::JointTrajectoryPoint scan_point;
 	moveit::core::RobotState * generic_state;
 	moveit::planning_interface::MoveGroup arm_control_group;
 	boost::condition_variable plan_condition;

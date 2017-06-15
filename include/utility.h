@@ -46,6 +46,10 @@ const double conveyor_configuration_data[7]
 const double pickup_configuration_data[7]
 {-0.8, 0, -1.3423701458943502, 1.685736119751326, 4.3690230176147775, -1.5707963257517727, 0.004736669665898268};
 
+const double scanning_configuration_data[7]
+{1.2095197259937687, 0.4277456762257533, -0.9017659902055423, 1.015882476656145, 4.59827250166174, -1.5707963333654322, -1.1430506502429565};
+
+
 const double true_center = -0.15;
 
 const tf::Vector3 trash_position[2] {tf::Vector3(0.721362,2.859251,0.915775),tf::Vector3(0.721362,-2.859251,0.915775)};
@@ -65,7 +69,8 @@ enum simple_regions {
 	REGION_AGV2,
 	REGION_BINS, //treat bins and conveyor as same for now
 	REGION_CONVEYOR,
-	REGION_BIN_GRAB //technically unsafe to have just "bin" region
+	REGION_BIN_GRAB, //technically unsafe to have just "bin" region
+	REGION_SCAN
 };
 
 enum status_states {
@@ -158,6 +163,7 @@ struct arm_action {
 	bool pick_part = false;
 	bool perturb = true;
 	bool planning_failure = false;
+	bool scan = false;
 	bool use_intermediate = false;	//prepares to go to an intermediate pose
 	bool use_trash = false; //prepares to drop a faulty item
 	bool use_conveyor = false; //prepares to grab off conveyor
