@@ -342,9 +342,14 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	}
 
 	//TODO: expand upon this, such that parts fall to where you'd expect them to be
-	static void drop_off() {
+	static void drop_off(bool block = true) {
 		lookup_map[object_held]->reference_swap("world",ObjectTracker::get_recent_transform("world",lookup_map[object_held]->get_reference_frame()));
-		condemn(object_held);
+		// tf::Transform a = get_location(object_held);
+		// if (abs(a.getOrigin().y()) > 2.0) {
+		if (block) {
+			condemn(object_held);
+		}
+		// }
 		object_held = "";
 		object_interested = "";
 	}
@@ -568,7 +573,8 @@ protected:
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951};
 		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951};
 		type_data["gear_part"] = {"gear_part",0.008717,0.004951};
-		type_data["piston_rod_part"] = {"piston_rod_part",0.006824,0.004951};
+		// type_data["piston_rod_part"] = {"piston_rod_part",0.007324,0.004951};
+		type_data["piston_rod_part"] = {"piston_rod_part",0.007101,0.004951};
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500};
 
 		for (std::map<std::string,ObjectTypeData>::iterator i = type_data.begin();i!=type_data.end();++i) {
