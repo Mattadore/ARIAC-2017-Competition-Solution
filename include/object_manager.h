@@ -450,6 +450,9 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 	static std::vector<std::string> get_belt_parts() {
 		std::vector<std::string> to_return;
 		for (auto & part : lookup_map) {
+			if (get_part_type(part.first) == "gear_part") {
+				continue;
+			}
 			if (condemned.count(part.first)) {
 				continue;
 			}
@@ -571,8 +574,8 @@ protected:
 		// tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)};
 
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951};
-		type_data["gasket_part"] = {"gasket_part",0.020020,0.004951};
-		type_data["gear_part"] = {"gear_part",0.008717,0.004951};
+		type_data["gasket_part"] = {"gasket_part",0.018020,0.004751};
+		type_data["gear_part"] = {"gear_part",0.009,0.004951};
 		// type_data["piston_rod_part"] = {"piston_rod_part",0.007324,0.004951};
 		type_data["piston_rod_part"] = {"piston_rod_part",0.007101,0.004951};
 		type_data["pulley_part"] = {"pulley_part",0.072900,0.005500};

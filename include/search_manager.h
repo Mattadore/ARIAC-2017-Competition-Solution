@@ -31,6 +31,7 @@ public:
 				possible_grids.emplace_back(data->radius,x,y);
 			}
 		}
+		counter = 0;
 		//TODO: import grasp locations
 	}
 	// 	std::string bin_name;
@@ -108,7 +109,7 @@ public:
 		ROS_INFO("INCORPORATING OBSERVATION; PRIOR MODELS: %d",(int)possible_grids.size());
 
 		for (std::list<grid_structure>::iterator iter = possible_grids.begin();iter!=possible_grids.end();) {
-			if (!iter->incorporate(pose_corrected,id_number,(observations == 0))) {
+			if (!iter->incorporate(pose_corrected,id_number,false)) {
 				iter = possible_grids.erase(iter);
 			}
 			else {
@@ -136,6 +137,16 @@ public:
 		tf::Quaternion angle = angle_pose_start + tf::Quaternion(tf::Vector3(0,0,1),angle_offset_average);
 		return angle;
 	}
+	void reset() {
+		n_curr = 0;
+		counter = 0;
+		grasp_locations = std::list<tf::Vector3>((default_search_locations[type_data->part_name]).begin(),(default_search_locations[type_data->part_name]).end());
+		for (char x = type_data->bin_num_min;x<type_data->bin_num_max;++x) {
+			for (char y = type_data->bin_num_min;y<type_data->bin_num_max;++y) {
+				possible_grids.emplace_back(type_data->radius,x,y);
+			}
+		}
+	}
 	void pop_search_location() {
 		ROS_INFO("Popping Search Location for Bin -> %s \n", bin_name.c_str());
 		if (!mirrored_object_locations.empty()) {
@@ -161,13 +172,36 @@ public:
 		}
 		else {
 			ROS_ERROR("NO MORE GRASP LOCATIONS");
+			ROS_INFO("Generating Random Location now...");
+			// if (counter < 40) {
+			float LO = -0.22; 
+			float HI = 0.22;
+			// 	float x = LO + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-LO)));
+			// 	float y = LO + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(HI-LO)));
+			// 	ROS_INFO("Generating Random Location: %f, %f", x,y);
+			// 	return_v = tf::Vector3(x,y,0);
+			// 	++counter;
+			// }
+			int xcurr,ycurr;
+			if (n_curr < (xmax*ymax)) {
+				xcurr=n_curr%xmax;
+				ycurr=n_curr/ymax;
+				double x = lo+xcurr*((HI-LO)/((double)(xmax-1)));
+				double y = lo+ycurr*((HI-LO)/((double)(ymax-1)));
+				return_v = tf::Vector3(x,y,0);
+				ROS_INFO("Generating Uniform Location: %f, %f, %f", n, x, y);
+				++n_curr;
+			}
+			// x = -0.25 to 0.25
+			// x = -0.25 to 0.25
+
 		}
 		return_v += bin_location;
 		return_v.setZ(ObjectTracker::part_type_generic_grab_height(type_data->part_name));
 		return return_v;
 	}
 	bool has_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
-		return ((mirrored_object_locations.empty())&&(grasp_locations.empty()));
+		return !((mirrored_object_locations.empty())&&(grasp_locations.empty())&&(n_curr >= (xmax*ymax)));
 	}
 	int get_grasp_location_num() {
 		return grasp_locations.size();
@@ -175,6 +209,10 @@ public:
 protected:
 	//bin size is 0.6
 	//only rescale axes when pertinent observations come in
+	char counter = 0;
+	int xmax = 5;
+	int ymax = 5;
+	int n_curr=0;
 	struct grid_structure {
 		//0 is x 1 is y
 		double scale[2] = {0,0};
@@ -322,7 +360,9 @@ public:
 		std::vector<std::string> & bin_list = part_locations[part_type];
 		for (std::string & bin_name : bin_list) {
 			if (!bin_lookup[bin_name].grid_complete()) {
-				return true;
+				if (bin_lookup[bin_name].has_search_location()) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -332,6 +372,12 @@ public:
 		ROS_INFO("Searching Parts...\n");
 		std::string bin_name = get_current_search_bin(part_type);
 		return bin_lookup[bin_name].get_search_location();
+	}
+
+	void reset_bins() {
+		for(auto && a : bin_lookup) {
+			a.second.reset();
+		}
 	}
 
 	void search_success(std::string part_type) { //invoke after finishing part scan

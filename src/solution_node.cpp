@@ -261,6 +261,7 @@ public:
 		if (CompetitionInterface::part_dropped()) {
 			ROS_WARN("PART DROP OCCURRED");
 			//TODO: part drop logic, includes turning off vacuum gripper.
+			CompetitionInterface::toggle_vacuum(false);
 			kill_all();
 		}
 
@@ -310,7 +311,7 @@ public:
 	void kill_all() {
 		planner.clear();
 		controller.clear();
-		controller.stop_controller();
+		// controller.stop_controller();
 	}
 
 	void combine_actions(std::vector<arm_action::Ptr> * action_list) {
@@ -328,9 +329,9 @@ public:
 	void make_calm(trajectory_msgs::JointTrajectory & a) {
 		//double pos_at_start = a.points[0].positions[1];
 		trajectory_msgs::JointTrajectory b(a);
-		double scaling = 0.1;
-		for (int i=1;i<a.points.size();++i) {
-			if (i > (a.points.size()*(2.0/3.0))) {
+		double scaling = 0.5;
+		for (int i=0;i<a.points.size();++i) {
+			//if (i > (a.points.size()*(0.5))) {
 				a.points[i].time_from_start *= 1.0/scaling;
 				if (!a.points[i].accelerations.empty()) {
 					a.points[i].accelerations.clear();
@@ -338,7 +339,7 @@ public:
 				for (int j=0;j<a.points[i].velocities.size();++j) {
 					a.points[i].velocities[j]*=scaling;
 				}
-			}
+			//}
 			//a.points[i].velocities[0] = -velocity; //probably will help
 			//a.points[i].accelerations[0] = 0; //probably will help
 			//a.points[i].accelerations.clear(); //probably will help?
@@ -404,7 +405,7 @@ public:
 	 			ROS_INFO("PART SUCCESSFULLY FOUND");
 	 			
 	 			go_to_scanner();
-	 			ros::Duration(0.5).sleep();
+	 			ros::Duration(0.7).sleep();
 	 			searcher.search_success(part_type);
 	 			pipeline_data data_generic;
 	 			data_generic.success = true;
@@ -804,8 +805,9 @@ public:
 
 
 		pipeline_data pipe;
-
-
+		ros::Time stall_time = ros::Time::now();
+		bool stalling = false;
+		int stall_counter = 0;
 		// pipe = simple_grab("pulley_part_1",pipe);
 		// pipe = simple_drop(2,tf::Transform(identity,tf::Vector3(0,0,0)),pipe);
 
@@ -825,7 +827,27 @@ public:
 			std::vector<std::string> bin_parts = ObjectTracker::get_bin_parts(); //sorted by distance from end
 			ROS_INFO("num bin parts: %d",(int)bin_parts.size());
 			ROS_INFO("num belt parts: %d",(int)belt_parts.size());
-
+			if (!stalling) {
+				stall_time = ros::Time::now();
+			}
+			else {
+				if (stall_counter < 2) {
+					if ((ros::Time::now()-stall_time).toSec() > 7.0) {
+						attempts.clear();
+						stall_time = ros::Time::now();
+						searcher.reset_bins();
+						++stall_counter;
+					}
+				}
+				else {
+					for (int agv_num=1;agv_num<=2;++agv_num) {
+						if (AGV_info[agv_num-1].current_kit != nullptr) {
+							CompetitionInterface::send_AGV(agv_num, AGV_info[agv_num-1].current_kit->kit_type);
+						}
+					}
+				}
+			}
+			stalling = false;
 			bool model_found = false;
 			char model_index;
 			char current_agv = 0;
@@ -858,6 +880,11 @@ public:
 				for (std::string & part_name : belt_parts) {
 					std::string type = ObjectTracker::get_part_type(part_name);
 					if (AGV_part_types[current_agv-1].count(type)) {
+						if (attempts.count(part_name)) {
+							if (attempts[part_name] >= 2) {
+								continue;
+							}
+						}
 						model_found = true;
 						is_belt_part = true;
 						model_index = AGV_part_types[current_agv-1][type];
@@ -876,6 +903,11 @@ public:
 					for (std::string & part_name : bin_parts) {
 						std::string type = ObjectTracker::get_part_type(part_name);
 						if (AGV_part_types[current_agv-1].count(type)) {
+							if (attempts.count(part_name)) {
+								if (attempts[part_name] >= 2) {
+									continue;
+								}
+							}
 							model_found = true;
 							is_belt_part = false;
 							model_index = AGV_part_types[current_agv-1][type];
@@ -899,7 +931,15 @@ public:
 				}
 				if (pipe.success) {
 					go_to_scanner();
-					ros::Duration(0.2).sleep();
+					ros::Duration(0.7).sleep();
+				}
+				else {
+					if (!(attempts.count(pick_part_name))) {
+						attempts[pick_part_name] = 1;
+					}
+					else {
+						++attempts[pick_part_name];
+					}
 				}
 			}
 			else {
@@ -919,6 +959,7 @@ public:
 				}
 				if (!model_found) {
 					ROS_WARN("Nothing to search for.");
+					stalling = true;
 					continue;
 				}
 				pipe = simple_search_thorough(search_type);
@@ -1280,7 +1321,7 @@ protected:
 	bool part_waiting;
 	std::string waiting_for;
 	ros::Publisher joint_pub;
-
+	std::map<std::string,char> attempts;
 };
 
 
