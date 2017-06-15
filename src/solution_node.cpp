@@ -328,14 +328,16 @@ public:
 	void make_calm(trajectory_msgs::JointTrajectory & a) {
 		//double pos_at_start = a.points[0].positions[1];
 		trajectory_msgs::JointTrajectory b(a);
-		double scaling = 0.5;
+		double scaling = 0.1;
 		for (int i=1;i<a.points.size();++i) {
-			a.points[i].time_from_start *= 1.0/scaling;
-			if (!a.points[i].accelerations.empty()) {
-				a.points[i].accelerations.clear();
-			}
-			for (int j=0;j<a.points[i].velocities.size();++j) {
-				a.points[i].velocities[j]*=scaling;
+			if (i > (a.points.size()*(2.0/3.0))) {
+				a.points[i].time_from_start *= 1.0/scaling;
+				if (!a.points[i].accelerations.empty()) {
+					a.points[i].accelerations.clear();
+				}
+				for (int j=0;j<a.points[i].velocities.size();++j) {
+					a.points[i].velocities[j]*=scaling;
+				}
 			}
 			//a.points[i].velocities[0] = -velocity; //probably will help
 			//a.points[i].accelerations[0] = 0; //probably will help
