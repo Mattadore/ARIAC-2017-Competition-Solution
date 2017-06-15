@@ -284,7 +284,7 @@ protected:
 		}
 		else {
 			if (ObjectTracker::get_held_object() != "") {
-				ObjectTracker::drop_off();
+				ObjectTracker::drop_off(!dropped);
 			}
 		}
 		if (state[GRIPPER_ENABLED] == BOOL_FALSE) {

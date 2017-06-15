@@ -331,6 +331,7 @@ public:
 		ROS_INFO("0 member name: %s",a.joint_names[0].c_str());
 		for (int i=1;i<a.points.size();++i) {
 			double current_velocity = distance_per/(b.points[i].time_from_start-b.points[i-1].time_from_start).toSec();
+			ROS_INFO("CURR VELOCITY: %f", current_velocity);
 			double scale = velocity/current_velocity;
 			for (int j=0;j<a.points[i].velocities.size();++j) {
 				a.points[i-1].velocities[j]*=scale;
@@ -378,7 +379,7 @@ public:
 	 			arm_action::Ptr intermediate_movement(new arm_action(lift_action,ObjectTracker::get_tray_pose(1),REGION_BINS));
 	 			intermediate_movement->use_intermediate = true;
 	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)+ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame").getOrigin());
-	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_AGV1));
+	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_BINS));
 	 			scan_movement->end_delay = 0.2;
 	 			planner.add_action(intermediate_movement);
 	 			planner.add_action(scan_movement);
@@ -392,7 +393,7 @@ public:
 	 		}
 	 		else {
 	 			ROS_INFO("PART FIND FAILED");
-	 			searcher.search_fail("part_type");
+	 			searcher.search_fail(part_type);
 	 		}
  			last_action = lift_action;
 	 	}
@@ -450,12 +451,12 @@ public:
 
 		// tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
 		// arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_CONVEYOR));
-		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,ros::Time::now());
-		ROS_INFO("current_grab 1 is: %f %f %f",current_grab.getOrigin().getX(),current_grab.getOrigin().getY(),current_grab.getOrigin().getZ());
+		double z_offset = 0.01;
+		tf::Pose current_grab = tf::Pose(identity,tf::Vector3(0,0,z_offset))*ObjectTracker::get_grab_pose(part_name,ros::Time::now());
 		arm_action::Ptr dummy_action(new arm_action(nullptr,current_grab,REGION_CONVEYOR));
 		dummy_action->vacuum_enabled = true;
 		dummy_action->pick_part = true;
-		for (char i=0;i<12;++i) {
+		for (char i=0;i<8;++i) {
 			dummy_action->trajectory_end = current_grab;
 			if (i>0) {
 				delete dummy_action->plan;
@@ -469,13 +470,10 @@ public:
 			//ros::Time end_time = ros::Time::now() + dummy_action->get_execution_time()+ros::Duration(0.05);
 			ros::Time end_time = ros::Time::now() + dummy_action->get_execution_time();
 			ROS_INFO("duration is %f",dummy_action->get_execution_time().toSec());
-			current_grab = ObjectTracker::get_grab_pose(part_name,end_time);
+			current_grab = tf::Pose(identity,tf::Vector3(0,0,z_offset))*ObjectTracker::get_grab_pose(part_name,end_time);
 		}
-		ROS_INFO("current_grab after loop is: %f %f %f",current_grab.getOrigin().getX(),current_grab.getOrigin().getY(),current_grab.getOrigin().getZ());
-		double dist = 1.0;
+		double dist = 0.3;
 		tf::Pose transform_pose = tf::Pose(identity,tf::Vector3(0,-dist,0)) * current_grab;
-
-		ROS_INFO("transform_pose is: %f %f %f",transform_pose.getOrigin().getX(),transform_pose.getOrigin().getY(),transform_pose.getOrigin().getZ());
 		arm_action::Ptr slide_action(new arm_action(dummy_action,transform_pose,REGION_CONVEYOR));
 		planner.add_action(slide_action);
 		planner.wait_until_planned(slide_action);
@@ -491,7 +489,6 @@ public:
 		//TODO: perhaps calculate the grasp location in a cleaner way?
 		tf::StampedTransform arm_location = ObjectTracker::get_gripper_pose();
 		tf::Pose next_location = tf::Pose(identity,tf::Vector3(0,0,0.2)+arm_location.getOrigin());
-		ROS_INFO("next_location is: %f %f %f",next_location.getOrigin().getX(),next_location.getOrigin().getY(),next_location.getOrigin().getZ());
 		arm_action::Ptr retract_action(new arm_action(nullptr,next_location,REGION_CONVEYOR));
 		retract_action->vacuum_enabled = true;
 
@@ -529,6 +526,7 @@ public:
 		std::string part_type = ObjectTracker::get_part_type(ObjectTracker::get_held_object());
 		grasp_correction = grasp_correction.inverse();
 		tf::Vector3 offset = grasp_correction.getOrigin();
+		ROS_INFO("Held object name: %s",ObjectTracker::get_held_object().c_str());
 		ROS_INFO("Pose is: %f %f %f",offset.getX(),offset.getY(),offset.getZ());
 		//TODO: I realize how problematic this might seem
 		//double drop_height_correction_value = ObjectTracker::part_type_grab_hold_offset(part_type,0.0,is_upside_down(drop_offset));
@@ -537,7 +535,7 @@ public:
 			ROS_INFO("CORRECTING FOR UPSIDE DOWN PART DROP LOCATION");
 			drop_offset_corrected.setRotation(identity);
 		}
-		double height_offset_value = 0.020;
+		double height_offset_value = 0.018;
 		// double height_offset_value = 0.06;
 		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		move_to_tray->vacuum_enabled = true;
@@ -608,7 +606,7 @@ public:
 				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
 				grab_action->vacuum_enabled = true;
 				grab_action->pick_part = true;
-				grab_action->end_delay = 1.5;
+				grab_action->end_delay = 1.75;
 				// delete (trash_actions.front()->plan);
 				// trash_actions.front()->plan = nullptr;
 				// trash_actions.front()->planning_status = PIPELINE_NONE;
@@ -651,6 +649,7 @@ public:
 			controller.wait_until_executed(standard_actions[1]);
 		 	osrf_gear::LogicalCameraImage quality_sensor_reading_2 = CompetitionInterface::get_quality_control_msg(agv_number);
 		 	if (!quality_sensor_reading_2.models.empty()) {
+		 		faulty = true;
 				tf::Pose part_pose,grasp_pose;
 				tf::poseMsgToTF(quality_sensor_reading_2.models[0].pose,part_pose);
 				if (agv_number == 1) {
@@ -659,12 +658,12 @@ public:
 				else {
 					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_2_frame") * part_pose;
 				}
-				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.0025))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading_2.models[0].type,ros::Time::now());
+				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.002))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading_2.models[0].type,ros::Time::now());
 				arm_action::Ptr align_action(new arm_action(nullptr,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region));
 				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
 				grab_action->vacuum_enabled = true;
 				grab_action->pick_part = true;
-				grab_action->end_delay = 1.5;
+				grab_action->end_delay = 1.0;
 				trash_actions.clear();
 				trash_actions.push_back(arm_action::Ptr(new arm_action(grab_action,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region)));
 				trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(grasp_pose.getRotation(),trash_position[agv_number-1]),agv_region)));
@@ -736,7 +735,7 @@ public:
 
 		pipeline_data pipe;
 
-		const bool test_search = true;
+		const bool test_search = false;
 
 		// pipe = simple_grab("pulley_part_1",pipe);
 		// pipe = simple_drop(2,tf::Transform(identity,tf::Vector3(0,0,0)),pipe);
@@ -1224,13 +1223,14 @@ protected:
 int main(int argc, char ** argv) {
 	ros::init(argc, argv, "solution_node");
 	ros::NodeHandle node;
-	CompetitionInterface::initialize_interface(&node);
-	CompetitionManager manager(&node);
 	tf::TransformListener listener;
+	ObjectTracker::initialize_tracker(&node,&listener);
+	CompetitionInterface::initialize_interface(&node);
+	ros::Duration(0.2).sleep();
+	CompetitionManager manager(&node);
 
 	ROS_INFO("STARTING\n");
 
-	ObjectTracker::initialize_tracker(&node,&listener);
 	ros::Time tf_publish = ros::Time::now();
 	ros::Duration tf_frequency(0.1);
 	ros::Rate spinRate(100);
