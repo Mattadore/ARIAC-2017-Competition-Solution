@@ -346,6 +346,7 @@ public://// Check this edit tf::Pose to tf:: StampedTransform/////
 		lookup_map[object_held]->reference_swap("world",ObjectTracker::get_recent_transform("world",lookup_map[object_held]->get_reference_frame()));
 		condemn(object_held);
 		object_held = "";
+		object_interested = "";
 	}
 
 	static void initialize_tracker(ros::NodeHandle * nodeptr_,tf::TransformListener * listener_) {
@@ -582,6 +583,7 @@ protected:
 
 	static void tf_callback(const tf2_msgs::TFMessage & transform_list) {
 		for (int tf_i = 0; tf_i < transform_list.transforms.size();++tf_i) {
+			tf::StampedTransform world_transformation,true_pose;
 			const geometry_msgs::TransformStamped & transformation = transform_list.transforms[tf_i];
 			std::string parent = transformation.header.frame_id;
 			std::string name = transformation.child_frame_id;
@@ -591,6 +593,15 @@ protected:
 			std::string part_type, part_id, full_name;
 			bool is_conveyor_part,used_belt_cam;
 			if (boost::regex_match(name, matches, pattern)) {
+				listener->lookupTransform("world",parent,ros::Time(0),world_transformation);
+				tf::transformStampedMsgToTF(transformation,true_pose);
+				world_transformation.setData(world_transformation * true_pose);
+				if (world_transformation.getOrigin().z() < 0.6) { //good times
+					continue;
+				}
+				if (abs(world_transformation.getOrigin().y()) > 2.0)  {
+					continue;
+				}
 				used_belt_cam = (((std::string)matches[1]) == "belt"); //// Check this edit /////
 				full_name = matches[2];
 				part_type = matches[3];
@@ -611,13 +622,9 @@ protected:
 				}
 				lookup_map[full_name] = &(object_data[part_type].back());
 			}
-			tf::StampedTransform true_pose,reference_transformation,world_transformation;
+			tf::StampedTransform reference_transformation;
 			tf::transformStampedMsgToTF(transformation,true_pose);
 			listener->lookupTransform(lookup_map[full_name]->get_reference_frame(),parent,ros::Time(0),reference_transformation);
-			listener->lookupTransform("world",parent,ros::Time(0),world_transformation);
-			if (world_transformation.getOrigin().z() < 0.6) { //good times
-				continue;
-			}
 			true_pose.setData(reference_transformation*true_pose);
 			//ROS_INFO("%s",lookup_map[full_name]->get_reference_frame().c_str());
 			true_pose.frame_id_ = lookup_map[full_name]->get_reference_frame();

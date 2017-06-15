@@ -123,7 +123,7 @@ public:
 
 		if (grid_complete()) {
 			populate_tracker();
-			//publish all as tfs, i suppose
+			//publish all as tfs, i supFpose
 		}
 		else if (possible_grids.size() == 0) {
 			ROS_ERROR("ALL MODELS FAILED ON BIN %s",bin_name.c_str());
@@ -168,6 +168,9 @@ public:
 	}
 	bool has_search_location() { //if we recently found a part, return those. Otherwise, use generic ones.
 		return ((mirrored_object_locations.empty())&&(grasp_locations.empty()));
+	}
+	int get_grasp_location_num() {
+		return grasp_locations.size();
 	}
 protected:
 	//bin size is 0.6
@@ -225,9 +228,9 @@ protected:
 				if (edge && (!is_edge(id_number))) { //edge mismatch
 					return false;
 				}
-				// if (num[0]*num[1]<id_number) {
-				// 	return false;
-				// }
+				if (num[0]*num[1]<id_number) {
+					return false;
+				}
 				for (char axis=0;axis<=1;++axis) {
 					if (is_central(axis,id_number)) { //probably more to put here, I imagine?
 						if (std::abs(true_location.m_floats[axis]) > radius) { //outta bounds, bro
@@ -285,7 +288,7 @@ public:
 		part_bin_data["disk_part"] = {"disk_part",1,3,true,0.06,0};
 		part_bin_data["gasket_part"] = {"gasket_part",1,3,true,0.05,0};
 		part_bin_data["gear_part"] = {"gear_part",1,5,true,0.04,0};
-		part_bin_data["piston_part"] = {"piston_part",1,4,true,0.03,0};
+		part_bin_data["piston_rod_part"] = {"piston_rod_part",1,4,true,0.03,0};
 		part_bin_data["pulley_part"] = {"pulley_part",1,2,false,0.1,0};
 
 		bin_locations["bin1"] = tf::Vector3(-1.0,-1.33,0);
@@ -310,6 +313,7 @@ public:
 		for (auto & index : bin_part_types) {
 			// ROS_INFO("Indide FOR loop for creating Bins\n");
 			bin_lookup.emplace(index.first,bin_data(index.first,&(part_bin_data[index.second]),bin_locations[index.first]));
+			ROS_INFO("Number of grasp locations: %d",bin_lookup[index.first].get_grasp_location_num());
 		}
 	}
 

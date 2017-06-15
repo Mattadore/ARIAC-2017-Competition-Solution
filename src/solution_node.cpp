@@ -378,7 +378,7 @@ public:
 	 			arm_action::Ptr intermediate_movement(new arm_action(lift_action,ObjectTracker::get_tray_pose(1),REGION_BINS));
 	 			intermediate_movement->use_intermediate = true;
 	 			tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)+ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame").getOrigin());
-	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_AGV1));
+	 			arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_BINS));
 	 			scan_movement->end_delay = 0.2;
 	 			planner.add_action(intermediate_movement);
 	 			planner.add_action(scan_movement);
@@ -392,7 +392,7 @@ public:
 	 		}
 	 		else {
 	 			ROS_INFO("PART FIND FAILED");
-	 			searcher.search_fail("part_type");
+	 			searcher.search_fail(part_type);
 	 		}
  			last_action = lift_action;
 	 	}
@@ -524,6 +524,7 @@ public:
 		std::string part_type = ObjectTracker::get_part_type(ObjectTracker::get_held_object());
 		grasp_correction = grasp_correction.inverse();
 		tf::Vector3 offset = grasp_correction.getOrigin();
+		ROS_INFO("Held object name: %s",ObjectTracker::get_held_object().c_str());
 		ROS_INFO("Pose is: %f %f %f",offset.getX(),offset.getY(),offset.getZ());
 		//TODO: I realize how problematic this might seem
 		//double drop_height_correction_value = ObjectTracker::part_type_grab_hold_offset(part_type,0.0,is_upside_down(drop_offset));
@@ -1219,13 +1220,14 @@ protected:
 int main(int argc, char ** argv) {
 	ros::init(argc, argv, "solution_node");
 	ros::NodeHandle node;
-	CompetitionInterface::initialize_interface(&node);
-	CompetitionManager manager(&node);
 	tf::TransformListener listener;
+	ObjectTracker::initialize_tracker(&node,&listener);
+	CompetitionInterface::initialize_interface(&node);
+	ros::Duration(0.2).sleep();
+	CompetitionManager manager(&node);
 
 	ROS_INFO("STARTING\n");
 
-	ObjectTracker::initialize_tracker(&node,&listener);
 	ros::Time tf_publish = ros::Time::now();
 	ros::Duration tf_frequency(0.1);
 	ros::Rate spinRate(100);
