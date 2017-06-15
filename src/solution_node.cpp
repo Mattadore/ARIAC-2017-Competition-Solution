@@ -381,7 +381,7 @@ public:
 	 		if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
 	 			ROS_INFO("PART SUCCESSFULLY FOUND");
 	 			
-	 			go_to_scanner();
+	 			go_to_scanner(true);
 
 	 			searcher.search_success(part_type);
 	 			pipeline_data data_generic;
@@ -428,23 +428,50 @@ public:
 	 	return return_data;
 	}
 
-	pipeline_data go_to_scanner(pipeline_data data_in = pipeline_data()) {
-	 	ROS_INFO("Scan a Part!");
-		arm_action::Ptr intermediate_movement(new arm_action(nullptr,ObjectTracker::get_tray_pose(1),REGION_BINS));
-		intermediate_movement->use_intermediate = true;
-		tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.5)+ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame").getOrigin());
-		arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_BINS));
-		scan_movement->end_delay = 0.2;
-		planner.add_action(intermediate_movement);
+	pipeline_data go_to_scanner(bool careful = false,pipeline_data data_in = pipeline_data()) {
+
+		ROS_INFO("Scan a Part!");
+		arm_action::Ptr scan_movement(new arm_action(nullptr,tf::Pose(),REGION_SCAN));
+		scan_movement->scan = true;
+		scan_movement->vacuum_enabled = true;
+		arm_action::Ptr scan_delay(new arm_action(scan_movement,tf::Pose(),REGION_SCAN));
+		scan_delay->scan = true;
+		if (careful) {
+			scan_delay->end_delay = 0.5;
+		}
+		else {
+			scan_delay->end_delay = 0.2;
+		}
 		planner.add_action(scan_movement);
-		controller.add_action(intermediate_movement);
+		planner.add_action(scan_delay);
+
 		controller.add_action(scan_movement);
+		controller.add_action(scan_delay);
 		controller.wait_until_executed(scan_movement);
 
-	 	pipeline_data return_data;
-	 	return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
-	 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
-	 	return return_data;
+		pipeline_data return_data;
+		return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
+		//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+		return return_data;
+
+
+	 // 	ROS_INFO("Scan a Part!");
+		// arm_action::Ptr intermediate_movement(new arm_action(nullptr,ObjectTracker::get_tray_pose(1),REGION_BINS));
+		// intermediate_movement->use_intermediate = true;
+		// intermediate_movement->vacuum_enabled = true;
+		// tf::Pose scan_pose = tf::Transform(identity,tf::Vector3(0,0,-0.2)+ObjectTracker::get_recent_transform("world", "logical_camera_belt_frame").getOrigin());
+		// arm_action::Ptr scan_movement(new arm_action(intermediate_movement,scan_pose,REGION_BINS));
+		// scan_movement->end_delay = 0.2;
+		// planner.add_action(intermediate_movement);
+		// planner.add_action(scan_movement);
+		// controller.add_action(intermediate_movement);
+		// controller.add_action(scan_movement);
+		// controller.wait_until_executed(scan_movement);
+
+	 // 	pipeline_data return_data;
+	 // 	return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
+	 // 	//pipeline_data return_data(ros::Time::now()+lift_action->get_execution_time(),lift_action);
+	 // 	return return_data;
 	}
 
 	//if no pipeline data passed, will just act as if called on current time
@@ -470,7 +497,7 @@ public:
 
 		// tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
 		// arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_CONVEYOR));
-		double z_offset = 0.01;
+		double z_offset = 0.0;
 		tf::Pose current_grab = tf::Pose(identity,tf::Vector3(0,0,z_offset))*ObjectTracker::get_grab_pose(part_name,ros::Time::now());
 		arm_action::Ptr dummy_action(new arm_action(nullptr,current_grab,REGION_CONVEYOR));
 		dummy_action->vacuum_enabled = true;
@@ -842,10 +869,12 @@ public:
 			if (model_found) {
 				if (is_belt_part) {
 					pipe = simple_grab_moving(pick_part_name);
-					go_to_scanner();
 				}
 				else {
 					pipe = simple_grab(pick_part_name);
+				}
+				if (pipe.success) {
+					go_to_scanner(false);
 				}
 			}
 			else {
@@ -863,13 +892,11 @@ public:
 						break;
 					}
 				}
-
+				if (!model_found) {
+					ROS_WARN("Nothing to search for.");
+					continue;
+				}
 				pipe = simple_search_thorough(search_type);
-			}
-
-			if (!model_found) {
-				ROS_WARN_THROTTLE(1,"no models remain");
-				continue;
 			}
 
 			if (!pipe.success) {
