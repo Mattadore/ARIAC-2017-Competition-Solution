@@ -324,7 +324,25 @@ public:
 	void execute_kit_simple() {
 
 	}
-
+	//make motion along belt have v = 0.2 ish
+	void make_calm(trajectory_msgs::JointTrajectory & a) {
+		//double pos_at_start = a.points[0].positions[1];
+		trajectory_msgs::JointTrajectory b(a);
+		double scaling = 0.5;
+		for (int i=1;i<a.points.size();++i) {
+			a.points[i].time_from_start *= 1.0/scaling;
+			if (!a.points[i].accelerations.empty()) {
+				a.points[i].accelerations.clear();
+			}
+			for (int j=0;j<a.points[i].velocities.size();++j) {
+				a.points[i].velocities[j]*=scaling;
+			}
+			//a.points[i].velocities[0] = -velocity; //probably will help
+			//a.points[i].accelerations[0] = 0; //probably will help
+			//a.points[i].accelerations.clear(); //probably will help?
+		}
+		//ROS_INFO_STREAM(a);
+	}
 	//make motion along belt have v = 0.2 ish
 	void homogenize_for_belt(trajectory_msgs::JointTrajectory & a,double distance,double velocity = 0.2,double distance_per = 0.05) {
 		//double pos_at_start = a.points[0].positions[1];
@@ -375,6 +393,8 @@ public:
 		 	arm_action::Ptr lift_action(new arm_action(test_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
 		 	planner.add_action(test_action);
 		 	planner.add_action(lift_action);
+		 	planner.wait_until_planned(test_action);
+		 	make_calm(test_action->plan->trajectory_.joint_trajectory);
 		 	controller.add_action(test_action);
 		 	controller.add_action(lift_action);
 	 		controller.wait_until_executed(lift_action);
@@ -416,6 +436,8 @@ public:
 	 	arm_action::Ptr lift_action(new arm_action(grab_action,grab_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BIN_GRAB));
 	 	planner.add_action(align_action);
 	 	planner.add_action(grab_action);
+	 	planner.wait_until_planned(grab_action);
+	 	make_calm(grab_action->plan->trajectory_.joint_trajectory);
 	 	planner.add_action(lift_action);
 	 	controller.add_action(align_action);
 	 	controller.add_action(grab_action);
