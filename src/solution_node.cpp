@@ -451,6 +451,7 @@ public:
 		// tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
 		// arm_action::Ptr dummy_action(new arm_action(data_in.action,current_grab,REGION_CONVEYOR));
 		tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,ros::Time::now());
+		ROS_INFO("current_grab 1 is: %f %f %f",current_grab.getOrigin().getX(),current_grab.getOrigin().getY(),current_grab.getOrigin().getZ());
 		arm_action::Ptr dummy_action(new arm_action(nullptr,current_grab,REGION_CONVEYOR));
 		dummy_action->vacuum_enabled = true;
 		dummy_action->pick_part = true;
@@ -470,8 +471,11 @@ public:
 			ROS_INFO("duration is %f",dummy_action->get_execution_time().toSec());
 			current_grab = ObjectTracker::get_grab_pose(part_name,end_time);
 		}
+		ROS_INFO("current_grab after loop is: %f %f %f",current_grab.getOrigin().getX(),current_grab.getOrigin().getY(),current_grab.getOrigin().getZ());
 		double dist = 1.0;
 		tf::Pose transform_pose = tf::Pose(identity,tf::Vector3(0,-dist,0)) * current_grab;
+
+		ROS_INFO("transform_pose is: %f %f %f",transform_pose.getOrigin().getX(),transform_pose.getOrigin().getY(),transform_pose.getOrigin().getZ());
 		arm_action::Ptr slide_action(new arm_action(dummy_action,transform_pose,REGION_CONVEYOR));
 		planner.add_action(slide_action);
 		planner.wait_until_planned(slide_action);
@@ -487,6 +491,7 @@ public:
 		//TODO: perhaps calculate the grasp location in a cleaner way?
 		tf::StampedTransform arm_location = ObjectTracker::get_gripper_pose();
 		tf::Pose next_location = tf::Pose(identity,tf::Vector3(0,0,0.2)+arm_location.getOrigin());
+		ROS_INFO("next_location is: %f %f %f",next_location.getOrigin().getX(),next_location.getOrigin().getY(),next_location.getOrigin().getZ());
 		arm_action::Ptr retract_action(new arm_action(nullptr,next_location,REGION_CONVEYOR));
 		retract_action->vacuum_enabled = true;
 
@@ -531,7 +536,7 @@ public:
 			ROS_INFO("CORRECTING FOR UPSIDE DOWN PART DROP LOCATION");
 			drop_offset_corrected.setRotation(identity);
 		}
-		double height_offset_value = 0.022;
+		double height_offset_value = 0.020;
 		// double height_offset_value = 0.06;
 		arm_action::Ptr move_to_tray(new arm_action(data_in.action,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
 		arm_action::Ptr move_to_tray_2(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,height_offset_value+ObjectTracker::get_part_bottom_margin(part_type,is_upside_down(grasp_correction))))*agv_pose*drop_offset_corrected*grasp_correction,agv_region));
@@ -596,12 +601,12 @@ public:
 				else {
 					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_2_frame") * part_pose;
 				}
-				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.002))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading.models[0].type,ros::Time::now());
+				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.0025))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading.models[0].type,ros::Time::now());
 				arm_action::Ptr align_action(new arm_action(nullptr,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region));
 				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
 				grab_action->vacuum_enabled = true;
 				grab_action->pick_part = true;
-				grab_action->end_delay = 1.0;
+				grab_action->end_delay = 1.5;
 				// delete (trash_actions.front()->plan);
 				// trash_actions.front()->plan = nullptr;
 				// trash_actions.front()->planning_status = PIPELINE_NONE;
@@ -652,12 +657,12 @@ public:
 				else {
 					part_pose = ObjectTracker::get_recent_transform("world","quality_control_sensor_2_frame") * part_pose;
 				}
-				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.002))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading_2.models[0].type,ros::Time::now());
+				grasp_pose = tf::Pose(identity,tf::Vector3(0,0,-0.0025))*ObjectTracker::get_grab_pose_custom(part_pose, quality_sensor_reading_2.models[0].type,ros::Time::now());
 				arm_action::Ptr align_action(new arm_action(nullptr,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region));
 				arm_action::Ptr grab_action(new arm_action(align_action,grasp_pose,agv_region));
 				grab_action->vacuum_enabled = true;
 				grab_action->pick_part = true;
-				grab_action->end_delay = 1.0;
+				grab_action->end_delay = 1.5;
 				trash_actions.clear();
 				trash_actions.push_back(arm_action::Ptr(new arm_action(grab_action,tf::Pose(identity,tf::Vector3(0,0,0.2))*grasp_pose,agv_region)));
 				trash_actions.push_back(arm_action::Ptr(new arm_action(trash_actions.back(),tf::Pose(grasp_pose.getRotation(),trash_position[agv_number-1]),agv_region)));
