@@ -80,7 +80,7 @@ public:
 	void clear() {
 		boost::unique_lock<boost::mutex> control_lock(control_mutex); //plays safe with lock conditions on planning list
 		for (std::list<arm_action::Ptr>::iterator i = control_queue.begin(); i != control_queue.end(); ++i) {
-			(*i)->execution_status = PIPELINE_NONE;
+			(*i)->execution_status = PIPELINE_COMPLETE;
 		}
 		control_queue.clear();
 	}

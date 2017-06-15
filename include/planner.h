@@ -97,7 +97,7 @@ public:
 	void clear() {
 		boost::unique_lock<boost::mutex> plan_lock(plan_mutex);
 		for (std::list<arm_action::Ptr>::iterator i = plan_queue.begin(); i != plan_queue.end(); ++i) {
-			(*i)->planning_status = PIPELINE_NONE;
+			(*i)->planning_status = PIPELINE_COMPLETE;
 		}
 		plan_queue.clear();
 	}
