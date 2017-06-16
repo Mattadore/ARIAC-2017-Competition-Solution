@@ -264,7 +264,11 @@ public:
 			CompetitionInterface::toggle_vacuum(false);
 			kill_all();
 		}
-
+		if (CompetitionInterface::control_thread_is_stuck()) {
+			//please forgive me for my sins against nature
+			controller = new Controller(controller,&planner);
+			CompetitionInterface::control_thread_unstuck();
+		}
 		//update agv
 		for (char agv_num = 1; agv_num <= 2; ++agv_num) {
 			if (AGV_info[agv_num-1].assigned()) {			
@@ -310,8 +314,8 @@ public:
 
 	void kill_all() {
 		planner.clear();
-		controller.clear();
-		// controller.stop_controller();
+		controller->clear();
+		// controller->stop_controller();
 	}
 
 	void combine_actions(std::vector<arm_action::Ptr> * action_list) {
@@ -388,7 +392,7 @@ public:
 			arm_action::Ptr align_action(new arm_action(last_action,search_pose*tf::Pose(identity,tf::Vector3(0,0,0.2)),REGION_BINS));
 	 		align_action->vacuum_enabled = false; //just to be safe
 	 		planner.add_action(align_action);
-	 		controller.add_action(align_action);
+	 		controller->add_action(align_action);
 		 	arm_action::Ptr test_action(new arm_action(align_action,search_pose,REGION_BIN_GRAB));
 		 	test_action->vacuum_enabled = true;
 		 	test_action->pick_part = true;
@@ -398,9 +402,9 @@ public:
 		 	planner.add_action(lift_action);
 		 	planner.wait_until_planned(test_action);
 		 	make_calm(test_action->plan->trajectory_.joint_trajectory);
-		 	controller.add_action(test_action);
-		 	controller.add_action(lift_action);
-	 		controller.wait_until_executed(lift_action);
+		 	controller->add_action(test_action);
+		 	controller->add_action(lift_action);
+	 		controller->wait_until_executed(lift_action);
 	 		if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) { //successful pick up
 	 			ROS_INFO("PART SUCCESSFULLY FOUND");
 	 			
@@ -442,10 +446,10 @@ public:
 	 	planner.wait_until_planned(grab_action);
 	 	make_calm(grab_action->plan->trajectory_.joint_trajectory);
 	 	planner.add_action(lift_action);
-	 	controller.add_action(align_action);
-	 	controller.add_action(grab_action);
-	 	controller.add_action(lift_action);
-	 	controller.wait_until_executed(lift_action);
+	 	controller->add_action(align_action);
+	 	controller->add_action(grab_action);
+	 	controller->add_action(lift_action);
+	 	controller->wait_until_executed(lift_action);
 
 	 	pipeline_data return_data;
 	 	return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
@@ -470,9 +474,9 @@ public:
 		planner.add_action(scan_movement);
 		// planner.add_action(scan_delay);
 
-		controller.add_action(scan_movement);
-		// controller.add_action(scan_delay);
-		controller.wait_until_executed(scan_movement);
+		controller->add_action(scan_movement);
+		// controller->add_action(scan_delay);
+		controller->wait_until_executed(scan_movement);
 
 		pipeline_data return_data;
 		return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
@@ -489,9 +493,9 @@ public:
 		// scan_movement->end_delay = 0.2;
 		// planner.add_action(intermediate_movement);
 		// planner.add_action(scan_movement);
-		// controller.add_action(intermediate_movement);
-		// controller.add_action(scan_movement);
-		// controller.wait_until_executed(scan_movement);
+		// controller->add_action(intermediate_movement);
+		// controller->add_action(scan_movement);
+		// controller->wait_until_executed(scan_movement);
 
 	 // 	pipeline_data return_data;
 	 // 	return_data.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
@@ -513,11 +517,11 @@ public:
 			planner.wait_until_planned(conveyor_move);
 			data_in.action = conveyor_move;
 			data_in.time += conveyor_move->get_execution_time();
-			controller.add_action(conveyor_move);
+			controller->add_action(conveyor_move);
 		// }
 
 		if (data_in.action != nullptr) {
-			controller.wait_until_executed(data_in.action);
+			controller->wait_until_executed(data_in.action);
 		}
 
 		// tf::Pose current_grab = ObjectTracker::get_grab_pose(part_name,data_in.time);
@@ -554,9 +558,9 @@ public:
 		homogenize_for_belt(slide_action->plan->trajectory_.joint_trajectory,dist);
 		integrate(dummy_action,slide_action);
 		ObjectTracker::set_interested_object(part_name);
-		controller.add_action(dummy_action);
-		//controller.add_action(slide_action);
-		controller.wait_until_executed(dummy_action);
+		controller->add_action(dummy_action);
+		//controller->add_action(slide_action);
+		controller->wait_until_executed(dummy_action);
 		//TODO: perhaps calculate the grasp location in a cleaner way?
 		tf::StampedTransform arm_location = ObjectTracker::get_gripper_pose();
 		tf::Pose next_location = tf::Pose(identity,tf::Vector3(0,0,0.2)+arm_location.getOrigin());
@@ -567,13 +571,13 @@ public:
 		planner.wait_until_planned(retract_action);
 		//Movement pipeline is recreated here
 		ros::Time pipeline_time = ros::Time::now()+retract_action->get_execution_time();
-		controller.add_action(retract_action);
+		controller->add_action(retract_action);
 		pipeline_data pipe_out(pipeline_time,retract_action);
 		pipe_out.success = (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE);
-		//controller.wait_until_executed(retract_action);
+		//controller->wait_until_executed(retract_action);
 		//delete dummy_action;
 		//delete slide_action;
-		controller.wait_until_executed(retract_action);
+		controller->wait_until_executed(retract_action);
 		return pipe_out;
 	}
 
@@ -591,7 +595,7 @@ public:
 			planner.wait_until_planned(intermediate_move);
 			data_in.action = intermediate_move;
 			data_in.time += intermediate_move->get_execution_time();
-			controller.add_action(intermediate_move);
+			controller->add_action(intermediate_move);
 		}
 		tf::Transform grasp_correction = ObjectTracker::get_internal_transform(ObjectTracker::get_held_object());
 		std::string part_type = ObjectTracker::get_part_type(ObjectTracker::get_held_object());
@@ -616,11 +620,11 @@ public:
 		planner.add_action(move_to_tray_2);
 		planner.wait_until_planned(move_to_tray_2);
 		integrate(move_to_tray,move_to_tray_2);
-		controller.add_action(move_to_tray);
+		controller->add_action(move_to_tray);
 		std::vector<arm_action::Ptr> standard_actions; //TODO: do something similar for waving under camera
 		std::vector<arm_action::Ptr> trash_actions; //TODO: do something similar for waving under camera
 		arm_action::Ptr retract_action;
-		//controller.wait_until_executed(move_to_tray);
+		//controller->wait_until_executed(move_to_tray);
 
 	 	ROS_INFO("Simple Grab: Planning Trash Actions...");
 		trash_actions.push_back(arm_action::Ptr(new arm_action(move_to_tray,tf::Pose(identity,tf::Vector3(0,0,0.2))*agv_pose*drop_offset_corrected*grasp_correction,agv_region)));
@@ -640,7 +644,7 @@ public:
 	 	standard_actions.back()->use_intermediate = true;
  		planner.add_actions(&standard_actions);
  		planner.wait_until_planned(standard_actions.back());
- 		controller.wait_until_executed(move_to_tray);
+ 		controller->wait_until_executed(move_to_tray);
 
  		//TODO: this is disgusting
  		ros::Duration(0.15).sleep();
@@ -692,10 +696,10 @@ public:
 				planner.add_action(grab_action);
 				planner.add_actions(&trash_actions);
 
-				controller.add_action(align_action);
-				controller.add_action(grab_action);
+				controller->add_action(align_action);
+				controller->add_action(grab_action);
 				planner.wait_until_planned(trash_actions.back());
-				controller.wait_until_executed(grab_action);
+				controller->wait_until_executed(grab_action);
 			}
 
 	 		//NOTE: this is where I will possibly work backwards to bin alignment
@@ -705,8 +709,8 @@ public:
 	 		//!!!!!!!TODO: plan multiple possible outcomes?
 	 		//basically just scoots the arm over a bit before dropping so it falls
 	 		//off the side, instead of in the intended drop
- 	 		controller.add_actions(&trash_actions);
- 			controller.wait_until_executed(trash_actions.back());
+ 	 		controller->add_actions(&trash_actions);
+ 			controller->wait_until_executed(trash_actions.back());
 	 	}
 	 	else {
 			if (CompetitionInterface::part_dropped()) {
@@ -715,9 +719,9 @@ public:
 				return pipe_out;
 			}
 	 		ROS_INFO("Part Good!!! -> Performing Standard Actions");
-	 		controller.add_action(standard_actions[0]);
-	 		controller.add_action(standard_actions[1]);
-			controller.wait_until_executed(standard_actions[1]);
+	 		controller->add_action(standard_actions[0]);
+	 		controller->add_action(standard_actions[1]);
+			controller->wait_until_executed(standard_actions[1]);
 		 	osrf_gear::LogicalCameraImage quality_sensor_reading_2 = CompetitionInterface::get_quality_control_msg(agv_number);
 		 	if (!quality_sensor_reading_2.models.empty()) {
 		 		faulty = true;
@@ -744,15 +748,15 @@ public:
 				planner.add_action(align_action);
 				planner.add_action(grab_action);
 				planner.add_actions(&trash_actions);
-				controller.add_action(align_action);
-				controller.add_action(grab_action);
- 	 			controller.add_actions(&trash_actions);
- 				controller.wait_until_executed(trash_actions.back());
+				controller->add_action(align_action);
+				controller->add_action(grab_action);
+ 	 			controller->add_actions(&trash_actions);
+ 				controller->wait_until_executed(trash_actions.back());
 
 		 	}
 		 	else {
-		 		controller.add_action(standard_actions[2]);
-		 		controller.wait_until_executed(standard_actions[2]);
+		 		controller->add_action(standard_actions[2]);
+		 		controller->wait_until_executed(standard_actions[2]);
 		 	}
 	 	}
  		pipeline_data pipe_out;
@@ -1038,8 +1042,8 @@ public:
 		// intermediate_move->use_intermediate = true;
 		// ros::Time start_time = ros::Time::now();
 		// planner.add_action(intermediate_move);
-		// controller.add_action(intermediate_move);
-		// controller.wait_until_executed(intermediate_move);
+		// controller->add_action(intermediate_move);
+		// controller->wait_until_executed(intermediate_move);
 		// ros::Duration time_taken = ros::Time::now() - start_time;
 		// ros::Duration expected_time = intermediate_move->plan->trajectory_.joint_trajectory.points.back().time_from_start;
 		// ROS_INFO("Time expected: %fs, time taken: %fs",expected_time.toSec(),time_taken.toSec());
@@ -1079,9 +1083,9 @@ public:
 		// planner.add_action(pull_action);
 		// planner.wait_until_planned(pull_action);
 		// ROS_INFO_STREAM("TRAJ" << grab_action.plan->trajectory_.joint_trajectory); 
-		// controller.add_action(grab_action);
-		// controller.add_action(pull_action);
-		// controller.wait_until_executed(pull_action);
+		// controller->add_action(grab_action);
+		// controller->add_action(pull_action);
+		// controller->wait_until_executed(pull_action);
 
 		// CompetitionInterface::toggle_vacuum(false);
 
@@ -1114,10 +1118,10 @@ public:
 		// planner.add_action(pull_action);
 		// planner.wait_until_planned(pull_action);
 		// ROS_INFO_STREAM("TRAJ" << wait_action.plan->trajectory_.joint_trajectory); 
-		// controller.add_action(grab_action);
-		// controller.add_action(wait_action);
-		// controller.add_action(pull_action);
-		// controller.wait_until_executed(pull_action);
+		// controller->add_action(grab_action);
+		// controller->add_action(wait_action);
+		// controller->add_action(pull_action);
+		// controller->wait_until_executed(pull_action);
 
 
 		// CompetitionInterface::start_competition();
@@ -1198,11 +1202,11 @@ public:
 
 
 	//CompetitionManager() : buffer(ros::Duration(1.0)),
-	CompetitionManager(ros::NodeHandle * nodeptr_) : controller(&planner), 
+	CompetitionManager(ros::NodeHandle * nodeptr_) :
 	logic_thread(boost::bind(&CompetitionManager::arm_process,this)) {
 		nodeptr = nodeptr_;
 		joint_pub = nodeptr->advertise<trajectory_msgs::JointTrajectory>("/ariac/arm/command", 20);
-
+		controller = new Controller(&planner);
 		terminated = false;
 		number_orders = 0;
 	  	//ensure buffer is completely initialized?
@@ -1231,7 +1235,7 @@ public:
 	}
 
 	Planner planner;
-	Controller controller;
+	Controller * controller;
 	SearchManager searcher;
 
 protected:

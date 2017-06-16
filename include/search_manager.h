@@ -186,10 +186,10 @@ public:
 			if (n_curr < (xmax*ymax)) {
 				xcurr=n_curr%xmax;
 				ycurr=n_curr/ymax;
-				double x = lo+xcurr*((HI-LO)/((double)(xmax-1)));
-				double y = lo+ycurr*((HI-LO)/((double)(ymax-1)));
+				double x = LO+xcurr*((HI-LO)/((double)(xmax-1)));
+				double y = LO+ycurr*((HI-LO)/((double)(ymax-1)));
 				return_v = tf::Vector3(x,y,0);
-				ROS_INFO("Generating Uniform Location: %f, %f, %f", n, x, y);
+				ROS_INFO("Generating Uniform Location: %d, %f, %f", n_curr, x, y);
 				++n_curr;
 			}
 			// x = -0.25 to 0.25

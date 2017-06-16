@@ -574,7 +574,7 @@ protected:
 		// tf::Vector3(0.45,0.45,0),tf::Vector3(0,0,M_PI/4.0),tf::Vector3(0,0,0)};
 
 		type_data["disk_part"] = {"disk_part",0.021835,0.004951};
-		type_data["gasket_part"] = {"gasket_part",0.018020,0.004751};
+		type_data["gasket_part"] = {"gasket_part",0.019020,0.004751};
 		type_data["gear_part"] = {"gear_part",0.009,0.004951};
 		// type_data["piston_rod_part"] = {"piston_rod_part",0.007324,0.004951};
 		type_data["piston_rod_part"] = {"piston_rod_part",0.007101,0.004951};

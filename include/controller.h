@@ -21,6 +21,17 @@ public:
 		// intermediate_points[1].positions = decltype(intermediate_points[1].positions)(intermediate_configuration_vectors[1].begin(),intermediate_configuration_vectors[1].end());
 	}
 
+	//I am so, so, so sorry.
+	Controller(Controller * other,Planner * planner_) : control_queue(other->control_queue.begin(),other->control_queue.end()),
+	arm_control_group("manipulator"), control_thread(boost::bind(&Controller::parallel_control,this)), planner(planner_) {
+		arm_control_group.setPoseReferenceFrame("/world");
+		arm_control_group.setWorkspace(-20000,-20000,-20000,20000,20000,20000);
+		std::vector<std_msgs::Float64> intermediate_configuration_vectors[2];
+		force_stop = false;
+		//doing some prior assignment
+		// intermediate_points[0].positions = decltype(intermediate_points[0].positions)(intermediate_configuration_vectors[0].begin(),intermediate_configuration_vectors[0].end());
+		// intermediate_points[1].positions = decltype(intermediate_points[1].positions)(intermediate_configuration_vectors[1].begin(),intermediate_configuration_vectors[1].end());
+	}
 	void wait_for_move_complete() {
 		boost::unique_lock<boost::mutex> current_control_lock(current_control_mutex);
 		while (currently_executing != nullptr) { //probably unnecessary
@@ -93,10 +104,25 @@ protected:
 		ROS_INFO("STARTING GRAB BREAK THREAD");
 		arm_action::Ptr start_action = currently_executing;
 		ros::Rate looprate(50);
+		ros::Time break_time;
+		bool broken = false;
+		bool killed = false;
 		while (start_action == currently_executing) {
 			if (CompetitionInterface::get_state(GRIPPER_ATTACHED) == BOOL_TRUE) {
 				ROS_INFO_THROTTLE(1,"GRAB BREAK!");
-				stop_controller();
+				if (!broken) {
+					stop_controller();
+					broken = true;
+					break_time = ros::Time::now();
+				}
+				else if ((!killed)&&((break_time+ros::Duration(2))>ros::Time::now())) {
+					killed = true;
+					CompetitionInterface::control_thread_stuck();
+				}
+				else if (killed && (!CompetitionInterface::control_thread_is_stuck())) {	
+					currently_executing->execution_status = PIPELINE_COMPLETE;
+					return;
+				}
 			}
 			looprate.sleep();
 		} 
@@ -187,7 +213,7 @@ protected:
 	boost::thread control_thread;
 	Planner * planner;
 	bool force_stop;
-	std::list<arm_action::Ptr> control_queue; 
+	std::list<arm_action::Ptr> control_queue;
 };
 
 #endif

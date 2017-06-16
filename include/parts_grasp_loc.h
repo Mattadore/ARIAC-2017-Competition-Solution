@@ -23,14 +23,14 @@ void init_default_search_locations(){
 	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.0700, 0));
 	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.0700, 0.2200, 0));
 	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.0700, 0.2200, 0));
-	
-	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.2200, 0));
+
 	// default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.2200, 0));
-	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.100, 0.100, 0));
+	// // default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.2200, 0));
 	// default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.100, 0.100, 0));
-	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.0700, 0));
+	// // default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.100, 0.100, 0));
 	// default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.0700, 0));
-	default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.0700, 0.2200, 0));
+	// // default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.2200, 0.0700, 0));
+	// default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.0700, 0.2200, 0));
 	// default_search_locations["piston_rod_part"].push_back(tf::Vector3(0.0700, 0.2200, 0));
 
 	default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
@@ -41,14 +41,15 @@ void init_default_search_locations(){
 	default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
 	default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
 	default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.0600, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.0600, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
-	default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
+
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.0600, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.0600, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
+	// default_search_locations["disk_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
 
 	default_search_locations["pulley_part"].push_back(tf::Vector3(0.15, 0.15, 0));
 	default_search_locations["pulley_part"].push_back(tf::Vector3(0.15, 0.15, 0));
@@ -65,25 +66,27 @@ void init_default_search_locations(){
 	default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.0700, 0));
 	default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.2300, 0));
 	default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.2300, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.1500, 0.1500, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.1500, 0.1500, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.0700, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.0700, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.0700, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.0700, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.2300, 0));
-	default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.2300, 0));
+
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.1500, 0.1500, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.1500, 0.1500, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.0700, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.0700, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.0700, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.2300, 0.0700, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.2300, 0));
+	// default_search_locations["gear_part"].push_back(tf::Vector3(0.0700, 0.2300, 0));
 
 	default_search_locations["gasket_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
 	default_search_locations["gasket_part"].push_back(tf::Vector3(0.2300, 0.2300, 0));
 	default_search_locations["gasket_part"].push_back(tf::Vector3(0.0600, 0.0600, 0));
 	default_search_locations["gasket_part"].push_back(tf::Vector3(0.0600, 0.0600, 0));
-	default_search_locations["gasket_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
-	default_search_locations["gasket_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
-	default_search_locations["gasket_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
-	default_search_locations["gasket_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
+
+	// default_search_locations["gasket_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
+	// default_search_locations["gasket_part"].push_back(tf::Vector3(0.2300, 0.0600, 0));
+	// default_search_locations["gasket_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
+	// default_search_locations["gasket_part"].push_back(tf::Vector3(0.0600, 0.2300, 0));
 }
 
 // disk_primary_loc.push_back(tf::Vector3(0.15, 0.15, 0));

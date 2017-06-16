@@ -68,6 +68,7 @@ struct CompetitionInterface { //exists for this one node, everything is static
 		AGV_status_lookup["ready_to_deliver"] = AGV_READY_TO_DELIVER;
 		AGV_status_lookup["preparing_to_deliver"] = AGV_PREPARING_TO_DELIVER;
 		dropped = false;
+		is_stuck = false;
 		add_subscriptions();
 		init_default_search_locations();
 
@@ -224,7 +225,17 @@ struct CompetitionInterface { //exists for this one node, everything is static
 	static bool part_dropped() {
 		return dropped;
 	}
-
+	static void control_thread_stuck() {
+		ROS_ERROR("CONTROL THREAD STUCK LOOPING, RESTARTING");
+		is_stuck = true;
+	}
+	static void control_thread_unstuck() {
+		is_stuck = false;
+	}
+	static bool control_thread_is_stuck() {
+		return is_stuck;
+	}
+	
 protected:
 
 	//---------------callbacks (should not invoke any actions or action methods)
@@ -349,6 +360,7 @@ protected:
 	static AGV_data AGV_info[2]; //basic agv information
 	static char arm_region;
 	static bool dropped;
+	static bool is_stuck;
 	static std::string object_held;
 	static std::string object_interested;
 	static tf::Transform last_grasp_location;
@@ -371,6 +383,8 @@ unsigned char CompetitionInterface::state[NUM_STATES]; //holds state machine inf
 AGV_data CompetitionInterface::AGV_info[2]; //basic agv information
 char CompetitionInterface::arm_region;
 bool CompetitionInterface::dropped;
+bool CompetitionInterface::is_stuck;
+
 std::string CompetitionInterface::object_held;
 std::string CompetitionInterface::object_interested;
 tf::Transform CompetitionInterface::last_grasp_location;
